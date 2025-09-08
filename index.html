@@ -493,7 +493,6 @@
         function initializeDatePicker() {
             const trainingDates = Object.keys(trainings);
 
-            // Se l'istanza esiste già, la distruggiamo per ricrearla con i dati aggiornati
             if (datePickerInstance) {
                 datePickerInstance.destroy();
             }
@@ -502,8 +501,8 @@
                 locale: "it",
                 dateFormat: "Y-m-d",
                 defaultDate: selectedTrainingDate,
+                disableMobile: true, // <-- LA MODIFICA CHIAVE È QUI
                 onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    // Formatta la data del giorno corrente in YYYY-MM-DD
                     const date = dayElem.dateObj;
                     const formattedDate = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
                     
