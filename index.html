@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libreria per il calendario personalizzato (Flatpickr) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/it.js"></script> <!-- Localizzazione Italiana -->
+
     <style>
         :root {
             --bg-dark: #1a1a2e;
@@ -103,6 +109,45 @@
         .modal-backdrop {
             background-color: rgba(0,0,0,0.7);
         }
+        
+        /* Stile per il calendario Flatpickr */
+        .flatpickr-calendar {
+            background-color: var(--bg-card);
+            border: 1px solid var(--primary);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .flatpickr-months .flatpickr-month, .flatpickr-current-month .flatpickr-monthDropdown-months, .flatpickr-weekdays {
+            color: var(--text-light);
+            fill: var(--text-light);
+        }
+        .flatpickr-day {
+            color: var(--text-dark);
+        }
+        .flatpickr-day:hover {
+            background-color: var(--primary);
+            color: var(--text-light);
+        }
+        .flatpickr-day.selected, .flatpickr-day.today {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+        }
+        /* Stile per evidenziare i giorni con allenamento */
+        .flatpickr-day.training-day {
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            background: transparent;
+        }
+        .flatpickr-day.training-day:hover {
+            background: rgba(233, 69, 96, 0.2);
+        }
+        .flatpickr-day.training-day.selected {
+             background-color: var(--secondary);
+        }
+        .numInputWrapper span:hover {
+            background: var(--primary);
+        }
+        
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -191,7 +236,6 @@
                 </div>
                 <h2 class="text-3xl font-bold mb-4 text-white">Classifica Generale</h2>
                 <div id="leaderboard-container" class="space-y-2">
-                    <!-- La classifica verrà generata qui da JavaScript -->
                      <div class="text-center py-10">
                         <p class="text-gray-400">Nessun dato da visualizzare. Aggiungi giocatori e registra un allenamento.</p>
                     </div>
@@ -237,8 +281,8 @@
                 <div class="card rounded-lg p-6 mb-6">
                      <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                           <label for="training-date" class="block text-lg font-semibold mb-2">Seleziona Data Allenamento:</label>
-                           <input type="date" id="training-date" class="form-input p-2 rounded">
+                           <label for="training-date-picker" class="block text-lg font-semibold mb-2">Seleziona Data Allenamento:</label>
+                           <input type="text" id="training-date-picker" placeholder="Seleziona una data..." class="form-input p-2 rounded cursor-pointer">
                         </div>
                         <div class="flex-grow">
                              <label for="training-notes" class="block text-lg font-semibold mb-2">Note Allenamento:</label>
@@ -354,30 +398,10 @@
 
     <!-- Importa Firebase -->
     <script type="module">
-        // Importa solo le funzioni che ti servono
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // ----- ISTRUZIONI DI CONFIGURAZIONE (LEGGI ATTENTAMENTE) -----
-        // 1. Vai su https://console.firebase.google.com/ e crea un nuovo progetto (es. "scando-volley-app").
-        // 2. Nel tuo progetto, vai alla sezione "Build" > "Firestore Database" e crea un nuovo database.
-        //    Scegli la modalità "Inizia in modalità di produzione" e seleziona una località (es. europe-west).
-        // 3. Vai alla sezione "Regole" di Firestore e sostituisci il contenuto con:
-        //    rules_version = '2';
-        //    service cloud.firestore {
-        //      match /databases/{database}/documents {
-        //        match /scandoVolleyData/{appData} {
-        //          allow read, write: if true; // Per iniziare, poi potrai renderla più sicura
-        //        }
-        //      }
-        //    }
-        //    E poi clicca su "Pubblica".
-        // 4. Torna alla panoramica del progetto (clicca sull'icona a forma di ingranaggio > Impostazioni progetto).
-        // 5. In basso, nella sezione "Le tue app", clicca sull'icona del Web (</>).
-        // 6. Dai un nickname alla tua app (es. "Scando Volley Web") e clicca su "Registra app".
-        // 7. Firebase ti mostrerà un oggetto `firebaseConfig`. COPIA TUTTO L'OGGETTO.
-        // 8. INCOLLA l'oggetto che hai copiato qui sotto, al posto di quello di esempio.
-        
+        // ----- INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE -----
         const firebaseConfig = {
             apiKey: "AIzaSyD7duEL7HRu-KAYU345AfUHkHGxCbMSPZw",
   	    authDomain: "scando-volley.firebaseapp.com",
@@ -387,7 +411,6 @@
   	    appId: "1:525150795987:web:02efdc0ff8b4e3a30dfc26"
         };
         
-        // Inizializzazione di Firebase
         let db;
         try {
             const app = initializeApp(firebaseConfig);
@@ -400,30 +423,21 @@
         
         const dbDocRef = doc(db, "scandoVolleyData", "appState");
 
-        // Stato dell'applicazione
         let isAdmin = false;
-        
-        // Dichiarazione delle variabili di stato
         let players = [], badges = [], events = [], trainings = {};
+        let selectedTrainingDate = new Date().toISOString().split('T')[0];
+        let datePickerInstance = null;
         
-        // Carica i dati da Firebase in tempo reale
         onSnapshot(dbDocRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
                 players = data.players || [];
                 badges = data.badges || [];
                 events = data.events || [];
-                // La conversione delle foto avviene qui
-                players.forEach(p => {
-                    if (p.photo && typeof p.photo === 'object' && p.photo.seconds) {
-                        p.photo = 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto'; // placeholder per foto vecchie/corrotte
-                    }
-                });
                 trainings = data.trainings || {};
                 console.log("Dati aggiornati da Firestore!");
             } else {
                 console.log("Nessun dato su Firestore, uso i dati di esempio e li salvo.");
-                // Se il database è vuoto, usa i dati iniziali e salvali
                  players = [
                     { id: 'p1', name: 'Mario', surname: 'Rossi', alias: 'SuperMario', photo: null, age: 25, height: 185, weight: 80, role: 'Schiacciatore', deficit: 'Ricezione', notes: 'Grande saltatore', assignedBadges: ['b1'] },
                     { id: 'p2', name: 'Luigi', surname: 'Verdi', alias: 'Gigi', photo: null, age: 23, height: 192, role: 'Centrale', deficit: '', notes: 'Muro invalicabile', assignedBadges: [] }
@@ -435,7 +449,7 @@
                     { id: 'e1', name: 'Amichevole vs S.S. Volley', date: '2025-09-15T21:00', description: 'Presso la palestra comunale. Ritrovo ore 20:00.' }
                 ];
                 trainings = {
-                    '2025-09-01': { 
+                    '2025-09-08': { 
                         notes: 'Allenamento intenso sulla difesa', 
                         players: {
                             'p1': { present: true, setsWon: '3', dishes: false },
@@ -443,17 +457,17 @@
                         }
                     }
                 };
-                saveData(); // Salva i dati iniziali su Firestore
+                saveData(); 
             }
             renderAll();
+            initializeDatePicker(); // Inizializza o aggiorna il calendario
         }, (error) => {
             console.error("Errore di connessione a Firestore:", error);
             alert("Impossibile connettersi al database. Controlla la connessione e la configurazione di Firebase.");
         });
 
-        // Funzione per salvare i dati su Firebase
         async function saveData() {
-            if (!isAdmin) return; // Solo gli admin possono salvare
+            if (!isAdmin) return;
             try {
                 const appState = { players, badges, events, trainings };
                 await setDoc(dbDocRef, appState);
@@ -464,16 +478,10 @@
             }
         }
         
-        window.app_saveData = saveData;
-
-        let selectedTrainingDate = new Date().toISOString().split('T')[0];
-
-        // Elementi DOM
         const pages = document.querySelectorAll('.page');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
 
-        // Funzione per aggiornare tutta la UI
         function renderAll() {
             renderLeaderboard();
             renderPlayersList();
@@ -481,8 +489,35 @@
             renderBadges();
             renderEvents();
         }
+
+        function initializeDatePicker() {
+            const trainingDates = Object.keys(trainings);
+
+            // Se l'istanza esiste già, la distruggiamo per ricrearla con i dati aggiornati
+            if (datePickerInstance) {
+                datePickerInstance.destroy();
+            }
+
+            datePickerInstance = flatpickr("#training-date-picker", {
+                locale: "it",
+                dateFormat: "Y-m-d",
+                defaultDate: selectedTrainingDate,
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    // Formatta la data del giorno corrente in YYYY-MM-DD
+                    const date = dayElem.dateObj;
+                    const formattedDate = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
+                    
+                    if (trainingDates.includes(formattedDate)) {
+                        dayElem.classList.add("training-day");
+                    }
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    selectedTrainingDate = dateStr;
+                    renderTrainingLog();
+                }
+            });
+        }
         
-        // Funzioni di rendering
         const renderLeaderboard = () => {
             const container = document.getElementById('leaderboard-container');
             if (players.length === 0) {
@@ -654,7 +689,6 @@
             badgeSelect.innerHTML = badges.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
         };
 
-        // Funzioni per gestire i dati (CRUD)
         const handlePlayerForm = (e) => {
             e.preventDefault();
             const id = document.getElementById('playerId').value;
@@ -662,7 +696,7 @@
                 name: document.getElementById('playerName').value,
                 surname: document.getElementById('playerSurname').value,
                 alias: document.getElementById('playerAlias').value,
-                photo: document.getElementById('playerPhotoData').value, // Usa il dato base64
+                photo: document.getElementById('playerPhotoData').value,
                 age: document.getElementById('playerAge').value,
                 height: document.getElementById('playerHeight').value,
                 weight: document.getElementById('playerWeight').value,
@@ -672,13 +706,13 @@
                 assignedBadges: []
             };
 
-            if (id) { // Modifica
+            if (id) {
                 const playerIndex = players.findIndex(p => p.id === id);
                 if (playerIndex > -1) {
-                    playerData.assignedBadges = players[playerIndex].assignedBadges; // Mantieni i badge esistenti
+                    playerData.assignedBadges = players[playerIndex].assignedBadges;
                     players[playerIndex] = { ...players[playerIndex], ...playerData };
                 }
-            } else { // Aggiungi
+            } else {
                 playerData.id = 'p' + Date.now();
                 players.push(playerData);
             }
@@ -799,6 +833,7 @@
 
              trainings[selectedTrainingDate].players[playerId][field] = value;
              renderLeaderboard();
+             initializeDatePicker(); // Aggiorna il calendario per mostrare il nuovo giorno
         };
         
         const handleTrainingNotesChange = (e) => {
@@ -809,7 +844,6 @@
              trainings[selectedTrainingDate].notes = notes;
         };
 
-        // Gestione UI
         window.handleLogin = (role) => {
             if (role === 'user') {
                 isAdmin = false;
@@ -834,7 +868,7 @@
                 document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.admin-content[readonly]').forEach(el => el.removeAttribute('readonly'));
             }
-            document.getElementById('training-date').value = selectedTrainingDate;
+            initializeDatePicker(); // Inizializza il date picker all'avvio dell'app
             renderAll();
         }
         
@@ -842,14 +876,12 @@
             pages.forEach(page => page.classList.add('hidden'));
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
             
-            // Update active state for all nav links, including mobile
             document.querySelectorAll('.nav-link').forEach(link => {
                  link.classList.toggle('active', link.dataset.page === pageId);
             });
             mobileMenu.classList.add('hidden');
         }
         
-        // Backup e Ripristino LOCALE
         function handleBackup() {
             const appState = { players, badges, events, trainings };
             const dataStr = JSON.stringify(appState, null, 2); 
@@ -882,7 +914,7 @@
                                 events = restoredData.events || [];
                                 trainings = restoredData.trainings || {};
                                 renderAll();
-                                saveData(); // Salva i dati importati sul DB
+                                saveData();
                             }
                         );
                     } else { throw new Error('File non valido.'); }
@@ -895,7 +927,6 @@
             reader.readAsText(file);
         }
 
-        // Listeners
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -915,12 +946,6 @@
         document.getElementById('save-data-button').addEventListener('click', saveData);
         document.getElementById('backup-data-button').addEventListener('click', handleBackup);
         document.getElementById('restore-data-input').addEventListener('change', handleRestore);
-
-        
-        document.getElementById('training-date').addEventListener('change', (e) => {
-            selectedTrainingDate = e.target.value;
-            renderTrainingLog();
-        });
         
         document.getElementById('training-log-container').addEventListener('change', handleTrainingDataChange);
         document.getElementById('training-notes').addEventListener('input', debounce(handleTrainingNotesChange, 500));
@@ -947,7 +972,6 @@
             }
         }
         
-        // Funzioni per Modali e Notifiche
         function showToast(message) {
             const toast = document.getElementById('toast-notification');
             const toastMessage = document.getElementById('toast-message');
@@ -991,7 +1015,6 @@
             confirmCallback = null;
         });
         
-        // Player detail modal
         window.app_showPlayerDetail = (id) => {
             const player = players.find(p => p.id === id);
             if(!player) return;
@@ -1045,7 +1068,6 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
         
-        // Rendi globali le funzioni che devono essere chiamate dall'HTML
         window.handleLogin = handleLogin;
         window.resetForm = resetForm;
         
