@@ -205,7 +205,6 @@
                     <a href="#" class="nav-link" data-page="allenamenti">Registro Allenamenti</a>
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
-                    <a href="#" class="nav-link admin-content hidden" data-page="admin">Admin</a>
                 </div>
                  <button id="mobile-menu-button" class="md:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -218,7 +217,6 @@
                 <a href="#" class="block nav-link py-2" data-page="allenamenti">Registro Allenamenti</a>
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
-                <a href="#" class="block nav-link py-2 admin-content hidden" data-page="admin">Admin</a>
             </div>
         </header>
 
@@ -347,27 +345,6 @@
                     <!-- Elenco eventi -->
                  </div>
             </div>
-            
-            <!-- Pagina Admin -->
-            <div id="page-admin" class="page hidden">
-                <h2 class="text-3xl font-bold mb-4 text-white">Pannello Admin</h2>
-                <!-- Sezione Backup e Ripristino -->
-                <div class="card rounded-lg p-6 mb-8">
-                    <h3 class="text-2xl font-semibold mb-4 text-white">Importa/Esporta Dati Locali</h3>
-                    <p class="text-gray-400 mb-4">Puoi usare queste funzioni per trasferire i dati da una versione all'altra dell'app, se non usi il database online.</p>
-                    <div class="flex flex-wrap gap-4">
-                        <button id="backup-data-button" class="btn-primary text-white font-bold py-2 px-6 rounded">
-                            Esporta Dati
-                        </button>
-                        <div>
-                            <label for="restore-data-input" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded cursor-pointer">
-                                Importa Dati
-                            </label>
-                            <input type="file" id="restore-data-input" accept=".json" class="hidden">
-                        </div>
-                    </div>
-                </div>
-            </div>
 
         </main>
     </div>
@@ -399,6 +376,7 @@
     <!-- Importa Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // ----- CONFIGURAZIONE FIREBASE -----
@@ -411,9 +389,10 @@
             appId: "1:525150795987:web:02efdc0ff8b4e3a30dfc26"
         };
         
-        let db;
+        let db, auth;
         try {
             const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
             db = getFirestore(app);
             console.log("Firebase connesso con successo!");
         } catch(e) {
@@ -421,12 +400,18 @@
             alert("ERRORE: Configurazione di Firebase non valida! Controlla la console per i dettagli e segui le istruzioni nel codice.");
         }
         
+        // Autenticazione anonima per permettere all'admin di scrivere sul DB
+        signInAnonymously(auth).catch((error) => {
+            console.error("Login anonimo (admin) fallito:", error);
+        });
+
         const dbDocRef = doc(db, "scandoVolleyData", "appState");
 
         let isAdmin = false;
         let players = [], badges = [], events = [], trainings = {};
         let selectedTrainingDate = new Date().toISOString().split('T')[0];
         let datePickerInstance = null;
+        let hasUnsavedChanges = false;
         
         onSnapshot(dbDocRef, (doc) => {
             if (doc.exists()) {
@@ -457,10 +442,10 @@
                         }
                     }
                 };
-                saveData(); 
+                if(isAdmin) saveData(); 
             }
             renderAll();
-            initializeDatePicker(); // Inizializza o aggiorna il calendario
+            initializeDatePicker(); 
         }, (error) => {
             console.error("Errore di connessione a Firestore:", error);
             alert("Impossibile connettersi al database. Controlla la connessione e la configurazione di Firebase.");
@@ -471,6 +456,7 @@
             try {
                 const appState = { players, badges, events, trainings };
                 await setDoc(dbDocRef, appState);
+                hasUnsavedChanges = false;
                 showToast('Dati salvati sul database!');
             } catch (e) {
                 console.error("Errore nel salvataggio su Firestore: ", e);
@@ -501,7 +487,7 @@
                 locale: "it",
                 dateFormat: "Y-m-d",
                 defaultDate: selectedTrainingDate,
-                disableMobile: true, // <-- LA MODIFICA CHIAVE È QUI
+                disableMobile: true,
                 onDayCreate: function(dObj, dStr, fp, dayElem) {
                     const date = dayElem.dateObj;
                     const formattedDate = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
@@ -690,6 +676,7 @@
 
         const handlePlayerForm = (e) => {
             e.preventDefault();
+            hasUnsavedChanges = true;
             const id = document.getElementById('playerId').value;
             const playerData = {
                 name: document.getElementById('playerName').value,
@@ -743,6 +730,7 @@
             showConfirmModal(
                 'Elimina Giocatore', 'Sei sicuro di voler eliminare questo giocatore?',
                 () => {
+                    hasUnsavedChanges = true;
                     players = players.filter(p => p.id !== id);
                     renderAll();
                 }
@@ -751,6 +739,7 @@
 
         const handleBadgeForm = (e) => {
             e.preventDefault();
+            hasUnsavedChanges = true;
             const badgeData = {
                 id: 'b' + Date.now(),
                 name: document.getElementById('badgeName').value,
@@ -766,6 +755,7 @@
         window.app_deleteBadge = (id) => {
             showConfirmModal('Elimina Badge', 'Sei sicuro? Verrà rimosso anche dai giocatori.',
                 () => {
+                    hasUnsavedChanges = true;
                     badges = badges.filter(b => b.id !== id);
                     players.forEach(p => {
                         if (p.assignedBadges) {
@@ -779,6 +769,7 @@
 
         const handleAssignBadgeForm = (e) => {
             e.preventDefault();
+            hasUnsavedChanges = true;
             const playerId = document.getElementById('assign-badge-player').value;
             const badgeId = document.getElementById('assign-badge-select').value;
             const player = players.find(p => p.id === playerId);
@@ -799,6 +790,7 @@
 
         const handleEventForm = (e) => {
             e.preventDefault();
+            hasUnsavedChanges = true;
             const eventData = {
                 id: 'e' + Date.now(),
                 name: document.getElementById('eventName').value,
@@ -813,6 +805,7 @@
         window.app_deleteEvent = (id) => {
              showConfirmModal('Elimina Evento', 'Sei sicuro di voler eliminare questo evento?',
                 () => {
+                    hasUnsavedChanges = true;
                     events = events.filter(ev => ev.id !== id);
                     renderAll();
                 }
@@ -820,6 +813,7 @@
         };
 
         const handleTrainingDataChange = (e) => {
+             hasUnsavedChanges = true;
              const { playerId, field } = e.target.dataset;
              const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
              
@@ -836,6 +830,7 @@
         };
         
         const handleTrainingNotesChange = (e) => {
+             hasUnsavedChanges = true;
              const notes = e.target.value;
              if (!trainings[selectedTrainingDate]) {
                 trainings[selectedTrainingDate] = { notes: '', players: {} };
@@ -869,6 +864,15 @@
             }
             initializeDatePicker(); // Inizializza il date picker all'avvio dell'app
             renderAll();
+
+             // Aggiungi conferma prima di uscire
+            window.addEventListener('beforeunload', (e) => {
+                if (hasUnsavedChanges && isAdmin) {
+                    e.preventDefault();
+                    e.returnValue = ''; // Standard per la maggior parte dei browser
+                    return ''; // Per alcuni browser più vecchi
+                }
+            });
         }
         
         function switchPage(pageId) {
@@ -881,51 +885,6 @@
             mobileMenu.classList.add('hidden');
         }
         
-        function handleBackup() {
-            const appState = { players, badges, events, trainings };
-            const dataStr = JSON.stringify(appState, null, 2); 
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            const date = new Date().toISOString().split('T')[0];
-            link.href = url;
-            link.download = `scando_volley_LOCAL_backup_${date}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            showToast('Backup locale scaricato!');
-        }
-
-        function handleRestore(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const restoredData = JSON.parse(e.target.result);
-                    if ('players' in restoredData) {
-                        showConfirmModal('Importa Dati Locali', 'Questo sovrascriverà i dati ATTUALI (non salvati) con quelli del file. Vuoi salvare i dati importati sul database online?',
-                            () => {
-                                players = restoredData.players || [];
-                                badges = restoredData.badges || [];
-                                events = restoredData.events || [];
-                                trainings = restoredData.trainings || {};
-                                renderAll();
-                                saveData();
-                            }
-                        );
-                    } else { throw new Error('File non valido.'); }
-                } catch (error) {
-                    showToast('Errore nel leggere il file di backup.');
-                } finally {
-                    event.target.value = '';
-                }
-            };
-            reader.readAsText(file);
-        }
-
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -943,8 +902,6 @@
         document.getElementById('event-form').addEventListener('submit', handleEventForm);
         
         document.getElementById('save-data-button').addEventListener('click', saveData);
-        document.getElementById('backup-data-button').addEventListener('click', handleBackup);
-        document.getElementById('restore-data-input').addEventListener('change', handleRestore);
         
         document.getElementById('training-log-container').addEventListener('change', handleTrainingDataChange);
         document.getElementById('training-notes').addEventListener('input', debounce(handleTrainingNotesChange, 500));
