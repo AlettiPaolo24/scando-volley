@@ -55,12 +55,12 @@
             background-color: var(--bg-card);
             border: 1px solid var(--primary);
         }
-        .form-input, .form-file-button::file-selector-button {
+        .form-input, .form-select, .form-file-button::file-selector-button {
             background-color: var(--primary);
             border: 1px solid var(--secondary);
             color: var(--text-light);
         }
-        .form-input:focus {
+        .form-input:focus, .form-select:focus {
             outline: none;
             ring: 2px;
             border-color: var(--accent);
@@ -168,7 +168,7 @@
     <!-- Schermata di Accesso -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
         <div class="card rounded-lg p-8 shadow-2xl text-center w-11/12 max-w-md">
-            <h1 class="text-3xl font-bold mb-2 text-white">Scandolara Volley</h1>
+            <h1 class="text-3xl font-bold mb-2 text-white">Scando Volley</h1>
             <p class="text-lg mb-6 text-gray-300">Benvenuto!</p>
             <p class="mb-4">Seleziona il tuo tipo di accesso:</p>
             <div id="login-options" class="space-y-4">
@@ -194,7 +194,7 @@
         <header class="bg-opacity-80 backdrop-blur-md sticky top-0 z-40 shadow-lg card border-t-0 border-l-0 border-r-0">
             <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <h1 class="text-2xl font-bold text-white">Scandolara Volley</h1>
+                    <h1 class="text-2xl font-bold text-white">Scando Volley</h1>
                     <button id="save-data-button" class="admin-content hidden btn-accent text-white font-bold py-1 px-3 rounded-lg text-sm">
                         Salva Dati su DB
                     </button>
@@ -226,8 +226,8 @@
                  <div class="card rounded-lg p-4 mb-6 border-l-4 border-accent">
                     <h2 class="text-xl font-bold mb-2 text-accent">Regolamento Punti</h2>
                     <ul class="list-disc list-inside text-gray-300 space-y-1">
-                        <li><strong class="text-white">1 Punto</strong> per ogni set vinto.</li>
-                        <li><strong class="text-white">1 Punto</strong> per la presenza ad ogni allenamento.</li>
+                        <li><strong class="text-white">1 Punto</strong> per ogni set vinto in allenamento.</li>
+                        <li><strong class="text-white">1 Punto</strong> per la presenza a ogni allenamento.</li>
                         <li><strong class="text-white">1 Punto</strong> extra se lavi i piatti dopo la cena di squadra.</li>
                         <li><strong class="text-white">Punti Badge</strong> assegnati al raggiungimento di obiettivi speciali.</li>
                     </ul>
@@ -256,7 +256,10 @@
                             <img id="playerPhotoPreview" src="https://placehold.co/100x100/16213e/dcdcdc?text=Foto" class="w-16 h-16 rounded-full object-cover bg-primary">
                             <input type="file" id="playerPhoto" accept="image/*" class="form-file-button w-full">
                         </div>
-                        <input type="number" id="playerAge" placeholder="Età" class="form-input p-2 rounded">
+                        <div>
+                            <label for="playerBirthDate" class="block text-sm text-gray-400 mb-1">Data di Nascita</label>
+                            <input required type="date" id="playerBirthDate" class="form-input p-2 rounded w-full">
+                        </div>
                         <input type="number" id="playerHeight" placeholder="Altezza (cm)" class="form-input p-2 rounded">
                         <input type="number" id="playerWeight" placeholder="Peso (kg)" class="form-input p-2 rounded">
                         <input type="text" id="playerRole" placeholder="Ruolo" class="form-input p-2 rounded">
@@ -295,33 +298,37 @@
 
             <!-- Pagina Badge -->
             <div id="page-badge" class="page hidden">
-                <h2 class="text-3xl font-bold mb-4 text-white">Badge</h2>
+                <h2 class="text-3xl font-bold mb-4 text-white">Badge Automatici</h2>
                  <div id="admin-only-badge-form" class="admin-content card rounded-lg p-6 mb-8 hidden">
                     <h3 class="text-2xl font-semibold mb-4 text-white">Crea Nuovo Badge</h3>
-                    <form id="badge-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <form id="badge-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                          <input required type="text" id="badgeName" placeholder="Nome Badge" class="form-input p-2 rounded">
                          <input type="text" id="badgeIcon" placeholder="Icona (es: ⭐ o 🏆)" class="form-input p-2 rounded">
-                         <input required type="number" id="badgePoints" placeholder="Punti Assegnati" class="form-input p-2 rounded">
-                         <textarea id="badgeDescription" placeholder="Descrizione" class="md:col-span-3 form-input p-2 rounded h-20"></textarea>
-                         <div class="md:col-span-3 flex justify-end">
+                         
+                         <div>
+                            <label for="badgeCriterion" class="block text-sm text-gray-400 mb-1">Criterio di Sblocco</label>
+                            <select id="badgeCriterion" class="form-select w-full p-2 rounded">
+                                <option value="consecutiveAttendance">Presenze consecutive</option>
+                                <option value="birthdayWeekTraining">Allenamento nella sett. del compleanno</option>
+                                <option value="totalAttendance">Totale presenze in stagione</option>
+                                <option value="totalSetsWon">Totale set vinti in stagione</option>
+                                <option value="totalDishes">Totale turni piatti</option>
+                            </select>
+                         </div>
+                        
+                         <div>
+                            <label for="badgeThreshold" class="block text-sm text-gray-400 mb-1">Obiettivo (Numero)</label>
+                            <input type="number" id="badgeThreshold" placeholder="Es: 10" class="form-input p-2 rounded w-full">
+                         </div>
+
+                         <input required type="number" id="badgePoints" placeholder="Punti Bonus Assegnati" class="form-input p-2 rounded">
+                         
+                         <div class="md:col-span-2 flex justify-end">
                             <button type="submit" class="btn-primary text-white font-bold py-2 px-6 rounded">Crea Badge</button>
                          </div>
                     </form>
                  </div>
-                 <div id="admin-only-assign-badge-form" class="admin-content card rounded-lg p-6 mb-8 hidden">
-                    <h3 class="text-2xl font-semibold mb-4 text-white">Assegna Badge a un Giocatore</h3>
-                    <form id="assign-badge-form" class="flex flex-wrap items-end gap-4">
-                        <div class="flex-grow">
-                            <label for="assign-badge-player" class="block mb-1">Giocatore</label>
-                            <select id="assign-badge-player" class="w-full form-input p-2 rounded"></select>
-                        </div>
-                         <div class="flex-grow">
-                            <label for="assign-badge-select" class="block mb-1">Badge</label>
-                            <select id="assign-badge-select" class="w-full form-input p-2 rounded"></select>
-                        </div>
-                        <button type="submit" class="btn-accent text-white font-bold py-2 px-6 rounded">Assegna</button>
-                    </form>
-                 </div>
+                 
                  <div id="badges-list-container">
                     <!-- Elenco badge -->
                  </div>
@@ -424,11 +431,10 @@
             } else {
                 console.log("Nessun dato su Firestore, uso i dati di esempio e li salvo.");
                  players = [
-                    { id: 'p1', name: 'Mario', surname: 'Rossi', alias: 'SuperMario', photo: null, age: 25, height: 185, weight: 80, role: 'Schiacciatore', deficit: 'Ricezione', notes: 'Grande saltatore', assignedBadges: ['b1'] },
-                    { id: 'p2', name: 'Luigi', surname: 'Verdi', alias: 'Gigi', photo: null, age: 23, height: 192, role: 'Centrale', deficit: '', notes: 'Muro invalicabile', assignedBadges: [] }
+                    { id: 'p1', name: 'Mario', surname: 'Rossi', alias: 'SuperMario', photo: null, birthDate: '1998-05-15', height: 185, weight: 80, role: 'Schiacciatore', deficit: 'Ricezione', notes: 'Grande saltatore', assignedBadges: ['b1'] },
                 ];
                 badges = [
-                    { id: 'b1', name: 'Stakanovista', icon: '🏆', points: '10', description: 'Partecipa a 10 allenamenti di fila' }
+                    { id: 'b1', name: 'Stakanovista', icon: '🏆', points: 10, criterion: 'consecutiveAttendance', threshold: 10, description: 'Raggiungi 10 presenze consecutive' }
                 ];
                 events = [
                     { id: 'e1', name: 'Amichevole vs S.S. Volley', date: '2025-09-15T21:00', description: 'Presso la palestra comunale. Ritrovo ore 20:00.' }
@@ -436,10 +442,7 @@
                 trainings = {
                     '2025-09-08': { 
                         notes: 'Allenamento intenso sulla difesa', 
-                        players: {
-                            'p1': { present: true, setsWon: '3', dishes: false },
-                            'p2': { present: true, setsWon: '2', dishes: true }
-                        }
+                        players: { 'p1': { present: true, setsWon: '3', dishes: false } }
                     }
                 };
                 if(isAdmin) saveData(); 
@@ -452,8 +455,19 @@
         });
 
         async function saveData() {
+            if (!auth.currentUser) {
+                console.error("Utente non autenticato. Impossibile salvare.");
+                showToast("Errore: sessione scaduta. Ricarica la pagina.");
+                return;
+            }
             if (!isAdmin) return;
             try {
+                // Esegui il controllo dei badge prima di salvare
+                const awardedBadgesInfo = checkAndAwardBadges(selectedTrainingDate);
+                if(awardedBadgesInfo.length > 0) {
+                    awardedBadgesInfo.forEach(info => showToast(info));
+                }
+
                 const appState = { players, badges, events, trainings };
                 await setDoc(dbDocRef, appState);
                 hasUnsavedChanges = false;
@@ -467,7 +481,122 @@
         const pages = document.querySelectorAll('.page');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
+        
+        // --- FUNZIONI DI GESTIONE DEI DATI (FORMS, DELETE, ETC) ---
+        
+        const handlePlayerForm = (e) => {
+            e.preventDefault();
+            hasUnsavedChanges = true;
+            const id = document.getElementById('playerId').value;
+            const playerData = {
+                name: document.getElementById('playerName').value,
+                surname: document.getElementById('playerSurname').value,
+                alias: document.getElementById('playerAlias').value,
+                photo: document.getElementById('playerPhotoData').value,
+                birthDate: document.getElementById('playerBirthDate').value,
+                height: document.getElementById('playerHeight').value,
+                weight: document.getElementById('playerWeight').value,
+                role: document.getElementById('playerRole').value,
+                deficit: document.getElementById('playerDeficit').value,
+                notes: document.getElementById('playerNotes').value,
+                assignedBadges: []
+            };
 
+            if (id) {
+                const playerIndex = players.findIndex(p => p.id === id);
+                if (playerIndex > -1) {
+                    playerData.assignedBadges = players[playerIndex].assignedBadges || [];
+                    players[playerIndex] = { ...players[playerIndex], ...playerData };
+                }
+            } else {
+                playerData.id = 'p' + Date.now();
+                players.push(playerData);
+            }
+            resetForm('player-form');
+            renderAll();
+        };
+
+        const handleBadgeForm = (e) => {
+            e.preventDefault();
+            hasUnsavedChanges = true;
+            
+            const criterion = document.getElementById('badgeCriterion').value;
+            const threshold = document.getElementById('badgeThreshold').value;
+            let description = '';
+
+            switch(criterion) {
+                case 'consecutiveAttendance': 
+                    description = `Raggiungi ${threshold} presenze consecutive`;
+                    break;
+                case 'birthdayWeekTraining':
+                    description = `Allenati nella settimana del tuo compleanno`;
+                    break;
+                case 'totalAttendance':
+                    description = `Raggiungi ${threshold} presenze totali`;
+                    break;
+                case 'totalSetsWon':
+                    description = `Vinci ${threshold} set totali`;
+                    break;
+                case 'totalDishes':
+                    description = `Lava i piatti ${threshold} volte`;
+                    break;
+            }
+
+            const badgeData = {
+                id: 'b' + Date.now(),
+                name: document.getElementById('badgeName').value,
+                icon: document.getElementById('badgeIcon').value,
+                points: parseInt(document.getElementById('badgePoints').value, 10),
+                criterion,
+                threshold: criterion !== 'birthdayWeekTraining' ? parseInt(threshold, 10) : 1,
+                description
+            };
+            badges.push(badgeData);
+            resetForm('badge-form');
+            renderAll();
+        };
+
+        const handleEventForm = (e) => {
+            e.preventDefault();
+            hasUnsavedChanges = true;
+            const eventData = {
+                id: 'e' + Date.now(),
+                name: document.getElementById('eventName').value,
+                date: document.getElementById('eventDate').value,
+                description: document.getElementById('eventDescription').value,
+            };
+            events.push(eventData);
+            resetForm('event-form');
+            renderAll();
+        };
+        
+        const handleTrainingDataChange = (e) => {
+             hasUnsavedChanges = true;
+             const { playerId, field } = e.target.dataset;
+             const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+             
+             if (!trainings[selectedTrainingDate]) {
+                trainings[selectedTrainingDate] = { notes: '', players: {} };
+             }
+             if (!trainings[selectedTrainingDate].players[playerId]) {
+                trainings[selectedTrainingDate].players[playerId] = {};
+             }
+
+             trainings[selectedTrainingDate].players[playerId][field] = value;
+             renderLeaderboard();
+             initializeDatePicker();
+        };
+        
+        const handleTrainingNotesChange = (e) => {
+             hasUnsavedChanges = true;
+             const notes = e.target.value;
+             if (!trainings[selectedTrainingDate]) {
+                trainings[selectedTrainingDate] = { notes: '', players: {} };
+             }
+             trainings[selectedTrainingDate].notes = notes;
+        };
+
+        // --- FUNZIONI DI RENDER ---
         function renderAll() {
             renderLeaderboard();
             renderPlayersList();
@@ -479,9 +608,7 @@
         function initializeDatePicker() {
             const trainingDates = Object.keys(trainings);
 
-            if (datePickerInstance) {
-                datePickerInstance.destroy();
-            }
+            if (datePickerInstance) { datePickerInstance.destroy(); }
 
             datePickerInstance = flatpickr("#training-date-picker", {
                 locale: "it",
@@ -491,7 +618,6 @@
                 onDayCreate: function(dObj, dStr, fp, dayElem) {
                     const date = dayElem.dateObj;
                     const formattedDate = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
-                    
                     if (trainingDates.includes(formattedDate)) {
                         dayElem.classList.add("training-day");
                     }
@@ -502,6 +628,14 @@
                 }
             });
         }
+
+        function calculateAge(birthDate) {
+            if (!birthDate) return null;
+            const birthday = new Date(birthDate);
+            const ageDifMs = Date.now() - birthday.getTime();
+            const ageDate = new Date(ageDifMs);
+            return Math.abs(ageDate.getUTCFullYear() - 1970);
+        }
         
         const renderLeaderboard = () => {
             const container = document.getElementById('leaderboard-container');
@@ -511,26 +645,15 @@
             }
 
             const leaderboardData = players.map(player => {
-                let totalPoints = 0;
-                let attendanceCount = 0;
-                let setsWon = 0;
-                let dishPoints = 0;
+                let totalPoints = 0, attendanceCount = 0, setsWon = 0, dishPoints = 0;
                 
                 Object.values(trainings).forEach(trainingDay => {
                     const playerData = trainingDay.players && trainingDay.players[player.id];
                     if (playerData) {
-                        if (playerData.present) {
-                            attendanceCount++;
-                            totalPoints++;
-                        }
+                        if (playerData.present) { attendanceCount++; totalPoints++; }
                         const sets = parseInt(playerData.setsWon, 10) || 0;
-                        setsWon += sets;
-                        totalPoints += sets;
-                        
-                        if (playerData.dishes) {
-                            dishPoints++;
-                            totalPoints++;
-                        }
+                        setsWon += sets; totalPoints += sets;
+                        if (playerData.dishes) { dishPoints++; totalPoints++; }
                     }
                 });
 
@@ -595,7 +718,6 @@
                     </div>
                 </div>
             `).join('');
-            populateAssignBadgeDropdowns();
         };
 
         const renderTrainingLog = () => {
@@ -648,7 +770,6 @@
                     `).join('')}
                 </div>
              `;
-             populateAssignBadgeDropdowns();
         };
 
         const renderEvents = () => {
@@ -666,178 +787,8 @@
             `).join('');
         };
 
-        const populateAssignBadgeDropdowns = () => {
-            const playerSelect = document.getElementById('assign-badge-player');
-            const badgeSelect = document.getElementById('assign-badge-select');
-            
-            playerSelect.innerHTML = players.map(p => `<option value="${p.id}">${p.name} ${p.surname}</option>`).join('');
-            badgeSelect.innerHTML = badges.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        };
-
-        const handlePlayerForm = (e) => {
-            e.preventDefault();
-            hasUnsavedChanges = true;
-            const id = document.getElementById('playerId').value;
-            const playerData = {
-                name: document.getElementById('playerName').value,
-                surname: document.getElementById('playerSurname').value,
-                alias: document.getElementById('playerAlias').value,
-                photo: document.getElementById('playerPhotoData').value,
-                age: document.getElementById('playerAge').value,
-                height: document.getElementById('playerHeight').value,
-                weight: document.getElementById('playerWeight').value,
-                role: document.getElementById('playerRole').value,
-                deficit: document.getElementById('playerDeficit').value,
-                notes: document.getElementById('playerNotes').value,
-                assignedBadges: []
-            };
-
-            if (id) {
-                const playerIndex = players.findIndex(p => p.id === id);
-                if (playerIndex > -1) {
-                    playerData.assignedBadges = players[playerIndex].assignedBadges;
-                    players[playerIndex] = { ...players[playerIndex], ...playerData };
-                }
-            } else {
-                playerData.id = 'p' + Date.now();
-                players.push(playerData);
-            }
-            resetForm('player-form');
-            renderAll();
-        };
-
-        window.app_editPlayer = (id) => {
-            const player = players.find(p => p.id === id);
-            if (player) {
-                switchPage('giocatori');
-                document.getElementById('playerId').value = player.id;
-                document.getElementById('playerName').value = player.name;
-                document.getElementById('playerSurname').value = player.surname;
-                document.getElementById('playerAlias').value = player.alias;
-                document.getElementById('playerPhotoData').value = player.photo;
-                document.getElementById('playerPhotoPreview').src = player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto';
-                document.getElementById('playerAge').value = player.age;
-                document.getElementById('playerHeight').value = player.height;
-                document.getElementById('playerWeight').value = player.weight;
-                document.getElementById('playerRole').value = player.role;
-                document.getElementById('playerDeficit').value = player.deficit;
-                document.getElementById('playerNotes').value = player.notes;
-                window.scrollTo(0,0);
-            }
-        };
-
-        window.app_deletePlayer = (id) => {
-            showConfirmModal(
-                'Elimina Giocatore', 'Sei sicuro di voler eliminare questo giocatore?',
-                () => {
-                    hasUnsavedChanges = true;
-                    players = players.filter(p => p.id !== id);
-                    renderAll();
-                }
-            );
-        };
-
-        const handleBadgeForm = (e) => {
-            e.preventDefault();
-            hasUnsavedChanges = true;
-            const badgeData = {
-                id: 'b' + Date.now(),
-                name: document.getElementById('badgeName').value,
-                icon: document.getElementById('badgeIcon').value,
-                points: document.getElementById('badgePoints').value,
-                description: document.getElementById('badgeDescription').value,
-            };
-            badges.push(badgeData);
-            resetForm('badge-form');
-            renderAll();
-        };
+        // --- FUNZIONI DI UTILITÀ E GESTIONE UI ---
         
-        window.app_deleteBadge = (id) => {
-            showConfirmModal('Elimina Badge', 'Sei sicuro? Verrà rimosso anche dai giocatori.',
-                () => {
-                    hasUnsavedChanges = true;
-                    badges = badges.filter(b => b.id !== id);
-                    players.forEach(p => {
-                        if (p.assignedBadges) {
-                            p.assignedBadges = p.assignedBadges.filter(bid => bid !== id);
-                        }
-                    });
-                    renderAll();
-                }
-            );
-        };
-
-        const handleAssignBadgeForm = (e) => {
-            e.preventDefault();
-            hasUnsavedChanges = true;
-            const playerId = document.getElementById('assign-badge-player').value;
-            const badgeId = document.getElementById('assign-badge-select').value;
-            const player = players.find(p => p.id === playerId);
-
-            if (player && badgeId) {
-                if (!player.assignedBadges) {
-                    player.assignedBadges = [];
-                }
-                if (!player.assignedBadges.includes(badgeId)) {
-                    player.assignedBadges.push(badgeId);
-                    showToast('Badge assegnato con successo!');
-                    renderAll();
-                } else {
-                    showToast('Questo giocatore ha già questo badge.');
-                }
-            }
-        };
-
-        const handleEventForm = (e) => {
-            e.preventDefault();
-            hasUnsavedChanges = true;
-            const eventData = {
-                id: 'e' + Date.now(),
-                name: document.getElementById('eventName').value,
-                date: document.getElementById('eventDate').value,
-                description: document.getElementById('eventDescription').value,
-            };
-            events.push(eventData);
-            resetForm('event-form');
-            renderAll();
-        };
-
-        window.app_deleteEvent = (id) => {
-             showConfirmModal('Elimina Evento', 'Sei sicuro di voler eliminare questo evento?',
-                () => {
-                    hasUnsavedChanges = true;
-                    events = events.filter(ev => ev.id !== id);
-                    renderAll();
-                }
-            );
-        };
-
-        const handleTrainingDataChange = (e) => {
-             hasUnsavedChanges = true;
-             const { playerId, field } = e.target.dataset;
-             const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-             
-             if (!trainings[selectedTrainingDate]) {
-                trainings[selectedTrainingDate] = { notes: '', players: {} };
-             }
-             if (!trainings[selectedTrainingDate].players[playerId]) {
-                trainings[selectedTrainingDate].players[playerId] = {};
-             }
-
-             trainings[selectedTrainingDate].players[playerId][field] = value;
-             renderLeaderboard();
-             initializeDatePicker(); // Aggiorna il calendario per mostrare il nuovo giorno
-        };
-        
-        const handleTrainingNotesChange = (e) => {
-             hasUnsavedChanges = true;
-             const notes = e.target.value;
-             if (!trainings[selectedTrainingDate]) {
-                trainings[selectedTrainingDate] = { notes: '', players: {} };
-             }
-             trainings[selectedTrainingDate].notes = notes;
-        };
-
         window.handleLogin = (role) => {
             if (role === 'user') {
                 isAdmin = false;
@@ -862,15 +813,14 @@
                 document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.admin-content[readonly]').forEach(el => el.removeAttribute('readonly'));
             }
-            initializeDatePicker(); // Inizializza il date picker all'avvio dell'app
+            initializeDatePicker();
             renderAll();
 
-             // Aggiungi conferma prima di uscire
             window.addEventListener('beforeunload', (e) => {
                 if (hasUnsavedChanges && isAdmin) {
                     e.preventDefault();
-                    e.returnValue = ''; // Standard per la maggior parte dei browser
-                    return ''; // Per alcuni browser più vecchi
+                    e.returnValue = ''; 
+                    return ''; 
                 }
             });
         }
@@ -885,38 +835,53 @@
             mobileMenu.classList.add('hidden');
         }
         
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                switchPage(e.target.dataset.page);
-            });
-        });
-        
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        document.getElementById('player-form').addEventListener('submit', handlePlayerForm);
-        document.getElementById('badge-form').addEventListener('submit', handleBadgeForm);
-        document.getElementById('assign-badge-form').addEventListener('submit', handleAssignBadgeForm);
-        document.getElementById('event-form').addEventListener('submit', handleEventForm);
-        
-        document.getElementById('save-data-button').addEventListener('click', saveData);
-        
-        document.getElementById('training-log-container').addEventListener('change', handleTrainingDataChange);
-        document.getElementById('training-notes').addEventListener('input', debounce(handleTrainingNotesChange, 500));
-        
-        document.getElementById('playerPhoto').addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('playerPhotoPreview').src = e.target.result;
-                    document.getElementById('playerPhotoData').value = e.target.result;
-                };
-                reader.readAsDataURL(file);
+        window.app_editPlayer = (id) => {
+            const player = players.find(p => p.id === id);
+            if (player) {
+                switchPage('giocatori');
+                document.getElementById('playerId').value = player.id;
+                document.getElementById('playerName').value = player.name;
+                document.getElementById('playerSurname').value = player.surname;
+                document.getElementById('playerAlias').value = player.alias;
+                document.getElementById('playerPhotoData').value = player.photo;
+                document.getElementById('playerPhotoPreview').src = player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto';
+                document.getElementById('playerBirthDate').value = player.birthDate;
+                document.getElementById('playerHeight').value = player.height;
+                document.getElementById('playerWeight').value = player.weight;
+                document.getElementById('playerRole').value = player.role;
+                document.getElementById('playerDeficit').value = player.deficit;
+                document.getElementById('playerNotes').value = player.notes;
+                window.scrollTo(0,0);
             }
-        });
+        };
+
+        window.app_deletePlayer = (id) => {
+            showConfirmModal('Elimina Giocatore', 'Sei sicuro di voler eliminare questo giocatore?', () => { hasUnsavedChanges = true; players = players.filter(p => p.id !== id); renderAll(); });
+        };
+
+        window.app_deleteBadge = (id) => {
+            showConfirmModal('Elimina Badge', 'Sei sicuro di voler eliminare questo badge?', () => {
+                    hasUnsavedChanges = true;
+                    badges = badges.filter(b => b.id !== id);
+                    players.forEach(p => {
+                        if (p.assignedBadges) {
+                            p.assignedBadges = p.assignedBadges.filter(bid => bid !== id);
+                        }
+                    });
+                    renderAll();
+                }
+            );
+        };
+
+        window.app_deleteEvent = (id) => {
+             showConfirmModal('Elimina Evento', 'Sei sicuro di voler eliminare questo evento?',
+                () => {
+                    hasUnsavedChanges = true;
+                    events = events.filter(ev => ev.id !== id);
+                    renderAll();
+                }
+            );
+        };
 
         window.resetForm = (formId) => {
             const form = document.getElementById(formId);
@@ -926,16 +891,14 @@
                  document.getElementById('playerPhotoData').value = '';
                  document.getElementById('playerPhotoPreview').src = 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto';
             }
-        }
+        };
         
         function showToast(message) {
             const toast = document.getElementById('toast-notification');
             const toastMessage = document.getElementById('toast-message');
             toastMessage.textContent = message;
-
             toast.classList.remove('translate-y-20', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
-
             setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
                 toast.classList.add('translate-y-20', 'opacity-0');
@@ -956,21 +919,6 @@
             setTimeout(() => confirmModalContent.classList.add('scale-100', 'opacity-100'), 10);
         }
 
-        document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
-            confirmModalContent.classList.remove('scale-100', 'opacity-100');
-            setTimeout(() => confirmModal.classList.add('hidden'), 300);
-            confirmCallback = null;
-        });
-
-        document.getElementById('confirm-modal-confirm').addEventListener('click', () => {
-            if (confirmCallback) {
-                confirmCallback();
-            }
-            confirmModalContent.classList.remove('scale-100', 'opacity-100');
-            setTimeout(() => confirmModal.classList.add('hidden'), 300);
-            confirmCallback = null;
-        });
-        
         window.app_showPlayerDetail = (id) => {
             const player = players.find(p => p.id === id);
             if(!player) return;
@@ -982,6 +930,8 @@
                  const badge = badges.find(b => b.id === badgeId);
                  return badge ? `<span class="bg-accent text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${badge.icon || '🏅'} ${badge.name}</span>` : '';
             }).join('');
+
+            const age = calculateAge(player.birthDate);
 
             content.innerHTML = `
                 <button onclick="app_closePlayerDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
@@ -995,7 +945,7 @@
                 </div>
                 <div class="mt-6 border-t border-primary pt-4 space-y-3">
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <div><strong>Età:</strong> ${player.age || 'N/D'}</div>
+                        <div><strong>Età:</strong> ${age ? age + ' anni' : 'N/D'}</div>
                         <div><strong>Altezza:</strong> ${player.height ? player.height + ' cm' : 'N/D'}</div>
                         <div><strong>Peso:</strong> ${player.weight ? player.weight + ' kg' : 'N/D'}</div>
                     </div>
@@ -1023,10 +973,86 @@
             content.classList.remove('scale-100', 'opacity-100');
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
-        
-        window.handleLogin = handleLogin;
-        window.resetForm = resetForm;
-        
+
+        // --- LOGICA BADGE AUTOMATICI ---
+        function checkAndAwardBadges(currentTrainingDate) {
+            const awardedMessages = [];
+            const sortedTrainingDates = Object.keys(trainings).sort();
+
+            players.forEach(player => {
+                if (!player.assignedBadges) player.assignedBadges = [];
+
+                badges.forEach(badge => {
+                    if (player.assignedBadges.includes(badge.id)) return; 
+
+                    let criterionMet = false;
+                    switch (badge.criterion) {
+                        case 'totalAttendance':
+                            let totalAttendance = 0;
+                            sortedTrainingDates.forEach(date => {
+                                if(trainings[date].players[player.id]?.present) totalAttendance++;
+                            });
+                            if(totalAttendance >= badge.threshold) criterionMet = true;
+                            break;
+                        
+                        case 'totalSetsWon':
+                            let totalSetsWon = 0;
+                            sortedTrainingDates.forEach(date => {
+                                totalSetsWon += parseInt(trainings[date].players[player.id]?.setsWon || 0, 10);
+                            });
+                            if(totalSetsWon >= badge.threshold) criterionMet = true;
+                            break;
+
+                        case 'totalDishes':
+                            let totalDishes = 0;
+                            sortedTrainingDates.forEach(date => {
+                                if(trainings[date].players[player.id]?.dishes) totalDishes++;
+                            });
+                            if(totalDishes >= badge.threshold) criterionMet = true;
+                            break;
+
+                        case 'consecutiveAttendance':
+                            let consecutiveCount = 0;
+                            let maxConsecutive = 0;
+                            sortedTrainingDates.forEach(date => {
+                                if (trainings[date].players[player.id]?.present) {
+                                    consecutiveCount++;
+                                } else {
+                                    consecutiveCount = 0;
+                                }
+                                if (consecutiveCount > maxConsecutive) {
+                                    maxConsecutive = consecutiveCount;
+                                }
+                            });
+                            if(maxConsecutive >= badge.threshold) criterionMet = true;
+                            break;
+                        
+                        case 'birthdayWeekTraining':
+                            if (!player.birthDate) break;
+                            const trainingDayData = trainings[currentTrainingDate];
+                            if (!trainingDayData?.players[player.id]?.present) break;
+                            
+                            const trainingDate = new Date(currentTrainingDate);
+                            const birthDate = new Date(player.birthDate);
+                            
+                            birthDate.setFullYear(trainingDate.getFullYear());
+
+                            const diffTime = Math.abs(trainingDate - birthDate);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDays <= 3) criterionMet = true;
+                            break;
+                    }
+
+                    if(criterionMet) {
+                        player.assignedBadges.push(badge.id);
+                        awardedMessages.push(`${player.name} ha sbloccato: ${badge.name}!`);
+                    }
+                });
+            });
+            return awardedMessages;
+        }
+
         function debounce(func, timeout = 300){
           let timer;
           return (...args) => {
@@ -1034,6 +1060,65 @@
             timer = setTimeout(() => { func.apply(this, args); }, timeout);
           };
         }
+        
+        // --- EVENT LISTENERS ---
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPage(e.target.dataset.page);
+            });
+        });
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        document.getElementById('player-form').addEventListener('submit', handlePlayerForm);
+        document.getElementById('badge-form').addEventListener('submit', handleBadgeForm);
+        document.getElementById('event-form').addEventListener('submit', handleEventForm);
+        
+        document.getElementById('save-data-button').addEventListener('click', saveData);
+        
+        document.getElementById('training-log-container').addEventListener('change', handleTrainingDataChange);
+        document.getElementById('training-notes').addEventListener('input', debounce(handleTrainingNotesChange, 500));
+        
+        document.getElementById('playerPhoto').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('playerPhotoPreview').src = e.target.result;
+                    document.getElementById('playerPhotoData').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
+            confirmModalContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            confirmCallback = null;
+        });
+
+        document.getElementById('confirm-modal-confirm').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            confirmModalContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            confirmCallback = null;
+        });
+
+        // --- ESPORTA FUNZIONI GLOBALI ---
+        window.handleLogin = handleLogin;
+        window.resetForm = resetForm;
+        window.app_showPlayerDetail = app_showPlayerDetail;
+        window.app_closePlayerDetail = app_closePlayerDetail;
+        window.app_editPlayer = app_editPlayer;
+        window.app_deletePlayer = app_deletePlayer;
+        window.app_deleteBadge = app_deleteBadge;
+        window.app_deleteEvent = app_deleteEvent;
+
     </script>
 </body>
 </html>
