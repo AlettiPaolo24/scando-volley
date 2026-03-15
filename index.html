@@ -512,7 +512,7 @@
                 playerData.id = 'p' + Date.now();
                 players.push(playerData);
             }
-            resetForm('player-form');
+            resetForm('player-form
             renderAll();
         };
 
@@ -817,22 +817,34 @@
             renderAll();
 
             window.addEventListener('beforeunload', (e) => {
-                if (hasUnsavedChanges && isAdmin) {
-                    e.preventDefault();
-                    e.returnValue = ''; 
-                    return ''; 
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            });
+
+            window.addEventListener('popstate', (e) => {
+                if (e.state && e.state.page) {
+                    switchPage(e.state.page, false);
+                } else {
+                    switchPage('classifica', false);
                 }
             });
+
+            history.pushState({page: 'classifica'}, '', '#classifica');
         }
         
-        function switchPage(pageId) {
+        function switchPage(pageId, pushState = true) {
             pages.forEach(page => page.classList.add('hidden'));
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            
+    
             document.querySelectorAll('.nav-link').forEach(link => {
                  link.classList.toggle('active', link.dataset.page === pageId);
             });
             mobileMenu.classList.add('hidden');
+    
+            if (pushState) {
+                history.pushState({page: pageId}, '', '#' + pageId);
+            }
         }
         
         window.app_editPlayer = (id) => {
