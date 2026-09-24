@@ -1413,29 +1413,61 @@
             const resto = top.filter(p => !podio.includes(p));
 
             const W = 1080;
-            const BASE = 760;                 // linea di appoggio dei gradini
             const listTop = 820;
             const rowH = 84;
 
-            // Calcola spazio per la sezione pagamenti
+            // === SEZIONE 1: Squadra vincitrice ultimo allenamento ===
+            let lastTrainingWinners = [];
+            const trainingDates = Object.keys(trainings).sort().reverse();
+            if (trainingDates.length > 0) {
+                const lastDate = trainingDates[0];
+                const lastTraining = trainings[lastDate];
+                const playersWithSets = Object.entries(lastTraining.players || {})
+                    .map(([playerId, data]) => ({
+                        id: playerId,
+                        sets: parseInt(data.setsWon || 0, 10),
+                        player: players.find(p => p.id === playerId)
+                    }))
+                    .filter(p => p.player && p.sets > 0)
+                    .sort((a, b) => b.sets - a.sets);
+
+                if (playersWithSets.length > 0) {
+                    const maxSets = playersWithSets[0].sets;
+                    lastTrainingWinners = playersWithSets.filter(p => p.sets === maxSets).map(p => p.player);
+                }
+            }
+
+            // === SEZIONE 3: Nomi di chi non ha pagato ===
             const season = defaultSeasonName();
-            let mealsUnpaid = 0;
+            let unpaidMeals = [];
+            let unpaidFees = [];
+
+            // Chi deve pagare cene
             Object.values(trainings).forEach(dayTrainings => {
-                Object.values(dayTrainings.players || {}).forEach(playerData => {
+                Object.entries(dayTrainings.players || {}).forEach(([playerId, playerData]) => {
                     if (playerData.dinnerAttended && !playerData.dinnerPaid) {
-                        mealsUnpaid++;
+                        if (!unpaidMeals.find(p => p.id === playerId)) {
+                            const player = players.find(p => p.id === playerId);
+                            if (player) unpaidMeals.push(player);
+                        }
                     }
                 });
             });
-            let feesUnpaid = 0;
+
+            // Chi deve pagare iscrizione
             players.forEach(player => {
                 const isPaid = appState.seasonFees[season]?.[player.id]?.paid || false;
-                if (!isPaid) feesUnpaid++;
+                if (!isPaid && player.status !== 'guest') {
+                    unpaidFees.push(player);
+                }
             });
-            const hasPaymentData = mealsUnpaid > 0 || feesUnpaid > 0;
-            const paymentSection = hasPaymentData ? 300 : 0;
 
-            const H = listTop + resto.length * rowH + 110 + paymentSection;
+            const hasPaymentData = unpaidMeals.length > 0 || unpaidFees.length > 0;
+            const topSectionHeight = lastTrainingWinners.length > 0 ? 180 : 0;
+            const paymentSection = hasPaymentData ? 300 : 0;
+            const BASE = 760 + topSectionHeight;
+
+            const H = listTop + resto.length * rowH + 110 + paymentSection + topSectionHeight;
 
             const canvas = document.createElement('canvas');
             canvas.width = W; canvas.height = H;
@@ -1443,6 +1475,21 @@
 
             paintBackdrop(ctx, W, H);
             paintHeader(ctx, W, 'Classifica', new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }));
+
+            // === SEZIONE 0: Squadra vincitrice ultimo allenamento ===
+            if (lastTrainingWinners.length > 0) {
+                let winY = 100;
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '700 28px Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🏐 SQUADRA VINCITRICE', W / 2, winY);
+                winY += 45;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '600 24px Poppins, sans-serif';
+                const winnerNames = lastTrainingWinners.map(p => p.alias || p.name).join(' • ');
+                ctx.fillText(winnerNames, W / 2, winY);
+            }
 
             // --- Podio: il primo al centro, gli altri ai lati; l'altezza segue la posizione ---
             const imgs = await Promise.all(podio.map(p => loadImageSafe(p.photo)));
@@ -1507,9 +1554,9 @@
                 ctx.textBaseline = 'alphabetic';
             });
 
-            // --- SEZIONE PAGAMENTI: Ricordini ---
+            // === SEZIONE PAGAMENTI: Ricordini con NOMI ===
             if (hasPaymentData) {
-                let paymentY = listTop + resto.length * rowH + 40;
+                let paymentY = listTop + resto.length * rowH + 40 + topSectionHeight;
 
                 // Sfondo sezione pagamenti
                 ctx.fillStyle = 'rgba(83,52,131,0.3)';
@@ -1523,33 +1570,31 @@
                 ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, paymentY);
                 paymentY += 50;
 
-                // Cene da pagare
-                const mealsTotal = mealsUnpaid * 10;
-                if (mealsUnpaid > 0) {
+                // Cene da pagare - SOLO NOMI
+                if (unpaidMeals.length > 0) {
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = '600 24px Poppins, sans-serif';
+                    ctx.font = '600 20px Poppins, sans-serif';
                     ctx.textAlign = 'left';
-                    ctx.fillText(`🍽️ Cene da pagare: ${mealsUnpaid} x 10€ = ${mealsTotal}€`, 100, paymentY);
-                    paymentY += 40;
+                    ctx.fillText('🍽️ Cena (10€):', 100, paymentY);
+                    paymentY += 35;
+                    unpaidMeals.forEach(player => {
+                        ctx.fillText('   ' + (player.alias || player.name), 100, paymentY);
+                        paymentY += 30;
+                    });
+                    paymentY += 10;
                 }
 
-                // Iscrizioni da pagare
-                const feesTotal = feesUnpaid * 100;
-                if (feesUnpaid > 0) {
+                // Iscrizioni da pagare - SOLO NOMI
+                if (unpaidFees.length > 0) {
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = '600 24px Poppins, sans-serif';
+                    ctx.font = '600 20px Poppins, sans-serif';
                     ctx.textAlign = 'left';
-                    ctx.fillText(`🎫 Iscrizioni da pagare: ${feesUnpaid} x 100€ = ${feesTotal}€`, 100, paymentY);
-                    paymentY += 40;
-                }
-
-                // Totale dovuto
-                const grandTotal = (mealsUnpaid * 10) + (feesUnpaid * 100);
-                if (grandTotal > 0) {
-                    ctx.fillStyle = '#e94560';
-                    ctx.font = '700 28px Poppins, sans-serif';
-                    ctx.textAlign = 'left';
-                    ctx.fillText(`💵 TOTALE DOVUTO: ${grandTotal}€`, 100, paymentY);
+                    ctx.fillText('🎫 Iscrizione (100€):', 100, paymentY);
+                    paymentY += 35;
+                    unpaidFees.forEach(player => {
+                        ctx.fillText('   ' + (player.alias || player.name), 100, paymentY);
+                        paymentY += 30;
+                    });
                 }
             }
 
