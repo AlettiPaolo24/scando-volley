@@ -358,21 +358,6 @@
                     </ul>
                 </div>
 
-                <!-- Gestione Stagione (solo admin) -->
-                <div class="admin-content hidden card rounded-lg p-4 mb-6 border-l-4 border-red-500">
-                    <h2 class="text-xl font-bold mb-2 text-red-400">Gestione Stagione</h2>
-                    <p class="text-gray-300 text-sm mb-3">Chiude la stagione: il podio attuale viene salvato nell'<strong class="text-white">Albo d'Oro</strong>, poi vengono cancellati tutti gli allenamenti e tolti i badge ai giocatori. Giocatori, badge ed eventi restano. Prima del reset viene scaricato un file di backup.</p>
-                    <div class="flex flex-wrap items-end gap-3">
-                        <div>
-                            <label for="season-name" class="block text-sm text-gray-400 mb-1">Nome della stagione che si chiude</label>
-                            <input type="text" id="season-name" placeholder="Es: 2025/2026" class="form-input p-2 rounded">
-                        </div>
-                        <button onclick="app_resetSeason()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
-                            Chiudi Stagione e Reset
-                        </button>
-                    </div>
-                </div>
-
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h2 class="text-3xl font-bold text-white">Classifica Generale</h2>
                     <button onclick="app_shareStandings(event)" class="share-btn" title="Crea un'immagine della classifica da mandare su WhatsApp">
@@ -489,6 +474,11 @@
                     </div>
                 </div>
                 <div id="training-log-container" class="space-y-3"></div>
+
+                <!-- Button per aprire dettagli allenamento (ospiti e pasti) -->
+                <button type="button" id="training-detail-button" class="admin-content hidden btn-primary text-white font-bold py-2 px-4 rounded-lg mt-4">
+                    📋 Dettagli (Ospiti + Pasti)
+                </button>
             </div>
 
             <!-- Pagina Genera Squadre -->
@@ -523,39 +513,9 @@
             <div id="page-album" class="page hidden">
                 <div class="text-center mb-6">
                     <h2 class="text-3xl md:text-4xl font-bold text-white">Album Figurine</h2>
-                    <p class="text-gray-400 mt-1">Stagione <span id="album-season"></span> · tocca una figurina per ingrandirla e scaricarla</p>
+                    <p class="text-gray-400 mt-1">Stagione <span id="album-season"></span> · clicca su un giocatore per generare la figurina</p>
                 </div>
-                
-                <!-- Selettore Modello Figurina -->
-                <div class="card rounded-lg p-4 mb-6">
-                    <h3 class="text-lg font-bold text-white mb-3">Scegli Modello Figurina</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <button onclick="setCardTemplate(1)" class="figurine-model-btn active p-3 rounded-lg border-2 border-accent bg-primary text-white font-semibold" data-model="1">
-                            📋 Modello 1<br><span class="text-xs text-gray-400">Classico</span>
-                        </button>
-                        <button onclick="setCardTemplate(2)" class="figurine-model-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white font-semibold hover:border-secondary" data-model="2">
-                            🎨 Modello 2<br><span class="text-xs text-gray-400">Colorato</span>
-                        </button>
-                        <button onclick="setCardTemplate(3)" class="figurine-model-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white font-semibold hover:border-secondary" data-model="3">
-                            ✨ Modello 3<br><span class="text-xs text-gray-400">Minimal</span>
-                        </button>
-                        <button onclick="setCardTemplate(4)" class="figurine-model-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white font-semibold hover:border-secondary" data-model="4">
-                            🌟 Modello 4<br><span class="text-xs text-gray-400">Premium</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Selettore Logo -->
-                <div class="card rounded-lg p-4 mb-6">
-                    <h3 class="text-lg font-bold text-white mb-3">Variante Logo</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <button onclick="setLogoVariant(1)" class="logo-variant-btn active p-3 rounded-lg border-2 border-accent bg-primary text-white text-sm font-semibold" data-variant="1">Logo Moderno</button>
-                        <button onclick="setLogoVariant(2)" class="logo-variant-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white text-sm font-semibold hover:border-secondary" data-variant="2">Logo Sportivo</button>
-                        <button onclick="setLogoVariant(3)" class="logo-variant-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white text-sm font-semibold hover:border-secondary" data-variant="3">Logo Minimal</button>
-                        <button onclick="setLogoVariant(4)" class="logo-variant-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white text-sm font-semibold hover:border-secondary" data-variant="4">Logo Classico</button>
-                    </div>
-                </div>
-                
+
                 <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
             </div>
 
@@ -641,31 +601,17 @@
                 <h2 class="text-3xl font-bold mb-4 text-white">Pagamenti</h2>
 
                 <div class="flex flex-wrap gap-2 mb-6">
-                    <button onclick="switchPaymentTab('meals')" class="pagamenti-tab-btn active btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="meals">
-                        🍽️ Pasti
-                    </button>
-                    <button onclick="switchPaymentTab('fees')" class="pagamenti-tab-btn btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="fees">
-                        🎫 Iscrizioni Stagione
+                    <button onclick="switchPaymentTab('fees')" class="pagamenti-tab-btn active btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="fees">
+                        🎫 Iscrizioni Stagione (100€)
                     </button>
                     <button onclick="switchPaymentTab('summary')" class="pagamenti-tab-btn btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="summary">
                         💰 Riepilogo
                     </button>
                 </div>
 
-                <!-- TAB: PASTI -->
-                <div id="tab-meals" class="pagamenti-tab-content">
-                    <h3 class="text-2xl font-bold mb-4 text-white">Pasti Pendenti</h3>
-                    <p class="text-gray-400 mb-4">Cena forfettaria: <strong class="text-white">10€ a persona</strong></p>
-                    <div id="meals-debtors-container" class="space-y-3">
-                        <div class="text-center py-10">
-                            <p class="text-gray-400">Nessun debito pasti.</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- TAB: ISCRIZIONI -->
-                <div id="tab-fees" class="pagamenti-tab-content hidden">
-                    <h3 class="text-2xl font-bold mb-4 text-white">Iscrizioni Stagione 2024-2025</h3>
+                <div id="tab-fees" class="pagamenti-tab-content">
+                    <h3 class="text-2xl font-bold mb-4 text-white">Iscrizioni Stagione</h3>
                     <p class="text-gray-400 mb-4">Quota annuale: <strong class="text-white">100€ per giocatore</strong></p>
 
                     <div class="grid md:grid-cols-2 gap-6 mb-6">
@@ -701,12 +647,7 @@
                 <div id="tab-summary" class="pagamenti-tab-content hidden">
                     <h3 class="text-2xl font-bold mb-4 text-white">Riepilogo Debitorio</h3>
 
-                    <div class="grid md:grid-cols-3 gap-4 mb-6">
-                        <div class="card rounded-lg p-4 border-l-4 border-orange-500">
-                            <p class="text-gray-400 text-sm">Pasti Dovuti</p>
-                            <p class="text-3xl font-bold text-white" id="summary-meals-total">0€</p>
-                            <p class="text-xs text-gray-400 mt-1" id="summary-meals-count">0 debiti</p>
-                        </div>
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
                         <div class="card rounded-lg p-4 border-l-4 border-red-500">
                             <p class="text-gray-400 text-sm">Iscrizioni Dovute</p>
                             <p class="text-3xl font-bold text-white" id="summary-fees-total">0€</p>
@@ -724,6 +665,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Gestione Stagione (admin, bottone collassabile in fondo) -->
+            <section id="season-management-section" class="admin-content hidden mt-8 container mx-auto px-4 pb-8">
+                <button onclick="toggleSeasonManagement()" class="flex items-center gap-2 text-gray-400 hover:text-white text-sm py-2 px-3 rounded">
+                    <span>⚙️</span> <span>Gestione Stagione</span>
+                </button>
+                <div id="season-management-content" class="hidden card rounded-lg p-4 mt-3 border-l-4 border-red-500">
+                    <h2 class="text-xl font-bold mb-2 text-red-400">Chiudi Stagione</h2>
+                    <p class="text-gray-300 text-sm mb-3">Salva il podio attuale nell'<strong class="text-white">Albo d'Oro</strong>, cancella tutti gli allenamenti e toglie i badge ai giocatori. Giocatori, badge ed eventi restano. Viene scaricato un file di backup.</p>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label for="season-name" class="block text-sm text-gray-400 mb-1">Nome della stagione che si chiude</label>
+                            <input type="text" id="season-name" placeholder="Es: 2025/2026" class="form-input p-2 rounded">
+                        </div>
+                        <button onclick="app_resetSeason()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
+                            Chiudi Stagione e Reset
+                        </button>
+                    </div>
+                </div>
+            </section>
 
             <!-- Training Detail Modal (per ospiti e pasti) -->
             <div id="training-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
@@ -851,8 +812,6 @@
         let currentPage = 'classifica';
 
         let appState = { players: [], badges: [], events: [], trainings: {}, hallOfFame: [], seasonFees: {} };
-        let cardTemplate = 1; // Default template (1-4)
-        let logoVariant = 1; // Default logo (1-4)
 
         onSnapshot(dbDocRef, (doc) => {
             if (doc.exists()) {
@@ -1901,30 +1860,41 @@
 
         const renderPlayersList = () => {
             const container = document.getElementById('players-list-container');
-            container.innerHTML = players.map(player => `
-                <div class="card rounded-lg p-4 flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
+            initSeasonFees();
+            const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            container.innerHTML = players.map(player => {
+                const isPaid = appState.seasonFees[season] && appState.seasonFees[season][player.id] && appState.seasonFees[season][player.id].paid;
+                return `
+                <div class="card rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-4 flex-grow">
                         <img src="${player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-12 h-12 rounded-full object-cover">
-                        <div>
+                        <div class="flex-grow">
                             <p class="font-bold text-lg text-white">${player.name} ${player.surname}</p>
                             <p class="text-sm text-gray-400">${player.role || 'Ruolo non specificato'} ${ovr(player) !== null ? `<span class="ovr-pill ml-1">${ovr(player)}</span>` : ''}</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="app_showPlayerDetail('${player.id}')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    <div class="flex items-center space-x-2 flex-wrap gap-2">
+                        ${isAdmin ? `
+                        <label class="flex items-center space-x-2 bg-primary rounded px-2 py-1">
+                            <input type="checkbox" ${isPaid ? 'checked' : ''} onchange="app_toggleSeasonFee('${player.id}')" class="w-4 h-4">
+                            <span class="text-xs text-white">Pagata</span>
+                        </label>
+                        ` : ''}
+                        <button onclick="app_showPlayerDetail('${player.id}')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
                         ${isAdmin ? `
-                        <button onclick="app_editPlayer('${player.id}')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <button onclick="app_editPlayer('${player.id}')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         </button>
-                        <button onclick="app_deletePlayer('${player.id}')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <button onclick="app_deletePlayer('${player.id}')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                         ` : ''}
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         };
 
         const renderTrainingLog = () => {
@@ -1934,7 +1904,7 @@
 
             // Assicurati che esista la struttura base per questo allenamento
             if (!trainings[selectedTrainingDate]) {
-                trainings[selectedTrainingDate] = { date: selectedTrainingDate, players: {}, notes: '', meals: { hadMeal: [], paid: [], outstanding: [] } };
+                trainings[selectedTrainingDate] = { date: selectedTrainingDate, players: {}, notes: '' };
             }
 
             container.innerHTML = players.map(player => {
@@ -1954,19 +1924,23 @@
                             <input type="number" min="0" data-player-id="${player.id}" data-field="setsWon" class="w-20 form-input p-1 rounded text-center" value="${playerData.setsWon || 0}" ${!isAdmin ? 'disabled' : ''}>
                             <span>Set Vinti</span>
                         </label>
-                        <label class="flex items-center space-x-2" title="Cena = 10€. Lascia spuntato finché non ricevi il pagamento">
-                            <input type="checkbox" data-player-id="${player.id}" data-field="hasDinner" ${playerData.hasDinner ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
-                            <span>Cena (10€)</span>
+                        <label class="flex items-center space-x-2" title="Ha partecipato alla cena">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="dinnerAttended" ${playerData.dinnerAttended ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Ha Mangiato</span>
                         </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" data-player-id="${player.id}" data-field="dishes" ${playerData.dishes ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
-                            <span>Piatti</span>
+                        <label class="flex items-center space-x-2" title="Pagamento cena 10€">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="dinnerPaid" ${playerData.dinnerPaid ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Cena Pagata (10€)</span>
                         </label>
-                        ${isAdmin ? `<button onclick="openTrainingDetail('${selectedTrainingDate}')" class="btn-primary text-white font-bold py-1 px-3 rounded text-sm">👥 Ospiti</button>` : ''}
                     </div>
                 </div>
                 `;
             }).join('');
+
+            // Aggiungi event listeners ai checkbox
+            document.querySelectorAll('[data-player-id]').forEach(input => {
+                input.addEventListener('change', handleTrainingDataChange);
+            });
         };
         
         const renderBadges = () => {
@@ -2068,6 +2042,13 @@
                 history.pushState({ page: pageId }, '', '#' + pageId);
             }
         }
+
+        window.toggleSeasonManagement = () => {
+            const content = document.getElementById('season-management-content');
+            if (content) {
+                content.classList.toggle('hidden');
+            }
+        };
         
         window.app_editPlayer = (id) => {
             const player = players.find(p => p.id === id);
@@ -2097,6 +2078,24 @@
                 players = players.filter(p => p.id !== id);
                 renderAll();
             });
+        };
+
+        window.app_toggleSeasonFee = (playerId) => {
+            hasUnsavedChanges = true;
+            const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            initSeasonFees();
+            if (!appState.seasonFees[season]) appState.seasonFees[season] = {};
+            const player = players.find(p => p.id === playerId);
+            if (!player) return;
+            const current = appState.seasonFees[season][playerId];
+            const isPaid = current && current.paid;
+            appState.seasonFees[season][playerId] = {
+                playerId, playerName: player.name + ' ' + player.surname,
+                amount: 100, paid: !isPaid, paidDate: isPaid ? null : new Date().toISOString().split('T')[0],
+                paymentMethod: 'admin', notes: ''
+            };
+            saveData();
+            renderPlayersList();
         };
 
         window.app_deleteBadge = (id) => {
@@ -2621,200 +2620,105 @@
             ctx.restore();
         }
 
-        // LOGO SCANDOLARA VOLLEY - 4 VARIANTI
         // =====================================================================
-        function getSvgLogo(variant = 1) {
-            const baseConfig = {
-                width: 100, height: 100,
-                ballColor: '#e94560', textColor: '#ffffff'
-            };
-            
-            if (variant === 1) {
-                // Variante 1: Logo Moderno (pallone sopra, scritta sotto)
-                return `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
-                    <defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#533483;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#e94560;stop-opacity:1" />
-                    </linearGradient></defs>
-                    <circle cx="150" cy="35" r="28" fill="url(#grad1)"/>
-                    <path d="M130 25 Q150 15 170 25 M130 45 Q150 55 170 45" stroke="#ffffff" stroke-width="2" fill="none"/>
-                    <text x="150" y="95" font-family="Poppins, sans-serif" font-size="32" font-weight="700" text-anchor="middle" fill="#ffffff">SCANDOLARA VOLLEY</text>
-                </svg>`;
-            } else if (variant === 2) {
-                // Variante 2: Logo Sportivo (pallone a sinistra, scritta a destra)
-                return `<svg viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
-                    <defs><radialGradient id="grad2" cx="40%" cy="40%">
-                        <stop offset="0%" style="stop-color:#ff6b9d;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#c9324a;stop-opacity:1" />
-                    </radialGradient></defs>
-                    <circle cx="60" cy="60" r="40" fill="url(#grad2)"/>
-                    <path d="M35 45 Q60 30 85 45 M35 75 Q60 90 85 75 M35 60 Q60 70 85 60" stroke="#ffffff" stroke-width="2.5" fill="none"/>
-                    <text x="220" y="50" font-family="Poppins, sans-serif" font-size="28" font-weight="700" fill="#533483">SCANDOLARA</text>
-                    <text x="220" y="85" font-family="Poppins, sans-serif" font-size="28" font-weight="700" fill="#e94560">VOLLEY</text>
-                </svg>`;
-            } else if (variant === 3) {
-                // Variante 3: Logo Minimal (pallone dentro cerchio, scritta attorno)
-                return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-                    <defs><linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#e94560;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#533483;stop-opacity:1" />
-                    </linearGradient></defs>
-                    <circle cx="150" cy="150" r="145" fill="none" stroke="url(#grad3)" stroke-width="3"/>
-                    <circle cx="150" cy="120" r="35" fill="#e94560"/>
-                    <path d="M125 105 Q150 95 175 105 M125 135 Q150 145 175 135" stroke="#ffffff" stroke-width="2" fill="none"/>
-                    <path id="circlePath" d="M 150, 150 m -120, 0 a 120,120 0 0,1 240,0 a 120,120 0 0,1 -240,0" fill="none"/>
-                    <text font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="#ffffff" letter-spacing="4">
-                        <textPath href="#circlePath" startOffset="50%" text-anchor="middle">SCANDOLARA VOLLEY</textPath>
-                    </text>
-                </svg>`;
-            } else {
-                // Variante 4: Logo Classico (pallone grande, scritta modesta sotto)
-                return `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg">
-                    <defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.3"/>
-                    </filter></defs>
-                    <g filter="url(#shadow)">
-                        <circle cx="150" cy="90" r="60" fill="#e94560"/>
-                        <path d="M110 60 Q150 45 190 60 M110 120 Q150 135 190 120 M110 90 Q150 100 190 90" stroke="#ffffff" stroke-width="3" fill="none"/>
-                        <path d="M150 30 Q150 150" stroke="#ffffff" stroke-width="2.5" opacity="0.6"/>
-                    </g>
-                    <text x="150" y="200" font-family="Poppins, sans-serif" font-size="26" font-weight="700" text-anchor="middle" fill="#533483">SCANDOLARA</text>
-                    <text x="150" y="235" font-family="Poppins, sans-serif" font-size="26" font-weight="700" text-anchor="middle" fill="#e94560">VOLLEY</text>
-                </svg>`;
-            }
-        }
-        
-        // Converte SVG a Canvas per rendering nelle figurine
-        function svgToDataUrl(svgString, width = 200, height = 200) {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-                img.onload = () => {
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
-                };
-                img.onerror = () => resolve(null);
-                img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
-            });
-        }
-
-
+        // FIGURINA SEMPLICE (versione unica)
         // =====================================================================
-        // MODELLI DI FIGURINA (4 varianti)
-        // =====================================================================
-        async function drawCardModel1(p) { /* Template Classico - Design Originale */
-            const W = 600, H = 840;
-            const c = document.createElement('canvas'); c.width = W; c.height = H;
-            const ctx = c.getContext('2d');
-            // [MANTENERE L'ORIGINALE - aggiunto alla fine]
-            return c.toDataURL('image/png');
-        }
-        
-        async function drawCardModel2(p) { /* Template Colorato - Design Vibrant */
-            const W = 600, H = 840;
-            const c = document.createElement('canvas'); c.width = W; c.height = H;
-            const ctx = c.getContext('2d');
-            
-            // Bordo colorato in base al ruolo
-            ctx.fillStyle = getRoleColor(p.role); rrPath(ctx, 0, 0, W, H, 30); ctx.fill();
-            
-            // Background gradiente vibrant
-            const bg = ctx.createLinearGradient(0, 0, W, H);
-            bg.addColorStop(0, '#667eea'); bg.addColorStop(0.5, '#764ba2'); bg.addColorStop(1, '#f093fb');
-            ctx.fillStyle = bg; rrPath(ctx, 16, 16, W-32, H-32, 25); ctx.fill();
-            
-            // Resto del disegno simile al modello 1 ma con colori vibrant
-            // [SEMPLIFICATO PER LO SPAZIO]
-            return c.toDataURL('image/png');
-        }
-        
-        async function drawCardModel3(p) { /* Template Minimal - Linee Pulite */
-            const W = 600, H = 840;
-            const c = document.createElement('canvas'); c.width = W; c.height = H;
-            const ctx = c.getContext('2d');
-            
-            // Sfondo bianco puro
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-            
-            // Sottile bordo colorato
-            ctx.strokeStyle = '#e94560'; ctx.lineWidth = 3;
-            rrPath(ctx, 10, 10, W-20, H-20, 20); ctx.stroke();
-            
-            // Contenuto principal minimalista
-            // [SEMPLIFICATO PER LO SPAZIO]
-            return c.toDataURL('image/png');
-        }
-        
-        async function drawCardModel4(p) { /* Template Premium - Effetti Avanzati */
-            const W = 600, H = 840;
-            const c = document.createElement('canvas'); c.width = W; c.height = H;
-            const ctx = c.getContext('2d');
-            
-            // Sfondo con pattern
-            ctx.fillStyle = '#0f3460'; ctx.fillRect(0, 0, W, H);
-            
-            // Pattern diagonale premium
-            ctx.fillStyle = 'rgba(233,69,96,0.08)';
-            for (let i = -H; i < W; i += 20) {
-                ctx.fillRect(i, 0, 10, H*2);
-            }
-            
-            // Contenuto con shadow effects
-            // [SEMPLIFICATO PER LO SPAZIO]
-            return c.toDataURL('image/png');
-        }
-        
-        function getRoleColor(role) {
-            const r = (role || '').toLowerCase();
-            if (/palleg|alzat/.test(r)) return '#3498db';
-            if (/liber/.test(r)) return '#9b59b6';
-            if (/centr/.test(r)) return '#e74c3c';
-            if (/oppost/.test(r)) return '#f39c12';
-            return '#e94560';
-        }
-
         const cardCache = new Map();
         async function drawCard(p) {
             const photoKey = p.photo ? p.photo.length + p.photo.slice(-24) : '';
             const streakNow = (computeStreaks()[p.id] || {}).current || 0;
-            const key = [p.name, p.surname, p.alias, p.role, p.number, p.height, JSON.stringify(p.skills || {}), photoKey, currentSeasonLabel(), streakNow, cardTemplate, logoVariant].join('|');
+            const key = [p.name, p.surname, p.alias, p.role, p.number, photoKey, currentSeasonLabel(), streakNow].join('|');
             if (cardCache.has(p.id) && cardCache.get(p.id).key === key) return cardCache.get(p.id).url;
-            
-            let url;
-            if (cardTemplate === 2) url = await drawCardModel2(p);
-            else if (cardTemplate === 3) url = await drawCardModel3(p);
-            else if (cardTemplate === 4) url = await drawCardModel4(p);
-            else url = await drawCardModel1(p);
-            
+
+            const W = 600, H = 840;
+            const c = document.createElement('canvas');
+            c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+
+            // Sfondo gradiente
+            const bg = ctx.createLinearGradient(0, 0, W, H);
+            bg.addColorStop(0, '#0f3460');
+            bg.addColorStop(1, '#16213e');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // Bordo rosso in alto
+            ctx.fillStyle = '#e94560';
+            ctx.fillRect(0, 0, W, 20);
+
+            // Carica e disegna la foto
+            const img = await loadImage(p.photo);
+            if (img) {
+                const photoW = 280, photoH = 350;
+                const photoX = (W - photoW) / 2;
+                const photoY = 80;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(W / 2, photoY + photoH / 2, Math.min(photoW, photoH) / 2, 0, Math.PI * 2);
+                ctx.clip();
+                const side = Math.min(img.width, img.height);
+                ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, photoX, photoY, photoW, photoH);
+                ctx.restore();
+                ctx.beginPath();
+                ctx.arc(W / 2, photoY + photoH / 2, Math.min(photoW, photoH) / 2, 0, Math.PI * 2);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#533483';
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = '#16213e';
+                ctx.fillRect((W - 280) / 2, 80, 280, 350);
+                ctx.fillStyle = '#dcdcdc';
+                ctx.font = '700 80px Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText((p.name || '?').charAt(0), W / 2, 255);
+            }
+
+            // Nome e Cognome
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 36px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText((p.name || '') + ' ' + (p.surname || ''), W / 2, 480);
+
+            // Ruolo
+            ctx.fillStyle = '#e94560';
+            ctx.font = '600 24px Poppins, sans-serif';
+            ctx.fillText(roleShort(p.role) || '—', W / 2, 520);
+
+            // Numero maglia
+            if (p.number) {
+                ctx.fillStyle = '#f6d365';
+                ctx.font = 'bold 48px Poppins, sans-serif';
+                ctx.fillText(p.number, W / 2, 610);
+            }
+
+            // Scritta "SCANDOLARA VOLLEY"
+            ctx.fillStyle = '#533483';
+            ctx.font = '700 20px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCANDOLARA VOLLEY', W / 2, 720);
+            ctx.fillText(currentSeasonLabel(), W / 2, 760);
+
+            const url = c.toDataURL('image/png');
             cardCache.set(p.id, { key, url });
             return url;
         }
 
-
-        window.setCardTemplate = (template) => {
-            cardTemplate = template;
-            cardCache.clear();
-            renderAlbum();
-            showToast(`Modello figurina ${template} selezionato`);
-        };
-        
-        window.setLogoVariant = (variant) => {
-            logoVariant = variant;
-            cardCache.clear();
-            renderAlbum();
-            showToast(`Logo variante ${variant} selezionato`);
-        };
-
         async function renderAlbum() {
             document.getElementById('album-season').textContent = currentSeasonLabel();
             const grid = document.getElementById('album-grid');
-            if (!players.length) { grid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Nessun giocatore inserito.</p>'; return; }
+            if (!players.length) { grid.innerHTML = '<p class="text-gray-400 col-span-full text-center py-10">Nessun giocatore inserito.</p>'; return; }
             const sorted = [...players].sort((a, b) => (parseInt(a.number, 10) || 999) - (parseInt(b.number, 10) || 999));
-            const urls = await Promise.all(sorted.map(drawCard));
-            grid.innerHTML = sorted.map((p, i) => `<img src="${urls[i]}" alt="Figurina di ${esc(p.alias || p.name)}" class="album-card w-full" onclick="app_openCard('${p.id}')">`).join('');
+            grid.innerHTML = sorted.map((p, i) => `
+                <button type="button" class="album-card cursor-pointer relative group overflow-hidden rounded-lg" onclick="app_openCard('${p.id}')" style="aspect-ratio:3/4;background:#16213e;display:flex;align-items:center;justify-content:center;border:1px solid #533483;">
+                    <div class="text-center w-full">
+                        <img src="${p.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + (p.name.charAt(0))}" alt="${p.name}" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
+                        <p class="text-white font-bold text-sm">${p.alias || p.name}</p>
+                        <p class="text-gray-400 text-xs">${roleShort(p.role) || '—'}</p>
+                    </div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition"></div>
+                </button>
+            `).join('');
         }
 
         let cardModalPlayerId = null;
@@ -2943,12 +2847,12 @@
         function getAllMealDebtors() {
             const debtors = {};
             Object.entries(appState.trainings).forEach(([trainingId, training]) => {
-                if (training.meals && training.meals.outstanding) {
-                    training.meals.outstanding.forEach(playerId => {
+                Object.entries(training.players || {}).forEach(([playerId, playerData]) => {
+                    if (playerData.dinnerAttended && !playerData.dinnerPaid) {
                         if (!debtors[playerId]) debtors[playerId] = [];
                         debtors[playerId].push({ date: training.date, amount: 10 });
-                    });
-                }
+                    }
+                });
             });
             return debtors;
         }
@@ -2984,19 +2888,14 @@
             return { paid, unpaid };
         }
 
-        // --- PAGAMENTI REMINDERS: Per immagine WhatsApp ---
+        // --- PAGAMENTI REMINDERS: Per immagine WhatsApp (SOLO CENE) ---
         function getPaymentReminders() {
             let reminders = [];
             const mealDebtors = getAllMealDebtors();
             Object.entries(mealDebtors).forEach(([playerId, debts]) => {
                 const player = appState.players[playerId];
                 const total = debts.reduce((sum, d) => sum + d.amount, 0);
-                const dates = debts.map(d => formatDateShort(d.date)).join(', ');
-                reminders.push({ type: 'meal', playerName: player.name, amount: total, description: `Cena ${dates}` });
-            });
-            const { unpaid } = getSeasonFeeStatus();
-            unpaid.forEach(player => {
-                reminders.push({ type: 'fee', playerName: player.name, amount: 100, description: 'Iscrizione stagione' });
+                reminders.push({ playerName: player.name + ' ' + player.surname, amount: total });
             });
             return reminders;
         }
@@ -3070,29 +2969,29 @@
 
             yPos = 1150;
 
-            // SEZIONE 3: Ricordini Pagamenti
-            ctx.font = 'bold 24px Poppins, sans-serif';
-            ctx.fillStyle = '#ff6b9d';
-            ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, yPos);
-            yPos += 45;
-
-            ctx.font = '14px Poppins, sans-serif';
-            ctx.fillStyle = '#ffd700';
-            
-            // Pasti pendenti
+            // SEZIONE 3: Debiti Cena (SOLO CENE, NO ISCRIZIONI)
             const mealDebtors = getMealDebtorsCount();
-            ctx.fillText(`🍽️ Pasti da pagare: ${mealDebtors.count} x 10€ = ${mealDebtors.count * 10}€`, 80, yPos);
-            yPos += 35;
+            if (mealDebtors.count > 0) {
+                ctx.font = 'bold 24px Poppins, sans-serif';
+                ctx.fillStyle = '#ff6b9d';
+                ctx.fillText('💰 DEBITI CENA', W / 2, yPos);
+                yPos += 45;
 
-            // Quote iscrizione pendenti
-            const feeDebtors = getSeasonFeeDebtorsCount();
-            ctx.fillText(`🎫 Iscrizioni da pagare: ${feeDebtors.count} x 100€ = ${feeDebtors.count * 100}€`, 80, yPos);
-            yPos += 35;
+                const debtorsList = getAllMealDebtors();
+                ctx.font = '14px Poppins, sans-serif';
+                ctx.fillStyle = '#dcdcdc';
+                Object.entries(debtorsList).forEach(([playerId, debts]) => {
+                    const player = appState.players[playerId];
+                    const total = debts.reduce((sum, d) => sum + d.amount, 0);
+                    ctx.fillText(`• ${player.name} ${player.surname} - ${total}€`, 80, yPos);
+                    yPos += 35;
+                });
 
-            const totalDebt = (mealDebtors.count * 10) + (feeDebtors.count * 100);
-            ctx.font = 'bold 16px Poppins, sans-serif';
-            ctx.fillStyle = '#e94560';
-            ctx.fillText(`💵 TOTALE DOVUTO: ${totalDebt}€`, 80, yPos);
+                yPos += 10;
+                ctx.font = 'bold 18px Poppins, sans-serif';
+                ctx.fillStyle = '#e94560';
+                ctx.fillText(`💵 TOTALE CENE: ${mealDebtors.total}€`, 80, yPos);
+            }
 
             // Footer
             ctx.font = '12px Poppins, sans-serif';
@@ -3104,28 +3003,6 @@
             return canvas;
         }
 
-        function getMealDebtorsCount() {
-            let count = 0;
-            Object.values(trainings).forEach(training => {
-                if (training.meals) {
-                    const outstanding = (training.meals.hadMeal || []).filter(p => !(training.meals.paid || []).includes(p));
-                    count += outstanding.length;
-                }
-            });
-            return { count, total: count * 10 };
-        }
-
-        function getSeasonFeeDebtorsCount() {
-            const season = defaultSeasonName();
-            const seasonFees = appState.seasonFees?.[season] || {};
-            let count = 0;
-            players.forEach(p => {
-                if (!seasonFees[p.id]) count++;
-            });
-            return { count, total: count * 100 };
-        }
-
-
         window.switchPaymentTab = function(tab) {
             document.querySelectorAll('.pagamenti-tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.pagamenti-tab-btn').forEach(btn => btn.classList.remove('active', 'btn-accent'));
@@ -3136,12 +3013,12 @@
             if (tab === 'summary') renderPaymentSummary();
         };
 
-        // --- RENDER: Debitori Pasti ---
+        // --- RENDER: Debitori Cena ---
         function renderMealsDebtors() {
             const container = document.getElementById('meals-debtors-container');
             const debtors = getAllMealDebtors();
             if (Object.keys(debtors).length === 0) {
-                container.innerHTML = '<div class="text-center py-10"><p class="text-gray-400">Nessun debito pasti.</p></div>';
+                container.innerHTML = '<div class="text-center py-10"><p class="text-gray-400">Nessun debito cena.</p></div>';
                 return;
             }
             container.innerHTML = Object.entries(debtors).map(([playerId, debts]) => {
@@ -3150,9 +3027,9 @@
                 return `<div class="card rounded-lg p-4 border-l-4 border-orange-500">
                     <div class="flex justify-between items-start">
                         <div><p class="font-bold text-white">${player.name} ${player.surname}</p>
-                        <p class="text-xs text-gray-400 mt-1">${debts.map(d => d.date).join(', ')}</p></div>
+                        <p class="text-xs text-gray-400 mt-1">${debts.map(d => formatDateShort(d.date)).join(', ')}</p></div>
                         <div class="text-right"><p class="text-2xl font-bold text-orange-500">${total}€</p>
-                        <p class="text-xs text-gray-400">${debts.length} pasti</p></div>
+                        <p class="text-xs text-gray-400">${debts.length} cene</p></div>
                     </div></div>`;
             }).join('');
         }
@@ -3180,42 +3057,25 @@
             }
         }
 
-        // --- RENDER: Riepilogo ---
+        // --- RENDER: Riepilogo (SOLO CENE) ---
         function renderPaymentSummary() {
             const mealDebtors = getAllMealDebtors();
-            const { unpaid: unpaidFees } = getSeasonFeeStatus();
             let mealTotal = 0, mealCount = 0;
             Object.entries(mealDebtors).forEach(([_, debts]) => {
                 mealCount += debts.length;
                 mealTotal += debts.reduce((sum, d) => sum + d.amount, 0);
             });
-            const feeTotal = unpaidFees.length * 100;
-            const grandTotal = mealTotal + feeTotal;
             document.getElementById('summary-meals-total').textContent = mealTotal + '€';
-            document.getElementById('summary-meals-count').textContent = Object.keys(mealDebtors).length + ' persone, ' + mealCount + ' pasti';
-            document.getElementById('summary-fees-total').textContent = feeTotal + '€';
-            document.getElementById('summary-fees-count').textContent = unpaidFees.length + ' persone';
-            document.getElementById('summary-grand-total').textContent = grandTotal + '€';
+            document.getElementById('summary-meals-count').textContent = Object.keys(mealDebtors).length + ' persone, ' + mealCount + ' cene';
+            document.getElementById('summary-grand-total').textContent = mealTotal + '€';
 
-            const byPlayer = {};
-            Object.entries(mealDebtors).forEach(([playerId, debts]) => {
-                if (!byPlayer[playerId]) byPlayer[playerId] = { meals: 0, fees: 0 };
-                byPlayer[playerId].meals = debts.reduce((sum, d) => sum + d.amount, 0);
-            });
-            unpaidFees.forEach(p => {
-                if (!byPlayer[p.id]) byPlayer[p.id] = { meals: 0, fees: 0 };
-                byPlayer[p.id].fees = 100;
-            });
             const container = document.getElementById('summary-by-player-container');
-            container.innerHTML = Object.entries(byPlayer).map(([playerId, amounts]) => {
+            container.innerHTML = Object.entries(mealDebtors).map(([playerId, debts]) => {
                 const player = appState.players[playerId];
-                const total = amounts.meals + amounts.fees;
-                const badges = [];
-                if (amounts.meals > 0) badges.push(`🍽️ ${amounts.meals}€`);
-                if (amounts.fees > 0) badges.push(`🎫 ${amounts.fees}€`);
+                const total = debts.reduce((sum, d) => sum + d.amount, 0);
                 return `<div class="flex justify-between items-center py-2 px-3 bg-primary rounded">
                     <div><p class="text-white font-semibold">${player.name} ${player.surname}</p>
-                    <p class="text-xs text-gray-400 mt-1">${badges.join(' + ')}</p></div>
+                    <p class="text-xs text-gray-400 mt-1">${debts.length} cene da pagare</p></div>
                     <p class="text-lg font-bold text-accent">${total}€</p></div>`;
             }).join('');
         }
@@ -3301,14 +3161,17 @@
             closeTrainingDetail();
         };
 
-        // --- MODIFICA CAPTION IMMAGINE WHATSAPP ---
+        // --- MODIFICA CAPTION IMMAGINE WHATSAPP (SOLO CENE) ---
         function getStandingsCaption() {
             const reminders = getPaymentReminders();
             if (reminders.length === 0) return '📲 Classifica aggiornata';
-            let caption = '📲 Classifica aggiornata\n\n💰 RICORDINI PAGAMENTI:\n';
+            let caption = '📲 Classifica aggiornata\n\n💰 DEBITI CENA:\n';
+            let totalDebt = 0;
             reminders.forEach(r => {
-                caption += `• ${r.playerName}: ${r.description} (${r.amount}€)\n`;
+                caption += `• ${r.playerName} - ${r.amount}€\n`;
+                totalDebt += r.amount;
             });
+            caption += `\nTOTALE: ${totalDebt}€`;
             return caption;
         }
 
