@@ -1464,13 +1464,23 @@
 
             const hasPaymentData = unpaidMeals.length > 0 || unpaidFees.length > 0;
 
-            // === Calcolo altezze sezioni ===
-            const winnersHeight = lastTrainingWinners.length > 0 ? 150 : 0; // Avatar + titolo compatto
-            const podiumHeight = 200; // Podio compatto
-            const classificaHeight = resto.length * rowH + 30; // Top 10 compatta
-            const paymentHeight = hasPaymentData ? Math.max(140, 50 + (unpaidMeals.length + unpaidFees.length) * 25) : 0;
+            // === Calcolo dimensioni in base alle proporzioni ===
+            // Header: 220px
+            // Squadra vincitrice: 30% dell'immagine
+            // Classifica+Podio: 64% dell'immagine
+            // Pagamenti: 6% dell'immagine
+            // Footer: 60px
 
-            const H = 100 + winnersHeight + 20 + podiumHeight + 20 + classificaHeight + 20 + paymentHeight + 80;
+            const headerHeight = 220;
+            const footerHeight = 60;
+
+            // Assegna spazio proporzionato
+            const baseContentHeight = 1500;
+            const winnersHeight = Math.round(baseContentHeight * 0.30); // 30% → ~450px
+            const classicaHeight = Math.round(baseContentHeight * 0.64); // 64% → ~960px
+            const paymentHeight = hasPaymentData ? Math.round(baseContentHeight * 0.06) : 0; // 6% → ~90px
+
+            const H = headerHeight + winnersHeight + classicaHeight + paymentHeight + footerHeight;
 
             const canvas = document.createElement('canvas');
             canvas.width = W; canvas.height = H;
@@ -1479,154 +1489,152 @@
             paintBackdrop(ctx, W, H);
             paintHeader(ctx, W, 'Classifica', new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }));
 
-            let currentY = 100;
+            let currentY = headerHeight;
 
             // === SEZIONE 1: Squadra vincitrice con FOTO ===
+            const winnersY = currentY;
             if (lastTrainingWinners.length > 0) {
-                ctx.fillStyle = '#FFD700';
-                ctx.font = '700 26px Poppins, sans-serif';
+                // Titolo principale
+                ctx.fillStyle = '#e94560';
+                ctx.font = '700 40px Poppins, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('🏐 SQUADRA VINCITRICE', W / 2, currentY + 30);
-                currentY += 50;
+                ctx.fillText('Scandolara Volley', W / 2, winnersY + 50);
 
-                const avatarRadius = 35;
-                const totalWidth = lastTrainingWinners.length * (avatarRadius * 2 + 10);
+                // Sottotitolo
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '700 32px Poppins, sans-serif';
+                ctx.fillText('Vincitori ultimo allenamento', W / 2, winnersY + 100);
+
+                // Avatar dei vincitori disposti in riga
+                const avatarRadius = (winnersHeight - 180) / 2; // Massimizza il raggio disponibile
+                const totalWidth = lastTrainingWinners.length * (avatarRadius * 2 + 15);
                 const startX = (W - totalWidth) / 2;
 
                 const imgs = await Promise.all(lastTrainingWinners.map(p => loadImageSafe(p.photo)));
                 lastTrainingWinners.forEach((p, i) => {
-                    const x = startX + i * (avatarRadius * 2 + 10) + avatarRadius;
-                    drawAvatar(ctx, imgs[i], p, x, currentY, avatarRadius, '#FFD700');
+                    const x = startX + i * (avatarRadius * 2 + 15) + avatarRadius;
+                    const y = winnersY + 160;
+                    drawAvatar(ctx, imgs[i], p, x, y, avatarRadius, '#FFD700');
                 });
-
-                currentY += avatarRadius * 2 + 30;
             }
 
-            // === SEZIONE 2: Podio compatto ===
+            currentY = winnersY + winnersHeight;
+
+            // === SEZIONE 2: Classifica (Podio + Top 10) ===
+            const classicaY = currentY;
+
+            // Podio occupa circa il 25% della sezione classifica
+            const podiumHeight = Math.round(classicaHeight * 0.25);
+
             ctx.fillStyle = 'rgba(83,52,131,0.2)';
-            roundRectPath(ctx, 40, currentY - 10, W - 80, podiumHeight, 12);
+            roundRectPath(ctx, 40, classicaY + 10, W - 80, podiumHeight, 12);
             ctx.fill();
 
-            const imgs = await Promise.all(podio.map(p => loadImageSafe(p.photo)));
-            const altezze = { 1: 140, 2: 120, 3: 100 };
+            const podioImgs = await Promise.all(podio.map(p => loadImageSafe(p.photo)));
+            const altezze = { 1: podiumHeight * 0.8, 2: podiumHeight * 0.68, 3: podiumHeight * 0.56 };
             const anelli = { 1: '#f6c700', 2: '#c9c9c9', 3: '#cd7f32' };
             const posti = [W / 2, W / 2 - 280, W / 2 + 280];
             const cols = podio.map((p, i) => ({
-                p, img: imgs[i],
+                p, img: podioImgs[i],
                 x: posti[i],
-                hgt: altezze[p.rank] || 100,
-                r: p.rank === 1 ? 70 : 60,
+                hgt: altezze[p.rank] || podiumHeight * 0.5,
+                r: p.rank === 1 ? 75 : 65,
                 ring: anelli[p.rank] || anelli[3]
             }));
 
             cols.forEach(c => {
-                const stepTop = currentY + podiumHeight - c.hgt - 20;
+                const stepTop = classicaY + podiumHeight - c.hgt - 15;
                 ctx.fillStyle = 'rgba(83,52,131,0.4)';
-                roundRectPath(ctx, c.x - 110, stepTop - 5, 220, c.hgt, 10);
+                roundRectPath(ctx, c.x - 120, stepTop - 5, 240, c.hgt, 10);
                 ctx.fill();
 
-                drawAvatar(ctx, c.img, c.p, c.x, stepTop - c.r - 10, c.r, c.ring);
-                drawMedal(ctx, c.x, stepTop + 30, 25, c.p.rank);
+                drawAvatar(ctx, c.img, c.p, c.x, stepTop - c.r - 15, c.r, c.ring);
+                drawMedal(ctx, c.x, stepTop + 40, 30, c.p.rank);
 
                 ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '700 24px Poppins, sans-serif';
-                ctx.fillText(wrapLines(ctx, c.p.alias || c.p.name, 200, 1)[0] || '', c.x, stepTop + 80);
+                ctx.font = '700 26px Poppins, sans-serif';
+                ctx.fillText(wrapLines(ctx, c.p.alias || c.p.name, 220, 1)[0] || '', c.x, stepTop + 90);
                 ctx.fillStyle = '#e94560';
-                ctx.font = '700 22px Poppins, sans-serif';
-                ctx.fillText(c.p.totalPoints + ' pt', c.x, stepTop + 110);
+                ctx.font = '700 24px Poppins, sans-serif';
+                ctx.fillText(c.p.totalPoints + ' pt', c.x, stepTop + 125);
             });
 
-            currentY += podiumHeight + 20;
+            // Top 10 (dal 4° in giù) occupa il resto
+            const rowH = (classicaHeight - podiumHeight - 30) / Math.max(1, resto.length);
+            const restY = classicaY + podiumHeight + 20;
 
-            // === SEZIONE 3: Classifica dal 4° posto in giù ===
             ctx.fillStyle = 'rgba(83,52,131,0.15)';
-            roundRectPath(ctx, 40, currentY - 10, W - 80, classificaHeight, 12);
+            roundRectPath(ctx, 40, restY - 10, W - 80, classicaHeight - podiumHeight - 20, 12);
             ctx.fill();
 
             resto.forEach((p, i) => {
-                const y = currentY + i * rowH + 10;
+                const y = restY + i * rowH;
                 ctx.fillStyle = i % 2 ? 'rgba(22,33,62,0.6)' : 'rgba(22,33,62,0.35)';
-                roundRectPath(ctx, 60, y, W - 120, rowH - 8, 10);
+                roundRectPath(ctx, 60, y, W - 120, rowH - 6, 10);
                 ctx.fill();
 
                 ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                const mid = y + (rowH - 8) / 2;
+                const mid = y + rowH / 2;
 
                 ctx.fillStyle = '#a0a0a0';
-                ctx.font = '700 24px Poppins, sans-serif';
+                ctx.font = `700 ${Math.max(18, rowH * 0.4)}px Poppins, sans-serif`;
                 ctx.fillText(p.rank + '°', 85, mid);
 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '600 24px Poppins, sans-serif';
+                ctx.font = `600 ${Math.max(20, rowH * 0.42)}px Poppins, sans-serif`;
                 ctx.fillText(wrapLines(ctx, p.alias || p.name, 500, 1)[0] || '', 150, mid);
 
                 const st = streaks[p.id] ? streaks[p.id].current : 0;
                 if (streakLevel(st)) {
                     ctx.fillStyle = '#d95926';
-                    ctx.font = '600 20px Poppins, sans-serif';
+                    ctx.font = `600 ${Math.max(16, rowH * 0.35)}px Poppins, sans-serif`;
                     ctx.textAlign = 'right';
                     ctx.fillText('🔥 ' + st, W - 200, mid);
                 }
 
                 ctx.textAlign = 'right';
                 ctx.fillStyle = '#e94560';
-                ctx.font = '700 26px Poppins, sans-serif';
+                ctx.font = `700 ${Math.max(20, rowH * 0.45)}px Poppins, sans-serif`;
                 ctx.fillText(p.totalPoints + ' pt', W - 80, mid);
             });
 
-            currentY += classificaHeight + 20;
+            currentY = classicaY + classicaHeight;
 
-            // === SEZIONE 4: Pagamenti (solo se ci sono debiti) ===
+            // === SEZIONE 3: Pagamenti (solo se ci sono debiti) ===
             if (hasPaymentData) {
+                const paymentY = currentY;
+
                 ctx.fillStyle = 'rgba(83,52,131,0.3)';
-                roundRectPath(ctx, 40, currentY - 10, W - 80, paymentHeight, 12);
+                roundRectPath(ctx, 40, paymentY + 5, W - 80, paymentHeight - 10, 12);
                 ctx.fill();
 
                 ctx.fillStyle = '#FFD700';
-                ctx.font = '700 26px Poppins, sans-serif';
+                ctx.font = '700 18px Poppins, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, currentY + 28);
-                currentY += 45;
+                ctx.fillText('💰 PAGAMENTI', W / 2, paymentY + 25);
 
-                let colX = 80;
-                let maxColHeight = currentY;
+                // Dividi i nomi su 3 colonne per stare compatti
+                const colWidth = (W - 100) / 3;
+                const allUnpaid = [];
+                unpaidMeals.forEach(p => allUnpaid.push({ ...p, type: 'meal' }));
+                unpaidFees.forEach(p => allUnpaid.push({ ...p, type: 'fee' }));
 
-                // Cene da pagare
-                if (unpaidMeals.length > 0) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '600 18px Poppins, sans-serif';
-                    ctx.textAlign = 'left';
-                    ctx.fillText('🍽️ Cena:', colX, currentY);
-                    let yMeal = currentY + 28;
-                    unpaidMeals.forEach(player => {
-                        ctx.font = '500 16px Poppins, sans-serif';
-                        ctx.fillText('• ' + (player.alias || player.name), colX + 20, yMeal);
-                        yMeal += 22;
-                    });
-                    maxColHeight = Math.max(maxColHeight, yMeal);
-                }
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '500 14px Poppins, sans-serif';
 
-                // Iscrizioni da pagare
-                if (unpaidFees.length > 0) {
-                    colX = W / 2 + 40;
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '600 18px Poppins, sans-serif';
-                    ctx.textAlign = 'left';
-                    ctx.fillText('🎫 Iscrizione:', colX, currentY);
-                    let yFee = currentY + 28;
-                    unpaidFees.forEach(player => {
-                        ctx.font = '500 16px Poppins, sans-serif';
-                        ctx.fillText('• ' + (player.alias || player.name), colX + 20, yFee);
-                        yFee += 22;
-                    });
-                    maxColHeight = Math.max(maxColHeight, yFee);
-                }
+                allUnpaid.forEach((item, idx) => {
+                    const col = idx % 3;
+                    const row = Math.floor(idx / 3);
+                    const x = 60 + col * colWidth;
+                    const y = paymentY + 40 + row * 18;
 
-                currentY = maxColHeight + 20;
+                    const icon = item.type === 'meal' ? '🍽️' : '🎫';
+                    ctx.fillText(icon + ' ' + (item.alias || item.name), x, y);
+                });
             }
 
-            paintFooter(ctx, W, currentY + 40);
+            paintFooter(ctx, W, H);
             return { canvas, standings };
         }
 
