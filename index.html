@@ -1418,9 +1418,13 @@
 
             // === SEZIONE 1: Squadra vincitrice ultimo allenamento ===
             let lastTrainingWinners = [];
-            const trainingDates = Object.keys(trainings).sort().reverse();
-            if (trainingDates.length > 0) {
-                const lastDate = trainingDates[0];
+            // Trova l'ultimo giorno CON DATI (non vuoto)
+            const allTrainingDates = Object.keys(trainings)
+                .filter(date => Object.keys(trainings[date].players || {}).length > 0)
+                .sort();
+
+            if (allTrainingDates.length > 0) {
+                const lastDate = allTrainingDates[allTrainingDates.length - 1];
                 const lastTraining = trainings[lastDate];
                 const playersWithSets = Object.entries(lastTraining.players || {})
                     .map(([playerId, data]) => ({
