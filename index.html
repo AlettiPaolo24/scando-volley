@@ -286,6 +286,9 @@
     <!-- Schermata di Accesso -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
         <div class="card rounded-lg p-8 shadow-2xl text-center w-11/12 max-w-md">
+            <div class="mb-6 flex justify-center">
+                <img src="logo-scandolara.png" alt="Scandolara Volley" class="h-32 object-contain">
+            </div>
             <h1 class="text-3xl font-bold mb-2 text-white">Scando Volley</h1>
             <p class="text-lg mb-6 text-gray-300">Benvenuto!</p>
             <p class="mb-4">Seleziona il tuo tipo di accesso:</p>
@@ -322,11 +325,10 @@
                     <a href="#" class="nav-link" data-page="giocatori">Giocatori</a>
                     <a href="#" class="nav-link" data-page="allenamenti">Allenamenti</a>
                     <a href="#" class="nav-link" data-page="squadre">Squadre</a>
-                    <a href="#" class="nav-link" data-page="iscrizioni">Iscrizioni</a>
+                    <a href="#" class="nav-link" data-page="pagamenti">Pagamenti</a>
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
                     <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
-                    <a href="#" class="nav-link" data-page="pagamenti">Pagamenti</a>
                 </div>
                 <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -337,11 +339,10 @@
                 <a href="#" class="block nav-link py-2" data-page="giocatori">Giocatori</a>
                 <a href="#" class="block nav-link py-2" data-page="allenamenti">Registro Allenamenti</a>
                 <a href="#" class="block nav-link py-2" data-page="squadre">Genera Squadre</a>
-                <a href="#" class="block nav-link py-2" data-page="iscrizioni">Iscrizioni</a>
+                <a href="#" class="block nav-link py-2" data-page="pagamenti">Pagamenti</a>
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
                 <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
-                <a href="#" class="block nav-link py-2" data-page="pagamenti">Pagamenti</a>
             </div>
         </header>
 
@@ -459,13 +460,14 @@
             </div>
 
             <!-- Pagina Iscrizioni Stagionali -->
-            <div id="page-iscrizioni" class="page hidden">
-                <h2 class="text-3xl font-bold mb-6 text-white">Iscrizioni Stagionali (100€)</h2>
+            <div id="page-pagamenti" class="page hidden">
+                <h2 class="text-3xl font-bold mb-6 text-white">Pagamenti Stagionali (100€)</h2>
                 <div class="overflow-x-auto card rounded-lg">
                     <table class="w-full">
                         <thead>
                             <tr class="bg-primary border-b border-secondary">
-                                <th class="p-4 text-left text-accent font-bold">Giocatore</th>
+                                <th class="p-4 text-left text-accent font-bold">Nome</th>
+                                <th class="p-4 text-left text-accent font-bold">Cognome</th>
                                 <th class="p-4 text-center text-accent font-bold">Pagato</th>
                                 <th class="p-4 text-right text-accent font-bold">Cene Pagate</th>
                             </tr>
@@ -603,76 +605,6 @@
                     </form>
                 </div>
 
-            </div>
-
-            <!-- Pagina Pagamenti -->
-            <div id="page-pagamenti" class="page hidden">
-                <h2 class="text-3xl font-bold mb-4 text-white">Pagamenti</h2>
-
-                <div class="flex flex-wrap gap-2 mb-6">
-                    <button onclick="switchPaymentTab('fees')" class="pagamenti-tab-btn active btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="fees">
-                        🎫 Iscrizioni Stagione (100€)
-                    </button>
-                    <button onclick="switchPaymentTab('summary')" class="pagamenti-tab-btn btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="summary">
-                        💰 Riepilogo
-                    </button>
-                </div>
-
-                <!-- TAB: ISCRIZIONI -->
-                <div id="tab-fees" class="pagamenti-tab-content">
-                    <h3 class="text-2xl font-bold mb-4 text-white">Iscrizioni Stagione</h3>
-                    <p class="text-gray-400 mb-4">Quota annuale: <strong class="text-white">100€ per giocatore</strong></p>
-
-                    <div class="grid md:grid-cols-2 gap-6 mb-6">
-                        <div class="card rounded-lg p-4">
-                            <h4 class="text-lg font-bold text-white mb-3">Pagati</h4>
-                            <div id="season-paid-container" class="space-y-2"></div>
-                        </div>
-                        <div class="card rounded-lg p-4">
-                            <h4 class="text-lg font-bold text-red-400 mb-3">In Sospeso</h4>
-                            <div id="season-unpaid-container" class="space-y-2"></div>
-                        </div>
-                    </div>
-
-                    <!-- Form admin: registra pagamento -->
-                    <div class="admin-content hidden card rounded-lg p-4 mb-6 border-l-4 border-secondary">
-                        <h4 class="text-lg font-bold text-white mb-3">Registra Pagamento (Admin)</h4>
-                        <div class="grid md:grid-cols-4 gap-3">
-                            <select id="fee-player-select" class="form-select p-2 rounded">
-                                <option value="">Seleziona giocatore...</option>
-                            </select>
-                            <select id="fee-method-select" class="form-select p-2 rounded">
-                                <option value="contanti">Contanti</option>
-                                <option value="bonifico">Bonifico</option>
-                                <option value="altro">Altro</option>
-                            </select>
-                            <input type="date" id="fee-date-input" class="form-input p-2 rounded">
-                            <button onclick="app_recordSeasonFee()" class="btn-accent text-white font-bold py-2 px-4 rounded-lg">Registra</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: RIEPILOGO -->
-                <div id="tab-summary" class="pagamenti-tab-content hidden">
-                    <h3 class="text-2xl font-bold mb-4 text-white">Riepilogo Debitorio</h3>
-
-                    <div class="grid md:grid-cols-2 gap-4 mb-6">
-                        <div class="card rounded-lg p-4 border-l-4 border-red-500">
-                            <p class="text-gray-400 text-sm">Iscrizioni Dovute</p>
-                            <p class="text-3xl font-bold text-white" id="summary-fees-total">0€</p>
-                            <p class="text-xs text-gray-400 mt-1" id="summary-fees-count">0 debiti</p>
-                        </div>
-                        <div class="card rounded-lg p-4 border-l-4 border-accent">
-                            <p class="text-gray-400 text-sm">TOTALE DOVUTO</p>
-                            <p class="text-3xl font-bold text-accent" id="summary-grand-total">0€</p>
-                        </div>
-                    </div>
-
-                    <div class="card rounded-lg p-4">
-                        <h4 class="text-lg font-bold text-white mb-3">Dettaglio per Giocatore</h4>
-                        <div id="summary-by-player-container" class="space-y-2"></div>
-                    </div>
-                </div>
             </div>
 
             <!-- Gestione Stagione (admin, bottone collassabile in fondo) -->
@@ -1060,7 +992,7 @@
             renderHallOfFame();
             renderTeamPicker();
             renderCharts();
-            renderIscrizioni();
+            renderPagamenti();
             if (currentPage === 'album') renderAlbum();
         }
 
@@ -1994,7 +1926,7 @@
             `).join('');
         };
 
-        const renderIscrizioni = () => {
+        const renderPagamenti = () => {
             const container = document.getElementById('iscrizioni-table-body');
             const season = defaultSeasonName();
 
@@ -2003,8 +1935,11 @@
                 appState.seasonFees[season] = {};
             }
 
-            // Ordina i giocatori per nome
-            const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+            // Ordina i giocatori per cognome, poi nome
+            const sortedPlayers = [...players].sort((a, b) => {
+                const cognomeComp = (a.surname || '').localeCompare(b.surname || '');
+                return cognomeComp !== 0 ? cognomeComp : a.name.localeCompare(b.name);
+            });
 
             container.innerHTML = sortedPlayers.map(player => {
                 const isPaid = appState.seasonFees[season][player.id]?.paid || false;
@@ -2024,6 +1959,7 @@
                 return `
                     <tr class="border-b border-gray-700 hover:bg-gray-800">
                         <td class="p-4 text-white">${player.name}</td>
+                        <td class="p-4 text-white">${player.surname || '-'}</td>
                         <td class="p-4 text-center">
                             ${isAdmin ? `
                                 <input type="checkbox"
