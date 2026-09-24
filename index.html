@@ -1414,30 +1414,6 @@
 
             const W = 1080;
 
-            // === SEZIONE 1: Squadra vincitrice ultimo allenamento ===
-            let lastTrainingWinners = [];
-            const allTrainingDates = Object.keys(trainings)
-                .filter(date => Object.keys(trainings[date].players || {}).length > 0)
-                .sort();
-
-            if (allTrainingDates.length > 0) {
-                const lastDate = allTrainingDates[allTrainingDates.length - 1];
-                const lastTraining = trainings[lastDate];
-                const playersWithSets = Object.entries(lastTraining.players || {})
-                    .map(([playerId, data]) => ({
-                        id: playerId,
-                        sets: parseInt(data.setsWon || 0, 10),
-                        player: players.find(p => p.id === playerId)
-                    }))
-                    .filter(p => p.player && p.sets > 0)
-                    .sort((a, b) => b.sets - a.sets);
-
-                if (playersWithSets.length > 0) {
-                    const maxSets = playersWithSets[0].sets;
-                    lastTrainingWinners = playersWithSets.filter(p => p.sets === maxSets).map(p => p.player);
-                }
-            }
-
             // === SEZIONE PAGAMENTI: Nomi di chi non ha pagato ===
             const season = defaultSeasonName();
             let unpaidMeals = [];
@@ -1463,23 +1439,20 @@
 
             const hasPaymentData = unpaidMeals.length > 0 || unpaidFees.length > 0;
 
-            // === Calcolo dimensioni in base alle proporzioni ===
+            // === Calcolo dimensioni ===
             // Header: 220px
-            // Squadra vincitrice: 30% dell'immagine
-            // Classifica+Podio: 64% dell'immagine
-            // Pagamenti: 6% dell'immagine
+            // Classifica+Podio: 94% dello spazio content
+            // Pagamenti: 6% dello spazio content
             // Footer: 60px
 
             const headerHeight = 220;
             const footerHeight = 60;
 
-            // Assegna spazio proporzionato
-            const baseContentHeight = 1500;
-            const winnersHeight = Math.round(baseContentHeight * 0.30); // 30% → ~450px
-            const classicaHeight = Math.round(baseContentHeight * 0.64); // 64% → ~960px
-            const paymentHeight = hasPaymentData ? Math.round(baseContentHeight * 0.06) : 0; // 6% → ~90px
+            const baseContentHeight = 1600;
+            const classicaHeight = Math.round(baseContentHeight * 0.94);
+            const paymentHeight = hasPaymentData ? Math.round(baseContentHeight * 0.06) : 0;
 
-            const H = headerHeight + winnersHeight + classicaHeight + paymentHeight + footerHeight;
+            const H = headerHeight + classicaHeight + paymentHeight + footerHeight;
 
             const canvas = document.createElement('canvas');
             canvas.width = W; canvas.height = H;
@@ -1490,36 +1463,7 @@
 
             let currentY = headerHeight;
 
-            // === SEZIONE 1: Squadra vincitrice con FOTO ===
-            const winnersY = currentY;
-            if (lastTrainingWinners.length > 0) {
-                // Titolo principale
-                ctx.fillStyle = '#e94560';
-                ctx.font = '700 40px Poppins, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Scandolara Volley', W / 2, winnersY + 50);
-
-                // Sottotitolo
-                ctx.fillStyle = '#FFD700';
-                ctx.font = '700 32px Poppins, sans-serif';
-                ctx.fillText('Vincitori ultimo allenamento', W / 2, winnersY + 100);
-
-                // Avatar dei vincitori disposti in riga
-                const avatarRadius = (winnersHeight - 180) / 2; // Massimizza il raggio disponibile
-                const totalWidth = lastTrainingWinners.length * (avatarRadius * 2 + 15);
-                const startX = (W - totalWidth) / 2;
-
-                const imgs = await Promise.all(lastTrainingWinners.map(p => loadImageSafe(p.photo)));
-                lastTrainingWinners.forEach((p, i) => {
-                    const x = startX + i * (avatarRadius * 2 + 15) + avatarRadius;
-                    const y = winnersY + 160;
-                    drawAvatar(ctx, imgs[i], p, x, y, avatarRadius, '#FFD700');
-                });
-            }
-
-            currentY = winnersY + winnersHeight;
-
-            // === SEZIONE 2: Classifica (Podio + Top 10) ===
+            // === SEZIONE 1: Classifica (Podio + Top 10) ===
             const classicaY = currentY;
 
             // Podio occupa circa il 25% della sezione classifica
@@ -1600,7 +1544,7 @@
 
             currentY = classicaY + classicaHeight;
 
-            // === SEZIONE 3: Pagamenti (solo se ci sono debiti) ===
+            // === SEZIONE 2: Pagamenti (solo se ci sono debiti) ===
             if (hasPaymentData) {
                 const paymentY = currentY;
 
