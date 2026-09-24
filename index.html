@@ -322,7 +322,7 @@
                     <a href="#" class="nav-link" data-page="giocatori">Giocatori</a>
                     <a href="#" class="nav-link" data-page="allenamenti">Allenamenti</a>
                     <a href="#" class="nav-link" data-page="squadre">Squadre</a>
-                    <a href="#" class="nav-link" data-page="album">Album</a>
+                    <a href="#" class="nav-link" data-page="iscrizioni">Iscrizioni</a>
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
                     <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
@@ -337,7 +337,7 @@
                 <a href="#" class="block nav-link py-2" data-page="giocatori">Giocatori</a>
                 <a href="#" class="block nav-link py-2" data-page="allenamenti">Registro Allenamenti</a>
                 <a href="#" class="block nav-link py-2" data-page="squadre">Genera Squadre</a>
-                <a href="#" class="block nav-link py-2" data-page="album">Album Figurine</a>
+                <a href="#" class="block nav-link py-2" data-page="iscrizioni">Iscrizioni</a>
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
                 <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
@@ -458,6 +458,25 @@
                 <div id="players-list-container" class="space-y-4"></div>
             </div>
 
+            <!-- Pagina Iscrizioni Stagionali -->
+            <div id="page-iscrizioni" class="page hidden">
+                <h2 class="text-3xl font-bold mb-6 text-white">Iscrizioni Stagionali (100€)</h2>
+                <div class="overflow-x-auto card rounded-lg">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-primary border-b border-secondary">
+                                <th class="p-4 text-left text-accent font-bold">Giocatore</th>
+                                <th class="p-4 text-center text-accent font-bold">Pagato</th>
+                                <th class="p-4 text-right text-accent font-bold">Cene Pagate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="iscrizioni-table-body">
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-gray-400 text-sm mt-4">Quota Stagionale: <strong>100€</strong></p>
+            </div>
+
             <!-- Pagina Registro Allenamenti -->
             <div id="page-allenamenti" class="page hidden">
                 <h2 class="text-3xl font-bold mb-4 text-white">Registro Allenamenti</h2>
@@ -507,16 +526,6 @@
                     </div>
                 </div>
                 <div id="teams-result"></div>
-            </div>
-
-            <!-- Pagina Album Figurine -->
-            <div id="page-album" class="page hidden">
-                <div class="text-center mb-6">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white">Album Figurine</h2>
-                    <p class="text-gray-400 mt-1">Stagione <span id="album-season"></span> · clicca su un giocatore per generare la figurina</p>
-                </div>
-
-                <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
             </div>
 
             <!-- Pagina Badge -->
@@ -1051,6 +1060,7 @@
             renderHallOfFame();
             renderTeamPicker();
             renderCharts();
+            renderIscrizioni();
             if (currentPage === 'album') renderAlbum();
         }
 
@@ -1928,6 +1938,10 @@
                             <input type="checkbox" data-player-id="${player.id}" data-field="dinnerAttended" ${playerData.dinnerAttended ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
                             <span>Ha Mangiato</span>
                         </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="dishes" ${playerData.dishes ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Piatti</span>
+                        </label>
                         <label class="flex items-center space-x-2" title="Pagamento cena 10€">
                             <input type="checkbox" data-player-id="${player.id}" data-field="dinnerPaid" ${playerData.dinnerPaid ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
                             <span>Cena Pagata (10€)</span>
@@ -1978,6 +1992,53 @@
                     ${isAdmin ? `<button onclick="app_deleteEvent('${event.id}')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full h-10 w-10 flex-shrink-0 ml-4 flex items-center justify-center text-xl font-bold">&times;</button>` : ''}
                 </div>
             `).join('');
+        };
+
+        const renderIscrizioni = () => {
+            const container = document.getElementById('iscrizioni-table-body');
+            const season = defaultSeasonName();
+
+            // Inizializza stagione se non esiste
+            if (!appState.seasonFees[season]) {
+                appState.seasonFees[season] = {};
+            }
+
+            // Ordina i giocatori per nome
+            const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+
+            container.innerHTML = sortedPlayers.map(player => {
+                const isPaid = appState.seasonFees[season][player.id]?.paid || false;
+
+                // Calcola cene pagate: somma dinnerPaid=true di tutti gli allenamenti
+                let dinnersPaidCount = 0;
+                Object.values(trainings).forEach(dayTrainings => {
+                    if (dayTrainings.players && dayTrainings.players[player.id]) {
+                        const playerData = dayTrainings.players[player.id];
+                        if (playerData.dinnerPaid) {
+                            dinnersPaidCount++;
+                        }
+                    }
+                });
+                const dinnersPaidTotal = dinnersPaidCount * 10; // 10€ per cena
+
+                return `
+                    <tr class="border-b border-gray-700 hover:bg-gray-800">
+                        <td class="p-4 text-white">${player.name}</td>
+                        <td class="p-4 text-center">
+                            ${isAdmin ? `
+                                <input type="checkbox"
+                                    data-player-id="${player.id}"
+                                    ${isPaid ? 'checked' : ''}
+                                    onchange="app_toggleSeasonFee('${player.id}', this.checked)"
+                                    class="w-5 h-5 cursor-pointer accent-accent">
+                            ` : `
+                                <span class="text-lg">${isPaid ? '✅' : '⭕'}</span>
+                            `}
+                        </td>
+                        <td class="p-4 text-right text-accent font-semibold">${dinnersPaidCount > 0 ? dinnersPaidCount + ' cene (€' + dinnersPaidTotal + ')' : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
         };
 
         window.handleLogin = (role) => {
@@ -2117,6 +2178,19 @@
                 events = events.filter(ev => ev.id !== id);
                 renderAll();
             });
+        };
+
+        window.app_toggleSeasonFee = (playerId, isPaid) => {
+            hasUnsavedChanges = true;
+            const season = defaultSeasonName();
+            if (!appState.seasonFees[season]) {
+                appState.seasonFees[season] = {};
+            }
+            if (!appState.seasonFees[season][playerId]) {
+                appState.seasonFees[season][playerId] = {};
+            }
+            appState.seasonFees[season][playerId].paid = isPaid;
+            renderIscrizioni();
         };
 
         window.resetForm = (formId) => {
