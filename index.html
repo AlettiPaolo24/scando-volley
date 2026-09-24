@@ -286,9 +286,6 @@
     <!-- Schermata di Accesso -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
         <div class="card rounded-lg p-8 shadow-2xl text-center w-11/12 max-w-md">
-            <div class="mb-6 flex justify-center">
-                <img src="logo-scandolara.png" alt="Scandolara Volley" class="h-32 object-contain">
-            </div>
             <h1 class="text-3xl font-bold mb-2 text-white">Scando Volley</h1>
             <p class="text-lg mb-6 text-gray-300">Benvenuto!</p>
             <p class="mb-4">Seleziona il tuo tipo di accesso:</p>
@@ -1419,7 +1416,26 @@
             const BASE = 760;                 // linea di appoggio dei gradini
             const listTop = 820;
             const rowH = 84;
-            const H = listTop + resto.length * rowH + 110;
+
+            // Calcola spazio per la sezione pagamenti
+            const season = defaultSeasonName();
+            let mealsUnpaid = 0;
+            Object.values(trainings).forEach(dayTrainings => {
+                Object.values(dayTrainings.players || {}).forEach(playerData => {
+                    if (playerData.dinnerAttended && !playerData.dinnerPaid) {
+                        mealsUnpaid++;
+                    }
+                });
+            });
+            let feesUnpaid = 0;
+            players.forEach(player => {
+                const isPaid = appState.seasonFees[season]?.[player.id]?.paid || false;
+                if (!isPaid) feesUnpaid++;
+            });
+            const hasPaymentData = mealsUnpaid > 0 || feesUnpaid > 0;
+            const paymentSection = hasPaymentData ? 300 : 0;
+
+            const H = listTop + resto.length * rowH + 110 + paymentSection;
 
             const canvas = document.createElement('canvas');
             canvas.width = W; canvas.height = H;
@@ -1490,6 +1506,52 @@
                 ctx.fillText(p.totalPoints + ' pt', W - 100, mid);
                 ctx.textBaseline = 'alphabetic';
             });
+
+            // --- SEZIONE PAGAMENTI: Ricordini ---
+            if (hasPaymentData) {
+                let paymentY = listTop + resto.length * rowH + 40;
+
+                // Sfondo sezione pagamenti
+                ctx.fillStyle = 'rgba(83,52,131,0.3)';
+                roundRectPath(ctx, 50, paymentY - 30, W - 100, paymentSection - 40, 12);
+                ctx.fill();
+
+                // Titolo sezione
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '700 32px Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, paymentY);
+                paymentY += 50;
+
+                // Cene da pagare
+                const mealsTotal = mealsUnpaid * 10;
+                if (mealsUnpaid > 0) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '600 24px Poppins, sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`🍽️ Cene da pagare: ${mealsUnpaid} x 10€ = ${mealsTotal}€`, 100, paymentY);
+                    paymentY += 40;
+                }
+
+                // Iscrizioni da pagare
+                const feesTotal = feesUnpaid * 100;
+                if (feesUnpaid > 0) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '600 24px Poppins, sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`🎫 Iscrizioni da pagare: ${feesUnpaid} x 100€ = ${feesTotal}€`, 100, paymentY);
+                    paymentY += 40;
+                }
+
+                // Totale dovuto
+                const grandTotal = (mealsUnpaid * 10) + (feesUnpaid * 100);
+                if (grandTotal > 0) {
+                    ctx.fillStyle = '#e94560';
+                    ctx.font = '700 28px Poppins, sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`💵 TOTALE DOVUTO: ${grandTotal}€`, 100, paymentY);
+                }
+            }
 
             paintFooter(ctx, W, H);
             return { canvas, standings };
@@ -2979,28 +3041,54 @@
 
             yPos = 1150;
 
-            // SEZIONE 3: Debiti Cena (SOLO CENE, NO ISCRIZIONI)
-            const mealDebtors = getMealDebtorsCount();
-            if (mealDebtors.count > 0) {
-                ctx.font = 'bold 24px Poppins, sans-serif';
-                ctx.fillStyle = '#ff6b9d';
-                ctx.fillText('💰 DEBITI CENA', W / 2, yPos);
-                yPos += 45;
+            // SEZIONE 3: RICORDINI PAGAMENTI (Cene + Iscrizioni)
+            ctx.font = 'bold 28px Poppins, sans-serif';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, yPos);
+            yPos += 50;
 
-                const debtorsList = getAllMealDebtors();
-                ctx.font = '14px Poppins, sans-serif';
-                ctx.fillStyle = '#dcdcdc';
-                Object.entries(debtorsList).forEach(([playerId, debts]) => {
-                    const player = appState.players[playerId];
-                    const total = debts.reduce((sum, d) => sum + d.amount, 0);
-                    ctx.fillText(`• ${player.name} ${player.surname} - ${total}€`, 80, yPos);
-                    yPos += 35;
+            // Conta cene da pagare
+            const season = defaultSeasonName();
+            let mealsUnpaid = 0;
+            Object.values(trainings).forEach(dayTrainings => {
+                Object.values(dayTrainings.players || {}).forEach(playerData => {
+                    if (playerData.dinnerAttended && !playerData.dinnerPaid) {
+                        mealsUnpaid++;
+                    }
                 });
+            });
+            const mealsTotal = mealsUnpaid * 10;
 
+            // Conta iscrizioni da pagare
+            let feesUnpaid = 0;
+            players.forEach(player => {
+                const isPaid = appState.seasonFees[season]?.[player.id]?.paid || false;
+                if (!isPaid) feesUnpaid++;
+            });
+            const feesTotal = feesUnpaid * 100;
+
+            // Mostra dettagli
+            ctx.font = '18px Poppins, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+
+            if (mealsUnpaid > 0) {
+                ctx.fillText(`🍽️ Cene da pagare: ${mealsUnpaid} x 10€ = ${mealsTotal}€`, 80, yPos);
+                yPos += 40;
+            }
+
+            if (feesUnpaid > 0) {
+                ctx.fillText(`🎫 Iscrizioni da pagare: ${feesUnpaid} x 100€ = ${feesTotal}€`, 80, yPos);
+                yPos += 40;
+            }
+
+            // TOTALE DOVUTO (in rosso)
+            const grandTotal = mealsTotal + feesTotal;
+            if (grandTotal > 0) {
                 yPos += 10;
-                ctx.font = 'bold 18px Poppins, sans-serif';
+                ctx.font = 'bold 24px Poppins, sans-serif';
                 ctx.fillStyle = '#e94560';
-                ctx.fillText(`💵 TOTALE CENE: ${mealDebtors.total}€`, 80, yPos);
+                ctx.fillText(`💵 TOTALE DOVUTO: ${grandTotal}€`, 80, yPos);
             }
 
             // Footer
