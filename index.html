@@ -231,6 +231,53 @@
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #6d44a6; }
+
+        /* --- Condivisione, serie di presenze e grafici --- */
+        .share-btn {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: #25D366; color: #06331a;
+            font-weight: 700; font-size: .875rem;
+            padding: .5rem 1rem; border-radius: 9999px;
+            transition: filter .15s ease, transform .15s ease;
+        }
+        .share-btn:hover { filter: brightness(1.08); }
+        .share-btn:active { transform: scale(.97); }
+        .share-btn:disabled { opacity: .6; cursor: progress; }
+        .share-btn-sm { padding: .3rem .7rem; font-size: .75rem; }
+
+        .fire { filter: drop-shadow(0 0 4px rgba(217, 89, 38, .6)); }
+        .streak-chip {
+            display: inline-flex; align-items: center; gap: .15rem;
+            font-weight: 700; white-space: nowrap;
+        }
+        .streak-1 { color: #c98500; }   /* serie appena avviata */
+        .streak-2 { color: #d95926; }   /* serie solida */
+        .streak-3 { color: #e66767; text-shadow: 0 0 8px rgba(230,103,103,.45); } /* serie da record */
+
+        /* Grafici: colori validati sul fondo scuro delle card (#16213e) */
+        .viz {
+            --viz-surface: #16213e;
+            --viz-ink: #ffffff;
+            --viz-muted: #98a2b8;
+            --viz-grid: #263457;
+            --viz-s1: #3987e5;  /* presenze */
+            --viz-s2: #d95926;  /* set vinti */
+            --viz-s3: #199e70;  /* piatti   */
+            --viz-s4: #c98500;  /* badge    */
+            width: 100%; height: auto; display: block;
+            font-family: 'Poppins', system-ui, sans-serif;
+        }
+        .viz text { fill: var(--viz-muted); font-size: 12px; }
+        .viz .viz-val { fill: var(--viz-ink); font-weight: 600; }
+        .viz .viz-name { fill: var(--viz-ink); font-size: 12.5px; }
+        .viz .viz-grid { stroke: var(--viz-grid); stroke-width: 1; }
+        .viz-legend {
+            display: flex; flex-wrap: wrap; gap: .25rem 1rem;
+            font-size: .75rem; color: var(--text-light); margin-bottom: .6rem;
+        }
+        .viz-legend span { display: inline-flex; align-items: center; gap: .35rem; }
+        .viz-key { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+        .viz-empty { color: var(--text-dark); font-size: .875rem; text-align: center; padding: 1.5rem 0; }
     </style>
 </head>
 <body class="antialiased">
@@ -323,10 +370,38 @@
                     </div>
                 </div>
 
-                <h2 class="text-3xl font-bold mb-4 text-white">Classifica Generale</h2>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 class="text-3xl font-bold text-white">Classifica Generale</h2>
+                    <button onclick="app_shareStandings(event)" class="share-btn" title="Crea un'immagine della classifica da mandare su WhatsApp">
+                        <span class="text-lg leading-none">📲</span> Condividi classifica
+                    </button>
+                </div>
                 <div id="leaderboard-container" class="space-y-2">
                     <div class="text-center py-10">
                         <p class="text-gray-400">Nessun dato da visualizzare. Aggiungi giocatori e registra un allenamento.</p>
+                    </div>
+                </div>
+
+                <!-- Statistiche -->
+                <div id="stats-section" class="mt-10">
+                    <h2 class="text-3xl font-bold mb-1 text-white">Statistiche</h2>
+                    <p class="text-sm text-gray-400 mb-4">I numeri della stagione in corso. I valori di ogni giocatore sono anche nella classifica qui sopra.</p>
+                    <div class="space-y-6">
+                        <div class="card rounded-lg p-4">
+                            <h3 class="text-lg font-bold text-white">Da dove arrivano i punti</h3>
+                            <p class="text-xs text-gray-400 mb-3">I primi 8 della classifica, punto per punto.</p>
+                            <div id="chart-points"></div>
+                        </div>
+                        <div class="card rounded-lg p-4">
+                            <h3 class="text-lg font-bold text-white">Affluenza agli allenamenti</h3>
+                            <p class="text-xs text-gray-400 mb-3">Quanti giocatori presenti a ogni allenamento.</p>
+                            <div id="chart-attendance"></div>
+                        </div>
+                        <div class="card rounded-lg p-4">
+                            <h3 class="text-lg font-bold text-white">Serie di presenze in corso <span class="fire">🔥</span></h3>
+                            <p class="text-xs text-gray-400 mb-3">Allenamenti consecutivi senza saltarne uno, fino all'ultimo registrato.</p>
+                            <div id="chart-streak"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -556,6 +631,7 @@
             <div class="flex justify-center space-x-3 mt-4">
                 <button type="button" id="card-modal-close" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded">Chiudi</button>
                 <a id="card-modal-download" class="btn-accent text-white font-bold py-2 px-5 rounded" download="figurina.png">⬇️ Scarica</a>
+                <button type="button" id="card-modal-share" class="share-btn" title="Manda la figurina su WhatsApp">📲 Condividi</button>
             </div>
         </div>
     </div>
@@ -826,6 +902,7 @@
             renderEvents();
             renderHallOfFame();
             renderTeamPicker();
+            renderCharts();
             if (currentPage === 'album') renderAlbum();
         }
 
@@ -882,29 +959,30 @@
             }).sort((a, b) => b.totalPoints - a.totalPoints);
         }
 
-        // Podio della stagione in corso: primi 3 posti.
+        // Classifica con la posizione in chiaro.
         // Stesso punteggio => stessa posizione; punteggi diversi => posizioni diverse.
         // Dopo un pari merito le posizioni "consumate" vengono saltate (1, 2, 2, 4...).
-        function computePodium() {
-            const standings = computeStandings().filter(p => p.totalPoints > 0);
-            const podium = [];
-            let rank = 0;
-            let prevPoints = null;
-            for (let i = 0; i < standings.length; i++) {
-                const p = standings[i];
-                // Nuova posizione solo se il punteggio è diverso da quello del giocatore precedente
+        // È l'unica fonte delle posizioni: podio, immagine condivisa e Albo d'Oro la usano tutti.
+        function rankedStandings() {
+            const list = computeStandings().filter(p => p.totalPoints > 0);
+            let rank = 0, prevPoints = null;
+            return list.map((p, i) => {
                 if (prevPoints === null || p.totalPoints !== prevPoints) {
                     rank = i + 1;
                     prevPoints = p.totalPoints;
                 }
-                // La classifica è ordinata in modo decrescente: da qui in poi solo posizioni peggiori
-                if (rank > 3) break;
-                podium.push({
+                return Object.assign({}, p, { rank });
+            });
+        }
+
+        // Podio della stagione in corso: primi 3 posti
+        function computePodium() {
+            return rankedStandings()
+                .filter(p => p.rank <= 3)
+                .map(p => ({
                     playerId: p.id, name: p.name, surname: p.surname || '', alias: p.alias || '',
-                    rank, points: p.totalPoints, attendance: p.attendanceCount, setsWon: p.setsWon
-                });
-            }
-            return podium;
+                    rank: p.rank, points: p.totalPoints, attendance: p.attendanceCount, setsWon: p.setsWon
+                }));
         }
 
         // Ricalcola le posizioni di un podio salvato partendo dai punti.
@@ -930,6 +1008,523 @@
             }
             return out;
         }
+
+        // ============================================================
+        //  SERIE DI PRESENZE (STREAK) 🔥
+        // ============================================================
+        // "current" = allenamenti consecutivi con presenza che arrivano fino
+        // all'ultimo allenamento registrato (se all'ultimo era assente, è 0).
+        // "best"    = la serie più lunga mai fatta nella stagione.
+        function computeStreaks() {
+            const dates = Object.keys(trainings).sort();
+            const out = {};
+            players.forEach(p => {
+                let run = 0, best = 0;
+                dates.forEach(d => {
+                    if (trainings[d] && trainings[d].players && trainings[d].players[p.id] && trainings[d].players[p.id].present) {
+                        run++;
+                        if (run > best) best = run;
+                    } else {
+                        run = 0;
+                    }
+                });
+                out[p.id] = { current: run, best };
+            });
+            return out;
+        }
+
+        // Livello del fuoco: più lunga è la serie, più "scotta"
+        function streakLevel(n) {
+            if (n >= 10) return 3;
+            if (n >= 5) return 2;
+            if (n >= 3) return 1;
+            return 0;
+        }
+
+        function streakChipHtml(n) {
+            const lvl = streakLevel(n);
+            if (!n) return '';
+            if (!lvl) return `<span class="text-gray-400">Serie <strong class="text-gray-200">${n}</strong></span>`;
+            const fires = lvl === 3 ? '🔥🔥' : '🔥';
+            return `<span class="streak-chip streak-${lvl}" title="${n} allenamenti consecutivi">${fires} ${n}</span>`;
+        }
+
+        // ============================================================
+        //  GRAFICI (SVG generati a mano, nessuna libreria esterna)
+        // ============================================================
+        const VIZ = { s1: '#3987e5', s2: '#d95926', s3: '#199e70', s4: '#c98500', surface: '#16213e' };
+
+        // Barra con estremità destra arrotondata (il dato) e sinistra squadrata (la base)
+        function barPath(x, y, w, h, r) {
+            const rr = Math.max(0, Math.min(r, w, h / 2));
+            return `M${x},${y} H${x + w - rr} Q${x + w},${y} ${x + w},${y + rr} V${y + h - rr} Q${x + w},${y + h} ${x + w - rr},${y + h} H${x} Z`;
+        }
+
+        function vizEmpty(msg) {
+            return `<p class="viz-empty">${esc(msg)}</p>`;
+        }
+
+        // 1) Composizione dei punti — barre impilate, 4 serie
+        function renderPointsChart() {
+            const box = document.getElementById('chart-points');
+            if (!box) return;
+            const data = computeStandings().filter(p => p.totalPoints > 0).slice(0, 8);
+            if (!data.length) { box.innerHTML = vizEmpty('Ancora nessun punto assegnato.'); return; }
+
+            const series = [
+                { key: 'attendanceCount', label: 'Presenze', color: VIZ.s1 },
+                { key: 'setsWon', label: 'Set vinti', color: VIZ.s2 },
+                { key: 'dishPoints', label: 'Piatti', color: VIZ.s3 },
+                { key: 'badgePoints', label: 'Badge', color: VIZ.s4 }
+            ];
+            const W = 600, nameW = 104, valW = 42, rowH = 34, barH = 20, gap = 2, pad = 6;
+            const plotW = W - nameW - valW;
+            const max = Math.max(...data.map(p => p.totalPoints)) || 1;
+            const H = data.length * rowH + pad * 2;
+
+            const rows = data.map((p, i) => {
+                const y = pad + i * rowH;
+                const barY = y + (rowH - barH) / 2;
+                const total = p.totalPoints;
+                const fullW = Math.max(2, (total / max) * plotW);
+                const clipId = 'vzclip' + i;
+                let cursor = nameW;
+                const segs = series.map((s, si) => {
+                    const v = p[s.key] || 0;
+                    if (v <= 0) return '';
+                    const segW = (v / total) * fullW;
+                    const isLast = series.slice(si + 1).every(n => !(p[n.key] > 0));
+                    const drawW = Math.max(0.5, isLast ? segW : segW - gap);
+                    const rect = `<rect x="${cursor.toFixed(1)}" y="${barY}" width="${drawW.toFixed(1)}" height="${barH}" fill="${s.color}"><title>${esc(p.alias || p.name)} · ${s.label}: ${v}</title></rect>`;
+                    cursor += segW;
+                    return rect;
+                }).join('');
+                const label = esc(p.alias || p.name);
+                const short = label.length > 14 ? label.slice(0, 13) + '…' : label;
+                return `
+                    <clipPath id="${clipId}"><path d="${barPath(nameW, barY, fullW, barH, 4)}"/></clipPath>
+                    <text x="${nameW - 8}" y="${barY + barH / 2 + 4}" text-anchor="end" class="viz-name">${short}</text>
+                    <g clip-path="url(#${clipId})">${segs}</g>
+                    <text x="${nameW + fullW + 8}" y="${barY + barH / 2 + 4}" class="viz-val">${total}</text>`;
+            }).join('');
+
+            const legend = series.map(s =>
+                `<span><i class="viz-key" style="background:${s.color}"></i>${s.label}</span>`).join('');
+
+            box.innerHTML = `
+                <div class="viz-legend">${legend}</div>
+                <svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Composizione dei punti dei primi giocatori">${rows}</svg>`;
+        }
+
+        // 2) Affluenza agli allenamenti — linea, serie singola
+        function renderAttendanceChart() {
+            const box = document.getElementById('chart-attendance');
+            if (!box) return;
+            const dates = Object.keys(trainings).sort();
+            if (dates.length < 2) { box.innerHTML = vizEmpty('Servono almeno due allenamenti registrati.'); return; }
+
+            const pts = dates.map(d => {
+                const day = trainings[d].players || {};
+                return { date: d, n: Object.values(day).filter(x => x && x.present).length };
+            });
+            const W = 600, H = 220, L = 34, R = 16, T = 16, B = 34;
+            const max = Math.max(...pts.map(p => p.n), 1);
+            const niceMax = Math.max(2, Math.ceil(max / 2) * 2);
+            const x = i => L + (pts.length === 1 ? 0 : (i / (pts.length - 1)) * (W - L - R));
+            const y = v => T + (1 - v / niceMax) * (H - T - B);
+
+            let grid = '';
+            for (let g = 0; g <= niceMax; g += Math.max(1, niceMax / 4)) {
+                grid += `<line class="viz-grid" x1="${L}" y1="${y(g)}" x2="${W - R}" y2="${y(g)}"/>
+                         <text x="${L - 8}" y="${y(g) + 4}" text-anchor="end">${g}</text>`;
+            }
+            const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.n).toFixed(1)}`).join(' ');
+            const area = `${line} L${x(pts.length - 1).toFixed(1)},${y(0)} L${x(0).toFixed(1)},${y(0)} Z`;
+            const dots = pts.map((p, i) => {
+                const last = i === pts.length - 1;
+                const d = new Date(p.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                return `<circle cx="${x(i).toFixed(1)}" cy="${y(p.n).toFixed(1)}" r="${last ? 5 : 3.5}" fill="${VIZ.s1}" stroke="${VIZ.surface}" stroke-width="2"><title>${d}: ${p.n} presenti</title></circle>`;
+            }).join('');
+            const fmt = s => new Date(s).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            const lastP = pts[pts.length - 1];
+
+            box.innerHTML = `
+                <svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Numero di presenti a ogni allenamento">
+                    ${grid}
+                    <path d="${area}" fill="${VIZ.s1}" fill-opacity="0.10"/>
+                    <path d="${line}" fill="none" stroke="${VIZ.s1}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                    ${dots}
+                    <text x="${x(0)}" y="${H - 10}" text-anchor="start">${fmt(pts[0].date)}</text>
+                    <text x="${W - R}" y="${H - 10}" text-anchor="end">${fmt(lastP.date)}</text>
+                    <text x="${(W - R - 6).toFixed(0)}" y="${(y(lastP.n) - 12).toFixed(0)}" text-anchor="end" class="viz-val">${lastP.n} presenti</text>
+                </svg>`;
+        }
+
+        // 3) Serie di presenze in corso — barre, serie singola
+        function renderStreakChart() {
+            const box = document.getElementById('chart-streak');
+            if (!box) return;
+            const streaks = computeStreaks();
+            const data = players
+                .map(p => ({ p, s: streaks[p.id] ? streaks[p.id].current : 0 }))
+                .filter(r => r.s > 0)
+                .sort((a, b) => b.s - a.s)
+                .slice(0, 8);
+            if (!data.length) { box.innerHTML = vizEmpty('Nessuna serie aperta: all\'ultimo allenamento non risultano presenze consecutive.'); return; }
+
+            const W = 600, nameW = 104, valW = 54, rowH = 32, barH = 18, pad = 6;
+            const plotW = W - nameW - valW;
+            const max = Math.max(...data.map(r => r.s));
+            const H = data.length * rowH + pad * 2;
+
+            const rows = data.map((r, i) => {
+                const y = pad + i * rowH, barY = y + (rowH - barH) / 2;
+                const w = Math.max(3, (r.s / max) * plotW);
+                const label = esc(r.p.alias || r.p.name);
+                const short = label.length > 14 ? label.slice(0, 13) + '…' : label;
+                const fire = streakLevel(r.s) === 3 ? ' 🔥🔥' : streakLevel(r.s) ? ' 🔥' : '';
+                return `
+                    <text x="${nameW - 8}" y="${barY + barH / 2 + 4}" text-anchor="end" class="viz-name">${short}</text>
+                    <path d="${barPath(nameW, barY, w, barH, 4)}" fill="${VIZ.s2}"><title>${label}: ${r.s} allenamenti consecutivi</title></path>
+                    <text x="${nameW + w + 8}" y="${barY + barH / 2 + 4}" class="viz-val">${r.s}${fire}</text>`;
+            }).join('');
+
+            box.innerHTML = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Serie di presenze consecutive in corso">${rows}</svg>`;
+        }
+
+        function renderCharts() {
+            renderPointsChart();
+            renderAttendanceChart();
+            renderStreakChart();
+        }
+
+        // ============================================================
+        //  CONDIVISIONE SU WHATSAPP (immagine generata su canvas)
+        // ============================================================
+        function loadImageSafe(src) {
+            // Solo immagini incorporate (data:) — un'immagine remota "sporcherebbe"
+            // il canvas e impedirebbe di esportare il PNG.
+            return new Promise(resolve => {
+                if (!src || !/^data:/i.test(src)) return resolve(null);
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = src;
+            });
+        }
+
+        function initialsOf(p) {
+            const a = (p.name || '?').charAt(0);
+            const b = (p.surname || '').charAt(0);
+            return (a + b).toUpperCase();
+        }
+
+        // Foto rotonda, oppure cerchio con le iniziali se la foto non c'è
+        function drawAvatar(ctx, img, p, cx, cy, r, ringColor) {
+            ctx.save();
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+            if (img) {
+                const side = Math.min(img.width, img.height);
+                ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, cx - r, cy - r, r * 2, r * 2);
+            } else {
+                ctx.fillStyle = '#0f3460'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+                ctx.fillStyle = '#dcdcdc';
+                ctx.font = `700 ${Math.round(r * 0.85)}px Poppins, sans-serif`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(initialsOf(p), cx, cy + 2);
+            }
+            ctx.restore();
+            if (ringColor) {
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.lineWidth = 6; ctx.strokeStyle = ringColor; ctx.stroke();
+            }
+        }
+
+        function roundRectPath(ctx, x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.arcTo(x + w, y, x + w, y + h, rr);
+            ctx.arcTo(x + w, y + h, x, y + h, rr);
+            ctx.arcTo(x, y + h, x, y, rr);
+            ctx.arcTo(x, y, x + w, y, rr);
+            ctx.closePath();
+        }
+
+        function wrapLines(ctx, text, maxWidth, maxLines) {
+            const words = String(text || '').replace(/\s+/g, ' ').trim().split(' ');
+            const lines = [];
+            let line = '';
+            words.forEach(w => {
+                const test = line ? line + ' ' + w : w;
+                if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+                else line = test;
+            });
+            if (line) lines.push(line);
+            if (maxLines && lines.length > maxLines) {
+                const cut = lines.slice(0, maxLines);
+                cut[maxLines - 1] = cut[maxLines - 1].replace(/.{0,3}$/, '…');
+                return cut;
+            }
+            return lines;
+        }
+
+        function paintBackdrop(ctx, W, H) {
+            const g = ctx.createLinearGradient(0, 0, 0, H);
+            g.addColorStop(0, '#1a1a2e'); g.addColorStop(1, '#101a30');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#e94560'; ctx.fillRect(0, 0, W, 14);
+        }
+
+        function paintHeader(ctx, W, title, subtitle) {
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#e94560';
+            ctx.font = '700 34px Poppins, sans-serif';
+            ctx.fillText('SCANDO VOLLEY', W / 2, 86);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 62px Poppins, sans-serif';
+            ctx.fillText(title, W / 2, 162);
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '400 28px Poppins, sans-serif';
+            ctx.fillText(subtitle, W / 2, 208);
+        }
+
+        function paintFooter(ctx, W, H) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '400 24px Poppins, sans-serif';
+            ctx.fillText('Scando Volley · scandolara', W / 2, H - 34);
+        }
+
+        // Medaglia disegnata (non emoji): stessa resa su tutti i telefoni
+        function drawMedal(ctx, cx, cy, r, rank) {
+            const tinte = {
+                1: ['#fff3c4', '#f6c700', '#a97c00'],
+                2: ['#f6f6f6', '#c9c9c9', '#8a8a8a'],
+                3: ['#f3cfa8', '#cd7f32', '#87511d']
+            };
+            const c = tinte[rank] || tinte[3];
+            const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+            g.addColorStop(0, c[0]); g.addColorStop(0.55, c[1]); g.addColorStop(1, c[2]);
+            ctx.save();
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = g; ctx.fill();
+            ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.stroke();
+            ctx.fillStyle = '#16213e';
+            ctx.font = `700 ${Math.round(r * 1.15)}px Poppins, sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(String(rank), cx, cy + 2);
+            ctx.restore();
+        }
+
+        async function buildStandingsImage() {
+            const standings = rankedStandings();
+            if (!standings.length) return null;
+            const streaks = computeStreaks();
+            const top = standings.slice(0, 10);
+            const podio = top.filter(p => p.rank <= 3).slice(0, 3);
+            const resto = top.filter(p => !podio.includes(p));
+
+            const W = 1080;
+            const BASE = 760;                 // linea di appoggio dei gradini
+            const listTop = 820;
+            const rowH = 84;
+            const H = listTop + resto.length * rowH + 110;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            paintBackdrop(ctx, W, H);
+            paintHeader(ctx, W, 'Classifica', new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }));
+
+            // --- Podio: il primo al centro, gli altri ai lati; l'altezza segue la posizione ---
+            const imgs = await Promise.all(podio.map(p => loadImageSafe(p.photo)));
+            const altezze = { 1: 250, 2: 210, 3: 180 };
+            const anelli = { 1: '#f6c700', 2: '#c9c9c9', 3: '#cd7f32' };
+            const posti = [W / 2, W / 2 - 320, W / 2 + 320];   // centro, sinistra, destra
+            const cols = podio.map((p, i) => ({
+                p, img: imgs[i],
+                x: posti[i],
+                hgt: altezze[p.rank] || 180,
+                r: p.rank === 1 ? 104 : 86,   // la foto segue la posizione, non il posto sul foglio
+                ring: anelli[p.rank] || anelli[3]
+            }));
+
+            cols.forEach(c => {
+                const stepTop = BASE - c.hgt;
+                ctx.fillStyle = 'rgba(83,52,131,0.5)';
+                roundRectPath(ctx, c.x - 150, stepTop, 300, c.hgt, 14);
+                ctx.fill();
+
+                drawAvatar(ctx, c.img, c.p, c.x, stepTop - c.r - 30, c.r, c.ring);
+                drawMedal(ctx, c.x, stepTop + 46, 30, c.p.rank);
+
+                ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '700 34px Poppins, sans-serif';
+                ctx.fillText(wrapLines(ctx, c.p.alias || c.p.name, 280, 1)[0] || '', c.x, stepTop + 122);
+                ctx.fillStyle = '#e94560';
+                ctx.font = '700 32px Poppins, sans-serif';
+                ctx.fillText(c.p.totalPoints + ' pt', c.x, stepTop + 164);
+            });
+
+            // --- Dal quarto posto in giù ---
+            resto.forEach((p, i) => {
+                const y = listTop + i * rowH;
+                ctx.fillStyle = i % 2 ? 'rgba(22,33,62,0.75)' : 'rgba(22,33,62,0.45)';
+                roundRectPath(ctx, 70, y, W - 140, rowH - 12, 12);
+                ctx.fill();
+
+                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                const mid = y + (rowH - 12) / 2;
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = '700 30px Poppins, sans-serif';
+                ctx.fillText(p.rank + '°', 100, mid);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '600 32px Poppins, sans-serif';
+                ctx.fillText(wrapLines(ctx, p.alias || p.name, 520, 1)[0] || '', 175, mid);
+
+                const st = streaks[p.id] ? streaks[p.id].current : 0;
+                if (streakLevel(st)) {
+                    ctx.fillStyle = '#d95926';
+                    ctx.font = '600 26px Poppins, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('🔥 ' + st, W - 230, mid);
+                }
+
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#e94560';
+                ctx.font = '700 34px Poppins, sans-serif';
+                ctx.fillText(p.totalPoints + ' pt', W - 100, mid);
+                ctx.textBaseline = 'alphabetic';
+            });
+
+            paintFooter(ctx, W, H);
+            return { canvas, standings };
+        }
+
+        async function buildEventImage(ev) {
+            const W = 1080, H = 1080;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            paintBackdrop(ctx, W, H);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#e94560';
+            ctx.font = '700 34px Poppins, sans-serif';
+            ctx.fillText('SCANDO VOLLEY', W / 2, 96);
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '400 30px Poppins, sans-serif';
+            ctx.fillText('Prossimo appuntamento', W / 2, 146);
+
+            const d = new Date(ev.date);
+            const giorno = d.toLocaleDateString('it-IT', { weekday: 'long' });
+            const dataStr = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+            const oraStr = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            // Nome evento
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 66px Poppins, sans-serif';
+            const titolo = wrapLines(ctx, ev.name, W - 180, 3);
+            titolo.forEach((l, i) => ctx.fillText(l, W / 2, 300 + i * 78));
+
+            // Riquadro data e ora
+            const boxY = 300 + titolo.length * 78 + 40;
+            ctx.fillStyle = 'rgba(83,52,131,0.5)';
+            roundRectPath(ctx, 130, boxY, W - 260, 200, 20);
+            ctx.fill();
+            ctx.fillStyle = '#e94560';
+            ctx.font = '700 40px Poppins, sans-serif';
+            ctx.fillText(giorno.charAt(0).toUpperCase() + giorno.slice(1), W / 2, boxY + 68);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 46px Poppins, sans-serif';
+            ctx.fillText(dataStr, W / 2, boxY + 126);
+            ctx.font = '700 54px Poppins, sans-serif';
+            ctx.fillText('ore ' + oraStr, W / 2, boxY + 184);
+
+            // Descrizione
+            if (ev.description) {
+                ctx.fillStyle = '#dcdcdc';
+                ctx.font = '400 34px Poppins, sans-serif';
+                const desc = wrapLines(ctx, ev.description, W - 200, 5);
+                desc.forEach((l, i) => ctx.fillText(l, W / 2, boxY + 270 + i * 48));
+            }
+
+            paintFooter(ctx, W, H);
+            return canvas;
+        }
+
+        // Condivide il PNG: su telefono apre direttamente il menu di condivisione
+        // (con WhatsApp tra le voci); su computer scarica l'immagine e apre WhatsApp Web.
+        async function sharePng(canvas, filename, text) {
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+            return shareBlob(blob, filename, text);
+        }
+
+        async function shareDataUrl(dataUrl, filename, text) {
+            const blob = await (await fetch(dataUrl)).blob();
+            return shareBlob(blob, filename, text);
+        }
+
+        async function shareBlob(blob, filename, text) {
+            if (!blob) { showToast('Non sono riuscito a creare l\'immagine.'); return; }
+            const file = new File([blob], filename, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], text });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // l'utente ha annullato
+                }
+            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+            showToast('Immagine scaricata: allegala al messaggio WhatsApp.');
+            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+        }
+
+        function withButtonBusy(btn, label, fn) {
+            const original = btn ? btn.innerHTML : null;
+            if (btn) { btn.disabled = true; btn.innerHTML = label; }
+            return Promise.resolve()
+                .then(fn)
+                .catch(err => { console.error(err); showToast('Non sono riuscito a preparare l\'immagine.'); })
+                .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = original; } });
+        }
+
+        window.app_shareStandings = (evt) => {
+            const btn = (evt && evt.currentTarget) || document.querySelector('[onclick^="app_shareStandings"]');
+            return withButtonBusy(btn, 'Preparo…', async () => {
+                const built = await buildStandingsImage();
+                if (!built) { showToast('Non c\'è ancora nessun punto in classifica.'); return; }
+                const medaglie = ['🥇', '🥈', '🥉'];
+                const righe = built.standings.slice(0, 3)
+                    .map((p, i) => `${medaglie[i]} ${p.alias || p.name} — ${p.totalPoints} pt`).join('\n');
+                const testo = `🏐 *Scando Volley* — Classifica al ${new Date().toLocaleDateString('it-IT')}\n\n${righe}\n\nClassifica completa: ${location.origin + location.pathname}`;
+                await sharePng(built.canvas, 'classifica-scando-volley.png', testo);
+            });
+        };
+
+        window.app_shareEvent = (id, evt) => {
+            const ev = events.find(e => e.id === id);
+            if (!ev) return;
+            const btn = evt && evt.currentTarget;
+            return withButtonBusy(btn, '…', async () => {
+                const canvas = await buildEventImage(ev);
+                const d = new Date(ev.date);
+                const quando = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }) +
+                    ' alle ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                const testo = `🏐 *${ev.name}*\n📅 ${quando}${ev.description ? '\n\n' + ev.description : ''}\n\n${location.origin + location.pathname}`;
+                await sharePng(canvas, 'evento-scando-volley.png', testo);
+            });
+        };
 
         function defaultSeasonName() {
             const y = new Date().getFullYear();
@@ -1087,8 +1682,10 @@
                 return;
             }
             const leaderboardData = computeStandings();
-            
+            const streaks = computeStreaks();
+
             container.innerHTML = leaderboardData.map((player, index) => {
+                const streak = streaks[player.id] ? streaks[player.id].current : 0;
                 const rankColor = index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-yellow-700' : 'bg-gray-600';
                 return `
                 <div class="card rounded-lg p-3 flex items-center space-x-3 shadow-md">
@@ -1104,6 +1701,7 @@
                             <span><strong class="text-gray-200">${player.dishPoints}</strong> Piatti</span>
                             <span><strong class="text-gray-200">${player.badgePoints}</strong> Badge</span>
                             <span><strong class="text-gray-200">${player.pointAverage}</strong> Media</span>
+                            ${streakChipHtml(streak)}
                         </div>
                     </div>
                     <div class="text-2xl font-bold text-accent">${player.totalPoints}</div>
@@ -1199,6 +1797,9 @@
                         <p class="font-bold text-lg text-white">${event.name}</p>
                         <p class="text-sm text-accent">${new Date(event.date).toLocaleString('it-IT', { dateStyle: 'full', timeStyle: 'short' })}</p>
                         <p class="mt-2 text-gray-300 whitespace-pre-wrap">${event.description}</p>
+                        <button onclick="app_shareEvent('${event.id}', event)" class="share-btn share-btn-sm mt-3" title="Crea la locandina dell'evento per WhatsApp">
+                            <span class="leading-none">📲</span> Condividi
+                        </button>
                     </div>
                     ${isAdmin ? `<button onclick="app_deleteEvent('${event.id}')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full h-10 w-10 flex-shrink-0 ml-4 flex items-center justify-center text-xl font-bold">&times;</button>` : ''}
                 </div>
@@ -1366,6 +1967,7 @@
                 return badge ? `<span class="bg-accent text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${badge.icon || '🏅'} ${badge.name}</span>` : '';
             }).join('');
             const age = calculateAge(player.birthDate);
+            const st = computeStreaks()[player.id] || { current: 0, best: 0 };
             content.innerHTML = `
                 <button onclick="app_closePlayerDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
                 <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
@@ -1381,6 +1983,8 @@
                         <div><strong>Età:</strong> ${age ? age + ' anni' : 'N/D'}</div>
                         <div><strong>Altezza:</strong> ${player.height ? player.height + ' cm' : 'N/D'}</div>
                         <div><strong>Peso:</strong> ${player.weight ? player.weight + ' kg' : 'N/D'}</div>
+                        <div><strong>Serie in corso:</strong> ${st.current ? streakChipHtml(st.current) : '<span class="text-gray-400">nessuna</span>'}</div>
+                        <div><strong>Record serie:</strong> ${st.best || 0}</div>
                     </div>
                     <div>
                         <p><strong>Deficit/Caratteristiche:</strong></p>
@@ -1820,7 +2424,8 @@
         const cardCache = new Map();
         async function drawCard(p) {
             const photoKey = p.photo ? p.photo.length + p.photo.slice(-24) : '';
-            const key = [p.name, p.surname, p.alias, p.role, p.number, p.height, JSON.stringify(p.skills || {}), photoKey, currentSeasonLabel()].join('|');
+            const streakNow = (computeStreaks()[p.id] || {}).current || 0;
+            const key = [p.name, p.surname, p.alias, p.role, p.number, p.height, JSON.stringify(p.skills || {}), photoKey, currentSeasonLabel(), streakNow].join('|');
             if (cardCache.has(p.id) && cardCache.get(p.id).key === key) return cardCache.get(p.id).url;
             if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
@@ -1874,6 +2479,23 @@
             ctx.fillStyle = fade; ctx.fillRect(px, py + ph - 170, pw, 170);
             ctx.restore();
             ctx.strokeStyle = 'rgba(246,211,101,0.55)'; ctx.lineWidth = 2; rrPath(ctx, px, py, pw, ph, 16); ctx.stroke();
+
+            // distintivo serie di presenze (solo da 3 allenamenti consecutivi in su)
+            if (streakLevel(streakNow)) {
+                const label = (streakLevel(streakNow) === 3 ? '🔥🔥 ' : '🔥 ') + streakNow;
+                ctx.save();
+                ctx.font = '700 22px Poppins, sans-serif';
+                const bw = Math.max(86, ctx.measureText(label).width + 30), bh = 40;
+                const bx = px + pw - bw - 14, by = py + 14;
+                ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 10;
+                ctx.fillStyle = 'rgba(217,89,38,0.94)';
+                rrPath(ctx, bx, by, bw, bh, 20); ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(label, bx + bw / 2, by + bh / 2 + 1);
+                ctx.restore();
+            }
 
             // valutazione complessiva (in alto a sinistra)
             const o = ovr(p);
@@ -1944,17 +2566,28 @@
             grid.innerHTML = sorted.map((p, i) => `<img src="${urls[i]}" alt="Figurina di ${esc(p.alias || p.name)}" class="album-card w-full" onclick="app_openCard('${p.id}')">`).join('');
         }
 
+        let cardModalPlayerId = null;
         window.app_openCard = async (id) => {
             const p = players.find(pl => pl.id === id);
             if (!p) return;
             const url = await drawCard(p);
             document.getElementById('card-modal-img').src = url;
+            cardModalPlayerId = id;
             const dl = document.getElementById('card-modal-download');
             dl.href = url;
             dl.download = 'figurina-' + (p.alias || p.name || 'giocatore').toLowerCase().replace(/[^a-z0-9]+/gi, '-') + '.png';
             document.getElementById('card-modal').classList.remove('hidden');
         };
         document.getElementById('card-modal-close').addEventListener('click', () => document.getElementById('card-modal').classList.add('hidden'));
+        document.getElementById('card-modal-share').addEventListener('click', function () {
+            const p = players.find(pl => pl.id === cardModalPlayerId);
+            const img = document.getElementById('card-modal-img');
+            if (!p || !img.src) return;
+            const nome = p.alias || p.name;
+            const file = 'figurina-' + nome.toLowerCase().replace(/[^a-z0-9]+/gi, '-') + '.png';
+            withButtonBusy(this, 'Preparo…', () =>
+                shareDataUrl(img.src, file, `🏐 La figurina di *${nome}* — Scando Volley\n${location.origin + location.pathname}`));
+        });
         document.getElementById('card-modal').addEventListener('click', e => { if (e.target.id === 'card-modal') e.currentTarget.classList.add('hidden'); });
 
         buildSkillSliders();
