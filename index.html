@@ -325,6 +325,7 @@
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
                     <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
+                    <a href="#" class="nav-link" data-page="pagamenti">Pagamenti</a>
                 </div>
                 <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -339,6 +340,7 @@
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
                 <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
+                <a href="#" class="block nav-link py-2" data-page="pagamenti">Pagamenti</a>
             </div>
         </header>
 
@@ -440,6 +442,20 @@
                             <textarea id="ai-prompt" readonly class="w-full form-input p-2 rounded mt-3 h-40 text-xs"></textarea>
                             <button type="button" id="copy-ai-prompt" class="btn-primary text-white font-bold py-1 px-4 rounded mt-2">Copia testo</button>
                         </details>
+                        <div class="md:col-span-2 rounded-lg p-4 bg-primary bg-opacity-40 border border-secondary">
+                            <h4 class="font-semibold text-white mb-2">Status</h4>
+                            <p class="text-xs text-gray-400 mb-3">Seleziona se è un giocatore della squadra fissa o un ospite occasionale.</p>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="playerStatus" value="core" checked class="w-4 h-4">
+                                    <span class="text-white">Squadra Fissa</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="playerStatus" value="guest" class="w-4 h-4">
+                                    <span class="text-white">Ospite Occasionale</span>
+                                </label>
+                            </div>
+                        </div>
                         <div class="md:col-span-2 rounded-lg p-4 bg-primary bg-opacity-40 border border-secondary">
                             <h4 class="font-semibold text-white mb-1">Caratteristiche tecniche</h4>
                             <p class="text-xs text-gray-400 mb-3">Voto da 1 a 10. Servono per creare squadre equilibrate e per le statistiche della figurina.</p>
@@ -587,6 +603,129 @@
                 </div>
 
             </div>
+
+            <!-- Pagina Pagamenti -->
+            <div id="page-pagamenti" class="page hidden">
+                <h2 class="text-3xl font-bold mb-4 text-white">Pagamenti</h2>
+
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="switchPaymentTab('meals')" class="pagamenti-tab-btn active btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="meals">
+                        🍽️ Pasti
+                    </button>
+                    <button onclick="switchPaymentTab('fees')" class="pagamenti-tab-btn btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="fees">
+                        🎫 Iscrizioni Stagione
+                    </button>
+                    <button onclick="switchPaymentTab('summary')" class="pagamenti-tab-btn btn-primary text-white font-bold py-2 px-4 rounded-lg" data-tab="summary">
+                        💰 Riepilogo
+                    </button>
+                </div>
+
+                <!-- TAB: PASTI -->
+                <div id="tab-meals" class="pagamenti-tab-content">
+                    <h3 class="text-2xl font-bold mb-4 text-white">Pasti Pendenti</h3>
+                    <p class="text-gray-400 mb-4">Cena forfettaria: <strong class="text-white">10€ a persona</strong></p>
+                    <div id="meals-debtors-container" class="space-y-3">
+                        <div class="text-center py-10">
+                            <p class="text-gray-400">Nessun debito pasti.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: ISCRIZIONI -->
+                <div id="tab-fees" class="pagamenti-tab-content hidden">
+                    <h3 class="text-2xl font-bold mb-4 text-white">Iscrizioni Stagione 2024-2025</h3>
+                    <p class="text-gray-400 mb-4">Quota annuale: <strong class="text-white">100€ per giocatore</strong></p>
+
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="card rounded-lg p-4">
+                            <h4 class="text-lg font-bold text-white mb-3">Pagati</h4>
+                            <div id="season-paid-container" class="space-y-2"></div>
+                        </div>
+                        <div class="card rounded-lg p-4">
+                            <h4 class="text-lg font-bold text-red-400 mb-3">In Sospeso</h4>
+                            <div id="season-unpaid-container" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Form admin: registra pagamento -->
+                    <div class="admin-content hidden card rounded-lg p-4 mb-6 border-l-4 border-secondary">
+                        <h4 class="text-lg font-bold text-white mb-3">Registra Pagamento (Admin)</h4>
+                        <div class="grid md:grid-cols-4 gap-3">
+                            <select id="fee-player-select" class="form-select p-2 rounded">
+                                <option value="">Seleziona giocatore...</option>
+                            </select>
+                            <select id="fee-method-select" class="form-select p-2 rounded">
+                                <option value="contanti">Contanti</option>
+                                <option value="bonifico">Bonifico</option>
+                                <option value="altro">Altro</option>
+                            </select>
+                            <input type="date" id="fee-date-input" class="form-input p-2 rounded">
+                            <button onclick="app_recordSeasonFee()" class="btn-accent text-white font-bold py-2 px-4 rounded-lg">Registra</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: RIEPILOGO -->
+                <div id="tab-summary" class="pagamenti-tab-content hidden">
+                    <h3 class="text-2xl font-bold mb-4 text-white">Riepilogo Debitorio</h3>
+
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <div class="card rounded-lg p-4 border-l-4 border-orange-500">
+                            <p class="text-gray-400 text-sm">Pasti Dovuti</p>
+                            <p class="text-3xl font-bold text-white" id="summary-meals-total">0€</p>
+                            <p class="text-xs text-gray-400 mt-1" id="summary-meals-count">0 debiti</p>
+                        </div>
+                        <div class="card rounded-lg p-4 border-l-4 border-red-500">
+                            <p class="text-gray-400 text-sm">Iscrizioni Dovute</p>
+                            <p class="text-3xl font-bold text-white" id="summary-fees-total">0€</p>
+                            <p class="text-xs text-gray-400 mt-1" id="summary-fees-count">0 debiti</p>
+                        </div>
+                        <div class="card rounded-lg p-4 border-l-4 border-accent">
+                            <p class="text-gray-400 text-sm">TOTALE DOVUTO</p>
+                            <p class="text-3xl font-bold text-accent" id="summary-grand-total">0€</p>
+                        </div>
+                    </div>
+
+                    <div class="card rounded-lg p-4">
+                        <h4 class="text-lg font-bold text-white mb-3">Dettaglio per Giocatore</h4>
+                        <div id="summary-by-player-container" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Detail Modal (per ospiti e pasti) -->
+            <div id="training-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+                <div class="card rounded-lg p-6 w-11/12 max-w-2xl max-h-96 overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-white" id="detail-modal-title">Allenamento</h3>
+                        <button onclick="closeTrainingDetail()" class="text-gray-400 hover:text-white">✕</button>
+                    </div>
+
+                    <!-- Ospiti -->
+                    <div class="mb-6 admin-content">
+                        <h4 class="text-lg font-bold text-white mb-2">👥 Ospiti Presenti</h4>
+                        <p class="text-xs text-gray-400 mb-2">Seleziona chi era ospite in questo allenamento</p>
+                        <div id="detail-guests-picker" class="grid grid-cols-2 gap-2"></div>
+                    </div>
+
+                    <!-- Pasti -->
+                    <div class="mb-6 admin-content">
+                        <h4 class="text-lg font-bold text-white mb-2">🍽️ Pasti</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-2">Chi ha mangiato?</p>
+                                <div id="detail-meals-picker" class="grid grid-cols-2 gap-2"></div>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-2">Chi ha pagato?</p>
+                                <div id="detail-meals-paid-picker" class="grid grid-cols-2 gap-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="saveTrainingDetail()" class="w-full btn-accent text-white font-bold py-2 px-4 rounded-lg">Salva</button>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -678,7 +817,9 @@
         let datePickerInstance = null;
         let hasUnsavedChanges = false;
         let currentPage = 'classifica';
-        
+
+        let appState = { players: [], badges: [], events: [], trainings: {}, hallOfFame: [], seasonFees: {} };
+
         onSnapshot(dbDocRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
@@ -687,6 +828,12 @@
                 events = data.events || [];
                 trainings = data.trainings || {};
                 hallOfFame = data.hallOfFame || [];
+                appState.players = players;
+                appState.badges = badges;
+                appState.events = events;
+                appState.trainings = trainings;
+                appState.hallOfFame = hallOfFame;
+                appState.seasonFees = data.seasonFees || {};
                 console.log("Dati aggiornati da Firestore!");
             } else {
                 console.log("Nessun dato su Firestore, uso i dati di esempio.");
@@ -725,7 +872,11 @@
                 if(awardedBadgesInfo.length > 0) {
                     awardedBadgesInfo.forEach(info => showToast(info));
                 }
-                const appState = { players, badges, events, trainings, hallOfFame };
+                appState.players = players;
+                appState.badges = badges;
+                appState.events = events;
+                appState.trainings = trainings;
+                appState.hallOfFame = hallOfFame;
                 await setDoc(dbDocRef, appState);
                 hasUnsavedChanges = false;
                 showToast('Dati salvati sul database!');
@@ -799,6 +950,7 @@
             e.preventDefault();
             hasUnsavedChanges = true;
             const id = document.getElementById('playerId').value;
+            const status = document.querySelector('input[name="playerStatus"]:checked')?.value || 'core';
             const playerData = {
                 name: document.getElementById('playerName').value,
                 surname: document.getElementById('playerSurname').value,
@@ -812,13 +964,16 @@
                 notes: document.getElementById('playerNotes').value,
                 number: document.getElementById('playerNumber').value,
                 skills: readSkillSliders(),
-                assignedBadges: []
+                assignedBadges: [],
+                status: status,
+                guestSinceDate: status === 'guest' ? new Date().toISOString().split('T')[0] : null
             };
 
             if (id) {
                 const playerIndex = players.findIndex(p => p.id === id);
                 if (playerIndex > -1) {
                     playerData.assignedBadges = players[playerIndex].assignedBadges || [];
+                    playerData.guestSinceDate = players[playerIndex].guestSinceDate || playerData.guestSinceDate;
                     players[playerIndex] = { ...players[playerIndex], ...playerData };
                 }
             } else {
@@ -1742,6 +1897,12 @@
             const container = document.getElementById('training-log-container');
             const trainingDayData = trainings[selectedTrainingDate] || { players: {} };
             document.getElementById('training-notes').value = trainingDayData.notes || '';
+
+            // Assicurati che esista la struttura base per questo allenamento
+            if (!trainings[selectedTrainingDate]) {
+                trainings[selectedTrainingDate] = { date: selectedTrainingDate, players: {}, notes: '', meals: { hadMeal: [], paid: [], outstanding: [] } };
+            }
+
             container.innerHTML = players.map(player => {
                 const playerData = trainingDayData.players ? (trainingDayData.players[player.id] || {}) : {};
                 return `
@@ -1763,6 +1924,7 @@
                             <input type="checkbox" data-player-id="${player.id}" data-field="dishes" ${playerData.dishes ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
                             <span>Piatti</span>
                         </label>
+                        ${isAdmin ? `<button onclick="openTrainingDetail('${selectedTrainingDate}')" class="btn-primary text-white font-bold py-1 px-3 rounded text-sm">👥 Ospiti & Pasti</button>` : ''}
                     </div>
                 </div>
                 `;
@@ -2653,7 +2815,296 @@
                 timer = setTimeout(() => { func.apply(this, args); }, timeout);
             };
         }
-        
+
+        // ========== FUNZIONI PER PAGAMENTI PASTI E QUOTE ANNUALI ==========
+
+        // --- INIZIALIZZAZIONE ---
+        function initSeasonFees() {
+            if (!appState.seasonFees) {
+                const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+                appState.seasonFees = { [season]: {} };
+            }
+        }
+
+        // --- PASTI: Registra chi ha mangiato e chi ha pagato ---
+        function recordMealAttendance(trainingId, mealAttendees, mealPaid) {
+            if (!appState.trainings[trainingId]) return;
+            appState.trainings[trainingId].meals = {
+                hadMeal: mealAttendees || [],
+                paid: mealPaid || [],
+                outstanding: (mealAttendees || []).filter(p => !(mealPaid || []).includes(p))
+            };
+            saveData();
+        }
+
+        // --- PASTI: Calcola debito pasti per un giocatore ---
+        function getMealDebt(playerId) {
+            let outstanding = [];
+            let total = 0;
+            Object.entries(appState.trainings).forEach(([trainingId, training]) => {
+                if (training.meals && training.meals.outstanding && training.meals.outstanding.includes(playerId)) {
+                    outstanding.push({ date: training.date, amount: 10, trainingId });
+                    total += 10;
+                }
+            });
+            return { outstanding, total };
+        }
+
+        // --- PASTI: Lista di tutti i debitori ---
+        function getAllMealDebtors() {
+            const debtors = {};
+            Object.entries(appState.trainings).forEach(([trainingId, training]) => {
+                if (training.meals && training.meals.outstanding) {
+                    training.meals.outstanding.forEach(playerId => {
+                        if (!debtors[playerId]) debtors[playerId] = [];
+                        debtors[playerId].push({ date: training.date, amount: 10 });
+                    });
+                }
+            });
+            return debtors;
+        }
+
+        // --- QUOTE: Registra pagamento iscrizione ---
+        function setSeasonFeePayment(playerId, data) {
+            const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            initSeasonFees();
+            if (!appState.seasonFees[season]) appState.seasonFees[season] = {};
+            const player = appState.players[playerId];
+            appState.seasonFees[season][playerId] = {
+                playerId, playerName: player.name + ' ' + player.surname,
+                amount: 100, paid: data.paid || false, paidDate: data.paidDate || null,
+                paymentMethod: data.paymentMethod || null, notes: data.notes || ''
+            };
+            saveData();
+        }
+
+        // --- QUOTE: Ottieni lo stato di pagamento iscrizione ---
+        function getSeasonFeeStatus(season = null) {
+            if (!season) season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            initSeasonFees();
+            const paid = [], unpaid = [];
+            Object.entries(appState.players).forEach(([playerId, player]) => {
+                if (player.status === 'guest') return;
+                const feeData = appState.seasonFees[season]?.[playerId];
+                if (feeData && feeData.paid) {
+                    paid.push({ ...player, ...feeData });
+                } else {
+                    unpaid.push({ ...player, amount: 100, paid: false, paidDate: null, paymentMethod: null, notes: '' });
+                }
+            });
+            return { paid, unpaid };
+        }
+
+        // --- PAGAMENTI REMINDERS: Per immagine WhatsApp ---
+        function getPaymentReminders() {
+            let reminders = [];
+            const mealDebtors = getAllMealDebtors();
+            Object.entries(mealDebtors).forEach(([playerId, debts]) => {
+                const player = appState.players[playerId];
+                const total = debts.reduce((sum, d) => sum + d.amount, 0);
+                const dates = debts.map(d => formatDateShort(d.date)).join(', ');
+                reminders.push({ type: 'meal', playerName: player.name, amount: total, description: `Cena ${dates}` });
+            });
+            const { unpaid } = getSeasonFeeStatus();
+            unpaid.forEach(player => {
+                reminders.push({ type: 'fee', playerName: player.name, amount: 100, description: 'Iscrizione stagione' });
+            });
+            return reminders;
+        }
+
+        function formatDateShort(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+        }
+
+        // --- RENDER: Tab Switching ---
+        window.switchPaymentTab = function(tab) {
+            document.querySelectorAll('.pagamenti-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.pagamenti-tab-btn').forEach(btn => btn.classList.remove('active', 'btn-accent'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active', 'btn-accent');
+            if (tab === 'meals') renderMealsDebtors();
+            if (tab === 'fees') renderSeasonFees();
+            if (tab === 'summary') renderPaymentSummary();
+        };
+
+        // --- RENDER: Debitori Pasti ---
+        function renderMealsDebtors() {
+            const container = document.getElementById('meals-debtors-container');
+            const debtors = getAllMealDebtors();
+            if (Object.keys(debtors).length === 0) {
+                container.innerHTML = '<div class="text-center py-10"><p class="text-gray-400">Nessun debito pasti.</p></div>';
+                return;
+            }
+            container.innerHTML = Object.entries(debtors).map(([playerId, debts]) => {
+                const player = appState.players[playerId];
+                const total = debts.reduce((sum, d) => sum + d.amount, 0);
+                return `<div class="card rounded-lg p-4 border-l-4 border-orange-500">
+                    <div class="flex justify-between items-start">
+                        <div><p class="font-bold text-white">${player.name} ${player.surname}</p>
+                        <p class="text-xs text-gray-400 mt-1">${debts.map(d => d.date).join(', ')}</p></div>
+                        <div class="text-right"><p class="text-2xl font-bold text-orange-500">${total}€</p>
+                        <p class="text-xs text-gray-400">${debts.length} pasti</p></div>
+                    </div></div>`;
+            }).join('');
+        }
+
+        // --- RENDER: Iscrizioni Stagione ---
+        function renderSeasonFees() {
+            const { paid, unpaid } = getSeasonFeeStatus();
+            const paidContainer = document.getElementById('season-paid-container');
+            const unpaidContainer = document.getElementById('season-unpaid-container');
+            paidContainer.innerHTML = paid.length === 0
+                ? '<p class="text-gray-400 text-sm">Nessun pagamento ancora registrato.</p>'
+                : paid.map(p => `<div class="flex justify-between items-center py-2 px-3 bg-primary bg-opacity-40 rounded">
+                    <div><p class="text-white font-semibold">${p.name} ${p.surname}</p>
+                    <p class="text-xs text-gray-400">${p.paymentMethod || 'N/A'} • ${formatDateShort(p.paidDate)}</p></div>
+                    <p class="text-green-400 font-bold">✓ 100€</p></div>`).join('');
+            unpaidContainer.innerHTML = unpaid.length === 0
+                ? '<p class="text-gray-400 text-sm">Tutti hanno pagato!</p>'
+                : unpaid.map(p => `<div class="flex justify-between items-center py-2 px-3 bg-red-900 bg-opacity-20 rounded border border-red-700">
+                    <p class="text-white font-semibold">${p.name} ${p.surname}</p>
+                    <p class="text-red-400 font-bold">⚠️ 100€</p></div>`).join('');
+            const playerSelect = document.getElementById('fee-player-select');
+            if (playerSelect) {
+                playerSelect.innerHTML = '<option value="">Seleziona giocatore...</option>' +
+                    unpaid.map(p => `<option value="${p.id}">${p.name} ${p.surname}</option>`).join('');
+            }
+        }
+
+        // --- RENDER: Riepilogo ---
+        function renderPaymentSummary() {
+            const mealDebtors = getAllMealDebtors();
+            const { unpaid: unpaidFees } = getSeasonFeeStatus();
+            let mealTotal = 0, mealCount = 0;
+            Object.entries(mealDebtors).forEach(([_, debts]) => {
+                mealCount += debts.length;
+                mealTotal += debts.reduce((sum, d) => sum + d.amount, 0);
+            });
+            const feeTotal = unpaidFees.length * 100;
+            const grandTotal = mealTotal + feeTotal;
+            document.getElementById('summary-meals-total').textContent = mealTotal + '€';
+            document.getElementById('summary-meals-count').textContent = Object.keys(mealDebtors).length + ' persone, ' + mealCount + ' pasti';
+            document.getElementById('summary-fees-total').textContent = feeTotal + '€';
+            document.getElementById('summary-fees-count').textContent = unpaidFees.length + ' persone';
+            document.getElementById('summary-grand-total').textContent = grandTotal + '€';
+
+            const byPlayer = {};
+            Object.entries(mealDebtors).forEach(([playerId, debts]) => {
+                if (!byPlayer[playerId]) byPlayer[playerId] = { meals: 0, fees: 0 };
+                byPlayer[playerId].meals = debts.reduce((sum, d) => sum + d.amount, 0);
+            });
+            unpaidFees.forEach(p => {
+                if (!byPlayer[p.id]) byPlayer[p.id] = { meals: 0, fees: 0 };
+                byPlayer[p.id].fees = 100;
+            });
+            const container = document.getElementById('summary-by-player-container');
+            container.innerHTML = Object.entries(byPlayer).map(([playerId, amounts]) => {
+                const player = appState.players[playerId];
+                const total = amounts.meals + amounts.fees;
+                const badges = [];
+                if (amounts.meals > 0) badges.push(`🍽️ ${amounts.meals}€`);
+                if (amounts.fees > 0) badges.push(`🎫 ${amounts.fees}€`);
+                return `<div class="flex justify-between items-center py-2 px-3 bg-primary rounded">
+                    <div><p class="text-white font-semibold">${player.name} ${player.surname}</p>
+                    <p class="text-xs text-gray-400 mt-1">${badges.join(' + ')}</p></div>
+                    <p class="text-lg font-bold text-accent">${total}€</p></div>`;
+            }).join('');
+        }
+
+        // --- APP: Registra pagamento iscrizione (Admin) ---
+        window.app_recordSeasonFee = function() {
+            const playerId = document.getElementById('fee-player-select').value;
+            const method = document.getElementById('fee-method-select').value;
+            const date = document.getElementById('fee-date-input').value;
+            if (!playerId || !date) {
+                alert('Seleziona giocatore e data');
+                return;
+            }
+            setSeasonFeePayment(playerId, { paid: true, paidDate: date, paymentMethod: method, notes: '' });
+            document.getElementById('fee-player-select').value = '';
+            document.getElementById('fee-date-input').value = '';
+            renderSeasonFees();
+            renderPaymentSummary();
+        };
+
+        // --- TRAINING DETAIL MODAL ---
+        let currentTrainingId = null;
+        window.openTrainingDetail = function(trainingId) {
+            currentTrainingId = trainingId;
+            const training = appState.trainings[trainingId];
+            document.getElementById('detail-modal-title').textContent = 'Allenamento ' + formatDateShort(training.date);
+
+            const guestsPicker = document.getElementById('detail-guests-picker');
+            guestsPicker.innerHTML = Object.entries(appState.players)
+                .filter(([_, p]) => training.players[_])
+                .map(([playerId, player]) => {
+                    const isGuest = training.players[playerId].role === 'guest';
+                    return `<label class="flex items-center gap-2 p-2 rounded cursor-pointer ${isGuest ? 'bg-secondary bg-opacity-40' : ''}">
+                        <input type="checkbox" value="${playerId}" class="detail-guest-check" ${isGuest ? 'checked' : ''}>
+                        <span class="text-white text-sm">${player.name}</span></label>`;
+                }).join('');
+
+            const mealsPicker = document.getElementById('detail-meals-picker');
+            mealsPicker.innerHTML = Object.entries(appState.players)
+                .filter(([_, p]) => training.players[_])
+                .map(([playerId, player]) => {
+                    const hadMeal = training.meals && training.meals.hadMeal && training.meals.hadMeal.includes(playerId);
+                    return `<label class="flex items-center gap-2 p-2 rounded cursor-pointer ${hadMeal ? 'bg-orange-600 bg-opacity-30' : ''}">
+                        <input type="checkbox" value="${playerId}" class="detail-meal-check" ${hadMeal ? 'checked' : ''}>
+                        <span class="text-white text-sm">${player.name}</span></label>`;
+                }).join('');
+
+            const mealsPaidPicker = document.getElementById('detail-meals-paid-picker');
+            mealsPaidPicker.innerHTML = Object.entries(appState.players)
+                .filter(([_, p]) => training.players[_] && training.meals && training.meals.hadMeal && training.meals.hadMeal.includes(_))
+                .map(([playerId, player]) => {
+                    const paid = training.meals && training.meals.paid && training.meals.paid.includes(playerId);
+                    return `<label class="flex items-center gap-2 p-2 rounded cursor-pointer ${paid ? 'bg-green-600 bg-opacity-30' : ''}">
+                        <input type="checkbox" value="${playerId}" class="detail-paid-check" ${paid ? 'checked' : ''}>
+                        <span class="text-white text-sm">${player.name}</span></label>`;
+                }).join('');
+
+            document.getElementById('training-detail-modal').classList.remove('hidden');
+        };
+
+        window.closeTrainingDetail = function() {
+            document.getElementById('training-detail-modal').classList.add('hidden');
+        };
+
+        window.saveTrainingDetail = function() {
+            const training = appState.trainings[currentTrainingId];
+            const guestChecks = document.querySelectorAll('.detail-guest-check:checked');
+            const guests = Array.from(guestChecks).map(cb => cb.value);
+            guests.forEach(playerId => {
+                training.players[playerId].role = 'guest';
+            });
+            Object.keys(training.players).forEach(playerId => {
+                if (!guests.includes(playerId)) training.players[playerId].role = 'core';
+            });
+
+            const mealChecks = document.querySelectorAll('.detail-meal-check:checked');
+            const hadMeal = Array.from(mealChecks).map(cb => cb.value);
+            const paidChecks = document.querySelectorAll('.detail-paid-check:checked');
+            const paid = Array.from(paidChecks).map(cb => cb.value);
+
+            training.meals = { hadMeal, paid, outstanding: hadMeal.filter(p => !paid.includes(p)) };
+            saveData();
+            closeTrainingDetail();
+        };
+
+        // --- MODIFICA CAPTION IMMAGINE WHATSAPP ---
+        function getStandingsCaption() {
+            const reminders = getPaymentReminders();
+            if (reminders.length === 0) return '📲 Classifica aggiornata';
+            let caption = '📲 Classifica aggiornata\n\n💰 RICORDINI PAGAMENTI:\n';
+            reminders.forEach(r => {
+                caption += `• ${r.playerName}: ${r.description} (${r.amount}€)\n`;
+            });
+            return caption;
+        }
+
         // --- EVENT LISTENERS ---
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
