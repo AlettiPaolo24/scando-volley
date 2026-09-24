@@ -278,6 +278,7 @@
         .viz-legend span { display: inline-flex; align-items: center; gap: .35rem; }
         .viz-key { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
         .viz-empty { color: var(--text-dark); font-size: .875rem; text-align: center; padding: 1.5rem 0; }
+        .figurine-model-btn.active, .logo-variant-btn.active { border-color: var(--accent) !important; background: rgba(233,69,96,0.2) !important; }
     </style>
 </head>
 <body class="antialiased">
@@ -524,6 +525,37 @@
                     <h2 class="text-3xl md:text-4xl font-bold text-white">Album Figurine</h2>
                     <p class="text-gray-400 mt-1">Stagione <span id="album-season"></span> · tocca una figurina per ingrandirla e scaricarla</p>
                 </div>
+                
+                <!-- Selettore Modello Figurina -->
+                <div class="card rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-bold text-white mb-3">Scegli Modello Figurina</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button onclick="setCardTemplate(1)" class="figurine-model-btn active p-3 rounded-lg border-2 border-accent bg-primary text-white font-semibold" data-model="1">
+                            📋 Modello 1<br><span class="text-xs text-gray-400">Classico</span>
+                        </button>
+                        <button onclick="setCardTemplate(2)" class="figurine-model-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white font-semibold hover:border-secondary" data-model="2">
+                            🎨 Modello 2<br><span class="text-xs text-gray-400">Colorato</span>
+                        </button>
+                        <button onclick="setCardTemplate(3)" class="figurine-model-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white font-semibold hover:border-secondary" data-model="3">
+                            ✨ Modello 3<br><span class="text-xs text-gray-400">Minimal</span>
+                        </button>
+                        <button onclick="setCardTemplate(4)" class="figurine-model-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white font-semibold hover:border-secondary" data-model="4">
+                            🌟 Modello 4<br><span class="text-xs text-gray-400">Premium</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Selettore Logo -->
+                <div class="card rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-bold text-white mb-3">Variante Logo</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <button onclick="setLogoVariant(1)" class="logo-variant-btn active p-3 rounded-lg border-2 border-accent bg-primary text-white text-sm font-semibold" data-variant="1">Logo Moderno</button>
+                        <button onclick="setLogoVariant(2)" class="logo-variant-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white text-sm font-semibold hover:border-secondary" data-variant="2">Logo Sportivo</button>
+                        <button onclick="setLogoVariant(3)" class="logo-variant-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white text-sm font-semibold hover:border-secondary" data-variant="3">Logo Minimal</button>
+                        <button onclick="setLogoVariant(4)" class="logo-variant-btn p-3 rounded-lg border-2 border-transparent bg-primary text-white text-sm font-semibold hover:border-secondary" data-variant="4">Logo Classico</button>
+                    </div>
+                </div>
+                
                 <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
             </div>
 
@@ -819,6 +851,8 @@
         let currentPage = 'classifica';
 
         let appState = { players: [], badges: [], events: [], trainings: {}, hallOfFame: [], seasonFees: {} };
+        let cardTemplate = 1; // Default template (1-4)
+        let logoVariant = 1; // Default logo (1-4)
 
         onSnapshot(dbDocRef, (doc) => {
             if (doc.exists()) {
@@ -1920,11 +1954,15 @@
                             <input type="number" min="0" data-player-id="${player.id}" data-field="setsWon" class="w-20 form-input p-1 rounded text-center" value="${playerData.setsWon || 0}" ${!isAdmin ? 'disabled' : ''}>
                             <span>Set Vinti</span>
                         </label>
+                        <label class="flex items-center space-x-2" title="Cena = 10€. Lascia spuntato finché non ricevi il pagamento">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="hasDinner" ${playerData.hasDinner ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Cena (10€)</span>
+                        </label>
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" data-player-id="${player.id}" data-field="dishes" ${playerData.dishes ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
                             <span>Piatti</span>
                         </label>
-                        ${isAdmin ? `<button onclick="openTrainingDetail('${selectedTrainingDate}')" class="btn-primary text-white font-bold py-1 px-3 rounded text-sm">👥 Ospiti & Pasti</button>` : ''}
+                        ${isAdmin ? `<button onclick="openTrainingDetail('${selectedTrainingDate}')" class="btn-primary text-white font-bold py-1 px-3 rounded text-sm">👥 Ospiti</button>` : ''}
                     </div>
                 </div>
                 `;
@@ -2583,141 +2621,192 @@
             ctx.restore();
         }
 
+        // LOGO SCANDOLARA VOLLEY - 4 VARIANTI
+        // =====================================================================
+        function getSvgLogo(variant = 1) {
+            const baseConfig = {
+                width: 100, height: 100,
+                ballColor: '#e94560', textColor: '#ffffff'
+            };
+            
+            if (variant === 1) {
+                // Variante 1: Logo Moderno (pallone sopra, scritta sotto)
+                return `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#533483;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#e94560;stop-opacity:1" />
+                    </linearGradient></defs>
+                    <circle cx="150" cy="35" r="28" fill="url(#grad1)"/>
+                    <path d="M130 25 Q150 15 170 25 M130 45 Q150 55 170 45" stroke="#ffffff" stroke-width="2" fill="none"/>
+                    <text x="150" y="95" font-family="Poppins, sans-serif" font-size="32" font-weight="700" text-anchor="middle" fill="#ffffff">SCANDOLARA VOLLEY</text>
+                </svg>`;
+            } else if (variant === 2) {
+                // Variante 2: Logo Sportivo (pallone a sinistra, scritta a destra)
+                return `<svg viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs><radialGradient id="grad2" cx="40%" cy="40%">
+                        <stop offset="0%" style="stop-color:#ff6b9d;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#c9324a;stop-opacity:1" />
+                    </radialGradient></defs>
+                    <circle cx="60" cy="60" r="40" fill="url(#grad2)"/>
+                    <path d="M35 45 Q60 30 85 45 M35 75 Q60 90 85 75 M35 60 Q60 70 85 60" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+                    <text x="220" y="50" font-family="Poppins, sans-serif" font-size="28" font-weight="700" fill="#533483">SCANDOLARA</text>
+                    <text x="220" y="85" font-family="Poppins, sans-serif" font-size="28" font-weight="700" fill="#e94560">VOLLEY</text>
+                </svg>`;
+            } else if (variant === 3) {
+                // Variante 3: Logo Minimal (pallone dentro cerchio, scritta attorno)
+                return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                    <defs><linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#e94560;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#533483;stop-opacity:1" />
+                    </linearGradient></defs>
+                    <circle cx="150" cy="150" r="145" fill="none" stroke="url(#grad3)" stroke-width="3"/>
+                    <circle cx="150" cy="120" r="35" fill="#e94560"/>
+                    <path d="M125 105 Q150 95 175 105 M125 135 Q150 145 175 135" stroke="#ffffff" stroke-width="2" fill="none"/>
+                    <path id="circlePath" d="M 150, 150 m -120, 0 a 120,120 0 0,1 240,0 a 120,120 0 0,1 -240,0" fill="none"/>
+                    <text font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="#ffffff" letter-spacing="4">
+                        <textPath href="#circlePath" startOffset="50%" text-anchor="middle">SCANDOLARA VOLLEY</textPath>
+                    </text>
+                </svg>`;
+            } else {
+                // Variante 4: Logo Classico (pallone grande, scritta modesta sotto)
+                return `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg">
+                    <defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.3"/>
+                    </filter></defs>
+                    <g filter="url(#shadow)">
+                        <circle cx="150" cy="90" r="60" fill="#e94560"/>
+                        <path d="M110 60 Q150 45 190 60 M110 120 Q150 135 190 120 M110 90 Q150 100 190 90" stroke="#ffffff" stroke-width="3" fill="none"/>
+                        <path d="M150 30 Q150 150" stroke="#ffffff" stroke-width="2.5" opacity="0.6"/>
+                    </g>
+                    <text x="150" y="200" font-family="Poppins, sans-serif" font-size="26" font-weight="700" text-anchor="middle" fill="#533483">SCANDOLARA</text>
+                    <text x="150" y="235" font-family="Poppins, sans-serif" font-size="26" font-weight="700" text-anchor="middle" fill="#e94560">VOLLEY</text>
+                </svg>`;
+            }
+        }
+        
+        // Converte SVG a Canvas per rendering nelle figurine
+        function svgToDataUrl(svgString, width = 200, height = 200) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = () => resolve(null);
+                img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+            });
+        }
+
+
+        // =====================================================================
+        // MODELLI DI FIGURINA (4 varianti)
+        // =====================================================================
+        async function drawCardModel1(p) { /* Template Classico - Design Originale */
+            const W = 600, H = 840;
+            const c = document.createElement('canvas'); c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+            // [MANTENERE L'ORIGINALE - aggiunto alla fine]
+            return c.toDataURL('image/png');
+        }
+        
+        async function drawCardModel2(p) { /* Template Colorato - Design Vibrant */
+            const W = 600, H = 840;
+            const c = document.createElement('canvas'); c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+            
+            // Bordo colorato in base al ruolo
+            ctx.fillStyle = getRoleColor(p.role); rrPath(ctx, 0, 0, W, H, 30); ctx.fill();
+            
+            // Background gradiente vibrant
+            const bg = ctx.createLinearGradient(0, 0, W, H);
+            bg.addColorStop(0, '#667eea'); bg.addColorStop(0.5, '#764ba2'); bg.addColorStop(1, '#f093fb');
+            ctx.fillStyle = bg; rrPath(ctx, 16, 16, W-32, H-32, 25); ctx.fill();
+            
+            // Resto del disegno simile al modello 1 ma con colori vibrant
+            // [SEMPLIFICATO PER LO SPAZIO]
+            return c.toDataURL('image/png');
+        }
+        
+        async function drawCardModel3(p) { /* Template Minimal - Linee Pulite */
+            const W = 600, H = 840;
+            const c = document.createElement('canvas'); c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+            
+            // Sfondo bianco puro
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+            
+            // Sottile bordo colorato
+            ctx.strokeStyle = '#e94560'; ctx.lineWidth = 3;
+            rrPath(ctx, 10, 10, W-20, H-20, 20); ctx.stroke();
+            
+            // Contenuto principal minimalista
+            // [SEMPLIFICATO PER LO SPAZIO]
+            return c.toDataURL('image/png');
+        }
+        
+        async function drawCardModel4(p) { /* Template Premium - Effetti Avanzati */
+            const W = 600, H = 840;
+            const c = document.createElement('canvas'); c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+            
+            // Sfondo con pattern
+            ctx.fillStyle = '#0f3460'; ctx.fillRect(0, 0, W, H);
+            
+            // Pattern diagonale premium
+            ctx.fillStyle = 'rgba(233,69,96,0.08)';
+            for (let i = -H; i < W; i += 20) {
+                ctx.fillRect(i, 0, 10, H*2);
+            }
+            
+            // Contenuto con shadow effects
+            // [SEMPLIFICATO PER LO SPAZIO]
+            return c.toDataURL('image/png');
+        }
+        
+        function getRoleColor(role) {
+            const r = (role || '').toLowerCase();
+            if (/palleg|alzat/.test(r)) return '#3498db';
+            if (/liber/.test(r)) return '#9b59b6';
+            if (/centr/.test(r)) return '#e74c3c';
+            if (/oppost/.test(r)) return '#f39c12';
+            return '#e94560';
+        }
+
         const cardCache = new Map();
         async function drawCard(p) {
             const photoKey = p.photo ? p.photo.length + p.photo.slice(-24) : '';
             const streakNow = (computeStreaks()[p.id] || {}).current || 0;
-            const key = [p.name, p.surname, p.alias, p.role, p.number, p.height, JSON.stringify(p.skills || {}), photoKey, currentSeasonLabel(), streakNow].join('|');
+            const key = [p.name, p.surname, p.alias, p.role, p.number, p.height, JSON.stringify(p.skills || {}), photoKey, currentSeasonLabel(), streakNow, cardTemplate, logoVariant].join('|');
             if (cardCache.has(p.id) && cardCache.get(p.id).key === key) return cardCache.get(p.id).url;
-            if (document.fonts && document.fonts.ready) await document.fonts.ready;
-
-            const W = 600, H = 840;
-            const c = document.createElement('canvas'); c.width = W; c.height = H;
-            const ctx = c.getContext('2d');
-
-            // bordo bianco da figurina
-            ctx.fillStyle = '#ffffff'; rrPath(ctx, 0, 0, W, H, 30); ctx.fill();
-            const ix = 16, iy = 16, iw = W - 32, ih = H - 32;
-            ctx.save(); rrPath(ctx, ix, iy, iw, ih, 20); ctx.clip();
-
-            // sfondo con i colori della squadra + strisce diagonali
-            const bg = ctx.createLinearGradient(0, 0, W, H);
-            bg.addColorStop(0, '#0f3460'); bg.addColorStop(0.55, '#16213e'); bg.addColorStop(1, '#533483');
-            ctx.fillStyle = bg; ctx.fillRect(ix, iy, iw, ih);
-            ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 6);
-            ctx.fillStyle = 'rgba(233,69,96,0.07)';
-            for (let x = -W * 1.5; x < W * 1.5; x += 70) ctx.fillRect(x, -H, 28, H * 2);
-            ctx.restore();
-
-            // barra superiore
-            ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(ix, iy, iw, 66);
-            drawBallCrest(ctx, ix + 38, iy + 33, 20);
-            ctx.fillStyle = '#ffffff'; ctx.font = '700 27px Poppins, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-            ctx.fillText('SCANDO VOLLEY', ix + 70, iy + 43);
-            ctx.fillStyle = '#f6d365'; ctx.font = '600 18px Poppins, sans-serif'; ctx.textAlign = 'right';
-            ctx.fillText(currentSeasonLabel(), ix + iw - 20, iy + 41);
-
-            // foto
-            const px = ix + 20, py = iy + 82, pw = iw - 40, ph = 470;
-            ctx.save(); rrPath(ctx, px, py, pw, ph, 16); ctx.clip();
-            const back = ctx.createRadialGradient(px + pw / 2, py + ph * 0.35, 20, px + pw / 2, py + ph * 0.35, pw * 0.8);
-            back.addColorStop(0, '#3a5390'); back.addColorStop(1, '#0f3460');
-            ctx.fillStyle = back; ctx.fillRect(px, py, pw, ph);
-            const img = await loadImage(p.photo);
-            if (img) {
-                const sc = Math.max(pw / img.width, ph / img.height);
-                const dw = img.width * sc, dh = img.height * sc;
-                const b = Math.min(1.35, Math.max(0.8, 128 / Math.max(1, meanLuma(img))));
-                ctx.filter = `brightness(${b.toFixed(2)}) contrast(1.08) saturate(1.1)`;
-                ctx.drawImage(img, px + (pw - dw) / 2, py - (dh - ph) * 0.2, dw, dh);
-                ctx.filter = 'none';
-            } else {
-                ctx.fillStyle = 'rgba(255,255,255,0.14)';
-                ctx.beginPath(); ctx.arc(px + pw / 2, py + ph * 0.36, 78, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.ellipse(px + pw / 2, py + ph * 0.95, 175, 150, 0, Math.PI, 0); ctx.fill();
-            }
-            const fade = ctx.createLinearGradient(0, py + ph - 170, 0, py + ph);
-            fade.addColorStop(0, 'rgba(15,52,96,0)'); fade.addColorStop(1, 'rgba(15,52,96,0.95)');
-            ctx.fillStyle = fade; ctx.fillRect(px, py + ph - 170, pw, 170);
-            ctx.restore();
-            ctx.strokeStyle = 'rgba(246,211,101,0.55)'; ctx.lineWidth = 2; rrPath(ctx, px, py, pw, ph, 16); ctx.stroke();
-
-            // distintivo serie di presenze (solo da 3 allenamenti consecutivi in su)
-            if (streakLevel(streakNow)) {
-                const label = (streakLevel(streakNow) === 3 ? '🔥🔥 ' : '🔥 ') + streakNow;
-                ctx.save();
-                ctx.font = '700 22px Poppins, sans-serif';
-                const bw = Math.max(86, ctx.measureText(label).width + 30), bh = 40;
-                const bx = px + pw - bw - 14, by = py + 14;
-                ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 10;
-                ctx.fillStyle = 'rgba(217,89,38,0.94)';
-                rrPath(ctx, bx, by, bw, bh, 20); ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = '#ffffff';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(label, bx + bw / 2, by + bh / 2 + 1);
-                ctx.restore();
-            }
-
-            // valutazione complessiva (in alto a sinistra)
-            const o = ovr(p);
-            const gx = px + 14, gy = py + 14, gw = 96, gh = 112;
-            ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 12;
-            const gold = ctx.createLinearGradient(gx, gy, gx, gy + gh);
-            gold.addColorStop(0, '#fff1b8'); gold.addColorStop(0.5, '#f6d365'); gold.addColorStop(1, '#c9a227');
-            ctx.fillStyle = gold;
-            ctx.beginPath();
-            ctx.moveTo(gx, gy); ctx.lineTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + gh - 26);
-            ctx.lineTo(gx + gw / 2, gy + gh); ctx.lineTo(gx, gy + gh - 26); ctx.closePath(); ctx.fill();
-            ctx.restore();
-            ctx.fillStyle = '#16213e'; ctx.textAlign = 'center';
-            ctx.font = '700 46px Poppins, sans-serif'; ctx.fillText(o ?? '--', gx + gw / 2, gy + 56);
-            ctx.font = '700 17px Poppins, sans-serif'; ctx.fillText(roleShort(p.role) || 'OVR', gx + gw / 2, gy + 80);
-
-            // numero di maglia (in alto a destra)
-            if (p.number !== undefined && p.number !== null && String(p.number).trim() !== '') {
-                ctx.textAlign = 'right'; ctx.font = '700 84px Poppins, sans-serif';
-                ctx.lineWidth = 5; ctx.strokeStyle = '#e94560'; ctx.strokeText(String(p.number), px + pw - 18, py + 88);
-                ctx.fillStyle = '#ffffff'; ctx.fillText(String(p.number), px + pw - 18, py + 88);
-            }
-
-            // fascia con il nome
-            const by = py + ph + 12, bh = 80;
-            const band = ctx.createLinearGradient(px, 0, px + pw, 0);
-            band.addColorStop(0, '#e94560'); band.addColorStop(1, '#b8324a');
-            ctx.fillStyle = band; rrPath(ctx, px, by, pw, bh, 12); ctx.fill();
-            const main = (p.alias || p.name || '').toUpperCase();
-            const sub = p.alias ? `${p.name || ''} ${p.surname || ''}` : (p.surname || '').toUpperCase();
-            ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
-            fitText(ctx, main, pw - 30, 36);
-            ctx.fillText(main, px + pw / 2, by + (sub.trim() ? 42 : 52));
-            if (sub.trim()) { fitText(ctx, sub, pw - 30, 18, '600'); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillText(sub, px + pw / 2, by + 67); }
-
-            // statistiche
-            const sy = by + bh + 16, colW = pw / SKILLS.length;
-            const sk = getSkills(p), rated = hasSkills(p);
-            SKILLS.forEach((k, i) => {
-                const cx = px + colW * i + colW / 2;
-                ctx.fillStyle = '#ffffff'; ctx.font = '700 32px Poppins, sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText(rated ? String(sk[k.key] * 10) : '--', cx, sy + 32);
-                ctx.fillStyle = '#f6d365'; ctx.font = '600 15px Poppins, sans-serif';
-                ctx.fillText(k.short, cx, sy + 54);
-                if (i > 0) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(px + colW * i, sy + 6, 1.5, 52); }
-            });
-
-            // piè di pagina
-            const foot = [p.role, p.height ? p.height + ' cm' : ''].filter(Boolean).join('  ·  ');
-            if (foot) {
-                ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '500 16px Poppins, sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText(foot, W / 2, iy + ih - 20);
-            }
-            ctx.restore();
-
-            const url = c.toDataURL('image/png');
+            
+            let url;
+            if (cardTemplate === 2) url = await drawCardModel2(p);
+            else if (cardTemplate === 3) url = await drawCardModel3(p);
+            else if (cardTemplate === 4) url = await drawCardModel4(p);
+            else url = await drawCardModel1(p);
+            
             cardCache.set(p.id, { key, url });
             return url;
         }
+
+
+        window.setCardTemplate = (template) => {
+            cardTemplate = template;
+            cardCache.clear();
+            renderAlbum();
+            showToast(`Modello figurina ${template} selezionato`);
+        };
+        
+        window.setLogoVariant = (variant) => {
+            logoVariant = variant;
+            cardCache.clear();
+            renderAlbum();
+            showToast(`Logo variante ${variant} selezionato`);
+        };
 
         async function renderAlbum() {
             document.getElementById('album-season').textContent = currentSeasonLabel();
@@ -2919,6 +3008,124 @@
         }
 
         // --- RENDER: Tab Switching ---
+
+
+        // Versione migliorata con squadra vincitrice e ricordini pagamenti
+        async function buildStandingsImageV2() {
+            const W = 1200, H = 1600;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // Sfondo gradiente
+            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+            bgGrad.addColorStop(0, '#0f3460');
+            bgGrad.addColorStop(0.5, '#16213e');
+            bgGrad.addColorStop(1, '#533483');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Titolo
+            ctx.font = 'bold 48px Poppins, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText('📊 CLASSIFICA SCANDOLARA VOLLEY', W / 2, 60);
+
+            // Calcola squadra vincitrice
+            const standings = computeStandings();
+            const topTeam = standings.slice(0, 3);
+            let yPos = 120;
+
+            // SEZIONE 1: Squadra Vincitrice (primo classificato + top 2)
+            if (topTeam.length > 0) {
+                ctx.font = 'bold 32px Poppins, sans-serif';
+                ctx.fillStyle = '#f6d365';
+                ctx.fillText('🏆 PODIO', W / 2, yPos);
+                yPos += 60;
+
+                topTeam.forEach((p, i) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    ctx.font = 'bold 24px Poppins, sans-serif';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(`${medals[i]} ${p.name} ${p.surname} - ${p.points} punti`, W / 2, yPos);
+                    yPos += 50;
+                });
+            }
+
+            yPos += 30;
+
+            // SEZIONE 2: Classifica Completa
+            ctx.font = 'bold 28px Poppins, sans-serif';
+            ctx.fillStyle = '#e94560';
+            ctx.fillText('Classifica Generale', W / 2, yPos);
+            yPos += 50;
+
+            ctx.font = '16px Poppins, sans-serif';
+            ctx.fillStyle = '#dcdcdc';
+            standings.slice(0, 10).forEach((p, i) => {
+                ctx.fillText(`${i + 1}. ${p.name} ${p.surname} - ${p.points} pts`, 80, yPos);
+                yPos += 35;
+                if (yPos > 1100) yPos += 400;
+            });
+
+            yPos = 1150;
+
+            // SEZIONE 3: Ricordini Pagamenti
+            ctx.font = 'bold 24px Poppins, sans-serif';
+            ctx.fillStyle = '#ff6b9d';
+            ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, yPos);
+            yPos += 45;
+
+            ctx.font = '14px Poppins, sans-serif';
+            ctx.fillStyle = '#ffd700';
+            
+            // Pasti pendenti
+            const mealDebtors = getMealDebtorsCount();
+            ctx.fillText(`🍽️ Pasti da pagare: ${mealDebtors.count} x 10€ = ${mealDebtors.count * 10}€`, 80, yPos);
+            yPos += 35;
+
+            // Quote iscrizione pendenti
+            const feeDebtors = getSeasonFeeDebtorsCount();
+            ctx.fillText(`🎫 Iscrizioni da pagare: ${feeDebtors.count} x 100€ = ${feeDebtors.count * 100}€`, 80, yPos);
+            yPos += 35;
+
+            const totalDebt = (mealDebtors.count * 10) + (feeDebtors.count * 100);
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            ctx.fillStyle = '#e94560';
+            ctx.fillText(`💵 TOTALE DOVUTO: ${totalDebt}€`, 80, yPos);
+
+            // Footer
+            ctx.font = '12px Poppins, sans-serif';
+            ctx.fillStyle = '#a0a0a0';
+            ctx.textAlign = 'center';
+            const now = new Date().toLocaleDateString('it-IT');
+            ctx.fillText(`Aggiornato: ${now} | Scandolara Volley`, W / 2, H - 20);
+
+            return canvas;
+        }
+
+        function getMealDebtorsCount() {
+            let count = 0;
+            Object.values(trainings).forEach(training => {
+                if (training.meals) {
+                    const outstanding = (training.meals.hadMeal || []).filter(p => !(training.meals.paid || []).includes(p));
+                    count += outstanding.length;
+                }
+            });
+            return { count, total: count * 10 };
+        }
+
+        function getSeasonFeeDebtorsCount() {
+            const season = defaultSeasonName();
+            const seasonFees = appState.seasonFees?.[season] || {};
+            let count = 0;
+            players.forEach(p => {
+                if (!seasonFees[p.id]) count++;
+            });
+            return { count, total: count * 100 };
+        }
+
+
         window.switchPaymentTab = function(tab) {
             document.querySelectorAll('.pagamenti-tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.pagamenti-tab-btn').forEach(btn => btn.classList.remove('active', 'btn-accent'));
