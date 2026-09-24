@@ -1413,7 +1413,6 @@
             const resto = top.filter(p => !podio.includes(p));
 
             const W = 1080;
-            const rowH = 60; // Compatto per il resto della classifica
 
             // === SEZIONE 1: Squadra vincitrice ultimo allenamento ===
             let lastTrainingWinners = [];
@@ -1561,7 +1560,7 @@
             });
 
             // Top 10 (dal 4° in giù) occupa il resto
-            const rowH = (classicaHeight - podiumHeight - 30) / Math.max(1, resto.length);
+            const rowHeightClassifica = (classicaHeight - podiumHeight - 30) / Math.max(1, resto.length);
             const restY = classicaY + podiumHeight + 20;
 
             ctx.fillStyle = 'rgba(83,52,131,0.15)';
@@ -1569,33 +1568,33 @@
             ctx.fill();
 
             resto.forEach((p, i) => {
-                const y = restY + i * rowH;
+                const y = restY + i * rowHeightClassifica;
                 ctx.fillStyle = i % 2 ? 'rgba(22,33,62,0.6)' : 'rgba(22,33,62,0.35)';
-                roundRectPath(ctx, 60, y, W - 120, rowH - 6, 10);
+                roundRectPath(ctx, 60, y, W - 120, rowHeightClassifica - 6, 10);
                 ctx.fill();
 
                 ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                const mid = y + rowH / 2;
+                const mid = y + rowHeightClassifica / 2;
 
                 ctx.fillStyle = '#a0a0a0';
-                ctx.font = `700 ${Math.max(18, rowH * 0.4)}px Poppins, sans-serif`;
+                ctx.font = `700 ${Math.max(18, rowHeightClassifica * 0.4)}px Poppins, sans-serif`;
                 ctx.fillText(p.rank + '°', 85, mid);
 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `600 ${Math.max(20, rowH * 0.42)}px Poppins, sans-serif`;
+                ctx.font = `600 ${Math.max(20, rowHeightClassifica * 0.42)}px Poppins, sans-serif`;
                 ctx.fillText(wrapLines(ctx, p.alias || p.name, 500, 1)[0] || '', 150, mid);
 
                 const st = streaks[p.id] ? streaks[p.id].current : 0;
                 if (streakLevel(st)) {
                     ctx.fillStyle = '#d95926';
-                    ctx.font = `600 ${Math.max(16, rowH * 0.35)}px Poppins, sans-serif`;
+                    ctx.font = `600 ${Math.max(16, rowHeightClassifica * 0.35)}px Poppins, sans-serif`;
                     ctx.textAlign = 'right';
                     ctx.fillText('🔥 ' + st, W - 200, mid);
                 }
 
                 ctx.textAlign = 'right';
                 ctx.fillStyle = '#e94560';
-                ctx.font = `700 ${Math.max(20, rowH * 0.45)}px Poppins, sans-serif`;
+                ctx.font = `700 ${Math.max(20, rowHeightClassifica * 0.45)}px Poppins, sans-serif`;
                 ctx.fillText(p.totalPoints + ' pt', W - 80, mid);
             });
 
