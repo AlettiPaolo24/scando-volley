@@ -142,6 +142,91 @@
         .numInputWrapper span:hover {
             background: var(--primary);
         }
+        /* --- Schede tecniche, squadre, figurine --- */
+        .skill-range { accent-color: #e94560; }
+        .crop-guide {
+            position: absolute;
+            left: 24%; right: 24%; top: 9%; height: 46%;
+            border: 2px dashed rgba(255,255,255,0.85);
+            border-radius: 50%;
+            box-shadow: 0 0 0 999px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .pick-chip {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.5rem; border-radius: 0.6rem;
+            background: var(--primary); border: 2px solid transparent;
+            cursor: pointer; text-align: left; transition: all 0.15s;
+            min-width: 0;
+        }
+        .pick-chip.selected { border-color: var(--accent); background: rgba(233,69,96,0.18); }
+        .pick-chip img { width: 2.2rem; height: 2.2rem; border-radius: 9999px; object-fit: cover; flex-shrink: 0; }
+        .ovr-pill {
+            font-size: 0.7rem; font-weight: 700; padding: 0.05rem 0.4rem;
+            border-radius: 9999px; background: #f6d365; color: #16213e; white-space: nowrap;
+        }
+        .album-card { cursor: pointer; transition: transform 0.15s; border-radius: 1rem; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+        .album-card:hover { transform: translateY(-3px) rotate(-0.5deg); }
+
+        /* --- Albo d'Oro --- */
+        .gold-text {
+            background: linear-gradient(90deg, #f6d365, #fff1b8, #d4a017);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .season-card {
+            background: radial-gradient(ellipse at top, rgba(212,160,23,0.18), transparent 60%), var(--bg-card);
+            border: 1px solid rgba(212,160,23,0.45);
+        }
+        .podium {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .podium-col {
+            flex: 1 1 0;
+            max-width: 11rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-width: 0;
+        }
+        .podium-step {
+            width: 100%;
+            border-radius: 0.6rem 0.6rem 0 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 0.4rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: rgba(0,0,0,0.55);
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.35);
+        }
+        .step-1 { height: 7.5rem; background: linear-gradient(180deg, #f6d365, #c9a227); }
+        .step-2 { height: 5.5rem; background: linear-gradient(180deg, #e6e6e6, #9e9e9e); }
+        .step-3 { height: 4rem;   background: linear-gradient(180deg, #e8a871, #9c5a2c); }
+        .podium-avatar {
+            border-radius: 9999px;
+            object-fit: cover;
+            border: 3px solid;
+        }
+        .avatar-1 { width: 5rem; height: 5rem; border-color: #f6d365; box-shadow: 0 0 18px rgba(246,211,101,0.6); }
+        .avatar-2 { width: 4rem; height: 4rem; border-color: #d0d0d0; }
+        .avatar-3 { width: 4rem; height: 4rem; border-color: #d98f55; }
+        .podium-name {
+            font-weight: 600;
+            color: white;
+            line-height: 1.2;
+            margin-top: 0.35rem;
+            word-break: break-word;
+        }
+        .crown { font-size: 1.6rem; line-height: 1; margin-bottom: 0.15rem; }
+        .medal-row { display: flex; align-items: center; gap: 0.75rem; }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
@@ -184,23 +269,29 @@
                         Salva Dati su DB
                     </button>
                 </div>
-                <div class="hidden md:flex items-center space-x-6 text-gray-300">
+                <div class="hidden lg:flex items-center space-x-5 text-gray-300">
                     <a href="#" class="nav-link active" data-page="classifica">Classifica</a>
                     <a href="#" class="nav-link" data-page="giocatori">Giocatori</a>
-                    <a href="#" class="nav-link" data-page="allenamenti">Registro Allenamenti</a>
+                    <a href="#" class="nav-link" data-page="allenamenti">Allenamenti</a>
+                    <a href="#" class="nav-link" data-page="squadre">Squadre</a>
+                    <a href="#" class="nav-link" data-page="album">Album</a>
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
+                    <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
                 </div>
-                <button id="mobile-menu-button" class="md:hidden text-white">
+                <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
             </nav>
-            <div id="mobile-menu" class="hidden md:hidden px-4 pb-4 space-y-2 text-center">
+            <div id="mobile-menu" class="hidden lg:hidden px-4 pb-4 space-y-2 text-center">
                 <a href="#" class="block nav-link py-2" data-page="classifica">Classifica</a>
                 <a href="#" class="block nav-link py-2" data-page="giocatori">Giocatori</a>
                 <a href="#" class="block nav-link py-2" data-page="allenamenti">Registro Allenamenti</a>
+                <a href="#" class="block nav-link py-2" data-page="squadre">Genera Squadre</a>
+                <a href="#" class="block nav-link py-2" data-page="album">Album Figurine</a>
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
+                <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
             </div>
         </header>
 
@@ -216,6 +307,22 @@
                         <li><strong class="text-white">Punti Badge</strong> assegnati al raggiungimento di obiettivi speciali.</li>
                     </ul>
                 </div>
+
+                <!-- Gestione Stagione (solo admin) -->
+                <div class="admin-content hidden card rounded-lg p-4 mb-6 border-l-4 border-red-500">
+                    <h2 class="text-xl font-bold mb-2 text-red-400">Gestione Stagione</h2>
+                    <p class="text-gray-300 text-sm mb-3">Chiude la stagione: il podio attuale viene salvato nell'<strong class="text-white">Albo d'Oro</strong>, poi vengono cancellati tutti gli allenamenti e tolti i badge ai giocatori. Giocatori, badge ed eventi restano. Prima del reset viene scaricato un file di backup.</p>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label for="season-name" class="block text-sm text-gray-400 mb-1">Nome della stagione che si chiude</label>
+                            <input type="text" id="season-name" placeholder="Es: 2025/2026" class="form-input p-2 rounded">
+                        </div>
+                        <button onclick="app_resetSeason()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
+                            Chiudi Stagione e Reset
+                        </button>
+                    </div>
+                </div>
+
                 <h2 class="text-3xl font-bold mb-4 text-white">Classifica Generale</h2>
                 <div id="leaderboard-container" class="space-y-2">
                     <div class="text-center py-10">
@@ -236,7 +343,7 @@
                         <input required type="text" id="playerSurname" placeholder="Cognome" class="form-input p-2 rounded">
                         <input type="text" id="playerAlias" placeholder="Alias" class="form-input p-2 rounded">
                         <div class="flex items-center space-x-4">
-                            <img id="playerPhotoPreview" src="https://placehold.co/100x100/16213e/dcdcdc?text=Foto" class="w-16 h-16 rounded-full object-cover bg-primary">
+                            <img id="playerPhotoPreview" src="https://placehold.co/100x100/16213e/dcdcdc?text=Foto" class="w-16 h-20 rounded-lg object-cover bg-primary flex-shrink-0">
                             <input type="file" id="playerPhoto" accept="image/*" class="form-file-button w-full">
                         </div>
                         <div>
@@ -245,7 +352,24 @@
                         </div>
                         <input type="number" id="playerHeight" placeholder="Altezza (cm)" class="form-input p-2 rounded">
                         <input type="number" id="playerWeight" placeholder="Peso (kg)" class="form-input p-2 rounded">
-                        <input type="text" id="playerRole" placeholder="Ruolo" class="form-input p-2 rounded">
+                        <input type="text" id="playerRole" placeholder="Ruolo (es: Palleggiatore, Schiacciatore, Centrale, Opposto, Libero)" class="form-input p-2 rounded">
+                        <input type="number" id="playerNumber" min="0" max="99" placeholder="Numero di maglia" class="form-input p-2 rounded">
+                        <details class="md:col-span-2 rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary">
+                            <summary class="cursor-pointer font-semibold text-white">✨ Foto stile album con l'AI (facoltativo)</summary>
+                            <ol class="list-decimal list-inside text-sm text-gray-300 space-y-1 mt-3">
+                                <li>Premi <strong>Copia testo</strong> qui sotto.</li>
+                                <li>Apri <a href="https://gemini.google.com" target="_blank" rel="noopener" class="text-accent underline">Gemini</a>, allega la foto del giocatore e incolla il testo.</li>
+                                <li>Scarica l'immagine che ti restituisce e caricala qui sopra con <strong>Scegli file</strong>.</li>
+                            </ol>
+                            <p class="text-xs text-gray-400 mt-2">Usa sempre lo stesso testo per tutti: così le foto escono con la stessa maglia, la stessa luce e lo stesso sfondo.</p>
+                            <textarea id="ai-prompt" readonly class="w-full form-input p-2 rounded mt-3 h-40 text-xs"></textarea>
+                            <button type="button" id="copy-ai-prompt" class="btn-primary text-white font-bold py-1 px-4 rounded mt-2">Copia testo</button>
+                        </details>
+                        <div class="md:col-span-2 rounded-lg p-4 bg-primary bg-opacity-40 border border-secondary">
+                            <h4 class="font-semibold text-white mb-1">Caratteristiche tecniche</h4>
+                            <p class="text-xs text-gray-400 mb-3">Voto da 1 a 10. Servono per creare squadre equilibrate e per le statistiche della figurina.</p>
+                            <div id="skill-sliders" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"></div>
+                        </div>
                         <textarea id="playerDeficit" placeholder="Deficit/Caratteristiche" class="md:col-span-2 form-input p-2 rounded h-20"></textarea>
                         <textarea id="playerNotes" placeholder="Note Varie" class="md:col-span-2 form-input p-2 rounded h-20"></textarea>
                         <div class="md:col-span-2 flex justify-end space-x-3">
@@ -273,6 +397,43 @@
                     </div>
                 </div>
                 <div id="training-log-container" class="space-y-3"></div>
+            </div>
+
+            <!-- Pagina Genera Squadre -->
+            <div id="page-squadre" class="page hidden">
+                <h2 class="text-3xl font-bold mb-1 text-white">Genera Squadre</h2>
+                <p class="text-gray-400 mb-4">Scegli chi gioca e l'app forma squadre equilibrate in base alle caratteristiche tecniche.</p>
+                <div class="card rounded-lg p-4 md:p-6 mb-6">
+                    <div class="flex flex-wrap items-end gap-3 mb-4">
+                        <div>
+                            <label for="team-count" class="block text-sm text-gray-400 mb-1">Numero di squadre</label>
+                            <select id="team-count" class="form-select p-2 rounded">
+                                <option value="2" selected>2 squadre</option>
+                                <option value="3">3 squadre</option>
+                                <option value="4">4 squadre</option>
+                            </select>
+                        </div>
+                        <button type="button" id="sel-present" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded">Presenti di oggi</button>
+                        <button type="button" id="sel-all" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded">Tutti</button>
+                        <button type="button" id="sel-none" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded">Nessuno</button>
+                    </div>
+                    <p class="text-sm text-gray-300 mb-2"><span id="sel-count" class="font-bold text-white">0</span> giocatori selezionati</p>
+                    <div id="team-player-picker" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+                    <div class="flex flex-wrap gap-3 mt-5">
+                        <button type="button" id="make-teams" class="btn-accent text-white font-bold py-3 px-6 rounded-lg text-lg">⚖️ Crea squadre equilibrate</button>
+                        <button type="button" id="reshuffle-teams" class="hidden btn-primary text-white font-bold py-3 px-5 rounded-lg">🔀 Rimescola</button>
+                    </div>
+                </div>
+                <div id="teams-result"></div>
+            </div>
+
+            <!-- Pagina Album Figurine -->
+            <div id="page-album" class="page hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">Album Figurine</h2>
+                    <p class="text-gray-400 mt-1">Stagione <span id="album-season"></span> · tocca una figurina per ingrandirla e scaricarla</p>
+                </div>
+                <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
             </div>
 
             <!-- Pagina Badge -->
@@ -322,12 +483,41 @@
                 </div>
                 <div id="events-list-container" class="space-y-4"></div>
             </div>
+
+            <!-- Pagina Albo d'Oro -->
+            <div id="page-albo" class="page hidden">
+                <div class="text-center mb-8">
+                    <div class="text-5xl mb-2">🏆</div>
+                    <h2 class="text-3xl md:text-4xl font-bold gold-text">Albo d'Oro</h2>
+                    <p class="text-gray-400 mt-1">I campioni di ogni stagione di Scando Volley</p>
+                </div>
+
+                <div id="albo-list-container" class="space-y-8 mb-8"></div>
+                <div id="albo-medal-table" class="mb-8"></div>
+                <div id="admin-only-albo-form" class="admin-content card rounded-lg p-6 mb-8 hidden">
+                    <h3 class="text-2xl font-semibold mb-1 text-white">Aggiungi una stagione passata</h3>
+                    <p class="text-sm text-gray-400 mb-4">Serve solo per le stagioni già concluse prima di questa funzione. Le prossime vengono salvate in automatico quando chiudi la stagione.</p>
+                    <form id="albo-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input required type="text" id="alboSeason" placeholder="Nome stagione (es: 2024/2025)" class="form-input p-2 rounded md:col-span-2">
+                        <select required id="alboFirst" class="form-select p-2 rounded albo-player-select"></select>
+                        <input type="number" id="alboFirstPts" placeholder="Punti 1° (facoltativo)" class="form-input p-2 rounded">
+                        <select id="alboSecond" class="form-select p-2 rounded albo-player-select"></select>
+                        <input type="number" id="alboSecondPts" placeholder="Punti 2° (facoltativo)" class="form-input p-2 rounded">
+                        <select id="alboThird" class="form-select p-2 rounded albo-player-select"></select>
+                        <input type="number" id="alboThirdPts" placeholder="Punti 3° (facoltativo)" class="form-input p-2 rounded">
+                        <div class="md:col-span-2 flex justify-end">
+                            <button type="submit" class="btn-primary text-white font-bold py-2 px-6 rounded">Aggiungi all'Albo</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
         </main>
     </div>
 
     <!-- Modal Dettaglio Giocatore -->
     <div id="player-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
-        <div class="card rounded-lg p-6 shadow-2xl w-11/12 max-w-lg relative text-gray-300 transform transition-all scale-95 opacity-0" id="player-detail-content"></div>
+        <div class="card rounded-lg p-6 shadow-2xl w-11/12 max-w-lg relative text-gray-300 transform transition-all scale-95 opacity-0 overflow-y-auto" style="max-height:90vh" id="player-detail-content"></div>
     </div>
 
     <!-- Modal Conferma Generica -->
@@ -338,6 +528,34 @@
             <div class="flex justify-center space-x-4">
                 <button id="confirm-modal-cancel" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded">Annulla</button>
                 <button id="confirm-modal-confirm" class="btn-accent text-white font-bold py-2 px-6 rounded">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ritaglio Foto -->
+    <div id="crop-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
+        <div class="card rounded-lg p-5 shadow-2xl w-11/12 max-w-sm text-center">
+            <h3 class="text-xl font-bold text-white mb-1">Inquadra la foto</h3>
+            <p class="text-sm text-gray-400 mb-3">Trascina per spostare e usa la barra per lo zoom. Metti il viso dentro l'ovale: così tutte le figurine hanno la stessa inquadratura.</p>
+            <div class="relative mx-auto rounded-lg overflow-hidden" style="width:240px;height:300px;">
+                <canvas id="crop-canvas" width="240" height="300" style="touch-action:none;cursor:grab;display:block;"></canvas>
+                <div class="crop-guide"></div>
+            </div>
+            <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" class="w-full mt-4 skill-range">
+            <div class="flex justify-center space-x-3 mt-4">
+                <button type="button" id="crop-cancel" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded">Annulla</button>
+                <button type="button" id="crop-ok" class="btn-primary text-white font-bold py-2 px-5 rounded">Usa foto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Figurina Grande -->
+    <div id="card-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden p-4">
+        <div class="w-full max-w-sm text-center">
+            <img id="card-modal-img" alt="Figurina" class="w-full rounded-2xl shadow-2xl">
+            <div class="flex justify-center space-x-3 mt-4">
+                <button type="button" id="card-modal-close" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded">Chiudi</button>
+                <a id="card-modal-download" class="btn-accent text-white font-bold py-2 px-5 rounded" download="figurina.png">⬇️ Scarica</a>
             </div>
         </div>
     </div>
@@ -379,11 +597,11 @@
         const dbDocRef = doc(db, "scandoVolleyData", "appState");
 
         let isAdmin = false;
-        let players = [], badges = [], events = [], trainings = {};
+        let players = [], badges = [], events = [], trainings = {}, hallOfFame = [];
         let selectedTrainingDate = new Date().toISOString().split('T')[0];
         let datePickerInstance = null;
         let hasUnsavedChanges = false;
-        let currentPage = 'classifica'; // ← NUOVA VARIABILE
+        let currentPage = 'classifica';
         
         onSnapshot(dbDocRef, (doc) => {
             if (doc.exists()) {
@@ -392,6 +610,7 @@
                 badges = data.badges || [];
                 events = data.events || [];
                 trainings = data.trainings || {};
+                hallOfFame = data.hallOfFame || [];
                 console.log("Dati aggiornati da Firestore!");
             } else {
                 console.log("Nessun dato su Firestore, uso i dati di esempio.");
@@ -430,7 +649,7 @@
                 if(awardedBadgesInfo.length > 0) {
                     awardedBadgesInfo.forEach(info => showToast(info));
                 }
-                const appState = { players, badges, events, trainings };
+                const appState = { players, badges, events, trainings, hallOfFame };
                 await setDoc(dbDocRef, appState);
                 hasUnsavedChanges = false;
                 showToast('Dati salvati sul database!');
@@ -439,7 +658,63 @@
                 showToast('Errore nel salvataggio dei dati!');
             }
         }
-        
+
+        // --- RESET STAGIONE ---
+        function downloadBackup() {
+            const oggi = new Date().toISOString().split('T')[0];
+            const backup = { players, badges, events, trainings, hallOfFame, backupDel: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'backup-scando-volley-' + oggi + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        window.app_resetSeason = () => {
+            showConfirmModal(
+                'Reset Stagione',
+                'Il podio attuale verrà salvato nell\'Albo d\'Oro, poi verranno cancellati TUTTI gli allenamenti e tolti i badge ai giocatori. Giocatori, badge ed eventi restano. Prima verrà scaricato un file di backup. Procedere?',
+                async () => {
+                    if (!isAdmin) return;
+                    if (!auth.currentUser) {
+                        showToast('Errore: sessione scaduta. Ricarica la pagina.');
+                        return;
+                    }
+                    try {
+                        // 1. Scarica un backup della stagione appena conclusa
+                        downloadBackup();
+
+                        // 2. Salva il podio attuale nell'Albo d'Oro
+                        const seasonName = document.getElementById('season-name').value.trim() || defaultSeasonName();
+                        const podium = computePodium();
+                        const nuovoAlbo = podium.length > 0
+                            ? [...hallOfFame, { id: 'h' + Date.now(), season: seasonName, closedAt: new Date().toISOString(), podium }]
+                            : hallOfFame;
+
+                        // 3. Giocatori senza badge assegnati, nessun allenamento
+                        const nuoviPlayers = players.map(p => ({ ...p, assignedBadges: [] }));
+                        await setDoc(dbDocRef, { players: nuoviPlayers, badges, events, trainings: {}, hallOfFame: nuovoAlbo });
+
+                        // 4. Aggiorna la pagina solo dopo che il salvataggio è riuscito
+                        players = nuoviPlayers;
+                        trainings = {};
+                        hallOfFame = nuovoAlbo;
+                        hasUnsavedChanges = false;
+                        renderAll();
+                        initializeDatePicker();
+                        showToast('Nuova stagione iniziata! Punteggi azzerati.');
+                    } catch (e) {
+                        console.error("Errore durante il reset:", e);
+                        showToast('Errore durante il reset: nessun dato è stato cancellato.');
+                    }
+                }
+            );
+        };
+
         const pages = document.querySelectorAll('.page');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -459,6 +734,8 @@
                 role: document.getElementById('playerRole').value,
                 deficit: document.getElementById('playerDeficit').value,
                 notes: document.getElementById('playerNotes').value,
+                number: document.getElementById('playerNumber').value,
+                skills: readSkillSliders(),
                 assignedBadges: []
             };
 
@@ -547,6 +824,9 @@
             renderTrainingLog();
             renderBadges();
             renderEvents();
+            renderHallOfFame();
+            renderTeamPicker();
+            if (currentPage === 'album') renderAlbum();
         }
 
         function initializeDatePicker() {
@@ -579,13 +859,9 @@
             return Math.abs(ageDate.getUTCFullYear() - 1970);
         }
         
-        const renderLeaderboard = () => {
-            const container = document.getElementById('leaderboard-container');
-            if (players.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center">Nessun giocatore ancora inserito.</p>`;
-                return;
-            }
-            const leaderboardData = players.map(player => {
+        // --- CALCOLO CLASSIFICA (usato da Classifica e Albo d'Oro) ---
+        function computeStandings() {
+            return players.map(player => {
                 let totalPoints = 0, attendanceCount = 0, setsWon = 0, dishPoints = 0;
                 Object.values(trainings).forEach(trainingDay => {
                     const playerData = trainingDay.players && trainingDay.players[player.id];
@@ -604,6 +880,177 @@
                 const pointAverage = attendanceCount > 0 ? (setsWon / attendanceCount).toFixed(2) : 0;
                 return { ...player, totalPoints, attendanceCount, dishPoints, badgePoints, pointAverage, setsWon };
             }).sort((a, b) => b.totalPoints - a.totalPoints);
+        }
+
+        // Podio della stagione in corso: primi 3 posti (a pari punti, stessa posizione)
+        function computePodium() {
+            const standings = computeStandings().filter(p => p.totalPoints > 0);
+            const podium = [];
+            standings.forEach((p, i) => {
+                const rank = (i > 0 && p.totalPoints === standings[i - 1].totalPoints) ? podium[podium.length - 1].rank : i + 1;
+                if (rank <= 3) {
+                    podium.push({
+                        playerId: p.id, name: p.name, surname: p.surname || '', alias: p.alias || '',
+                        rank, points: p.totalPoints, attendance: p.attendanceCount, setsWon: p.setsWon
+                    });
+                }
+            });
+            return podium;
+        }
+
+        function defaultSeasonName() {
+            const y = new Date().getFullYear();
+            return (y - 1) + '/' + y;
+        }
+
+        function esc(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // --- ALBO D'ORO ---
+        function podiumPhoto(entry) {
+            const current = players.find(p => p.id === entry.playerId);
+            return (current && current.photo) || ('https://placehold.co/150x150/16213e/dcdcdc?text=' + encodeURIComponent((entry.name || '?').charAt(0)));
+        }
+
+        function renderPodiumColumn(entries, rank) {
+            if (!entries.length) return `<div class="podium-col"></div>`;
+            const people = entries.map(e => `
+                <div class="flex flex-col items-center mb-2">
+                    ${rank === 1 ? '<div class="crown">👑</div>' : ''}
+                    <img src="${podiumPhoto(e)}" alt="${esc(e.name)}" class="podium-avatar avatar-${rank}">
+                    <div class="podium-name text-sm md:text-base">${esc(e.alias || e.name)}</div>
+                    ${e.alias ? `<div class="text-xs text-gray-400">${esc(e.name)} ${esc(e.surname)}</div>` : ''}
+                    ${e.points !== null && e.points !== undefined && e.points !== '' ? `<div class="text-xs mt-1 font-semibold ${rank === 1 ? 'text-yellow-300' : 'text-gray-300'}">${esc(e.points)} punti</div>` : ''}
+                </div>
+            `).join('');
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+            return `
+                <div class="podium-col">
+                    ${people}
+                    <div class="podium-step step-${rank}">${medal}</div>
+                </div>
+            `;
+        }
+
+        function renderHallOfFame() {
+            const container = document.getElementById('albo-list-container');
+            const medalTable = document.getElementById('albo-medal-table');
+
+            // Menu a tendina del form admin
+            const options = '<option value="">— Nessuno —</option>' + players
+                .map(p => `<option value="${p.id}">${esc(p.name)} ${esc(p.surname)}${p.alias ? ' (' + esc(p.alias) + ')' : ''}</option>`).join('');
+            document.querySelectorAll('.albo-player-select').forEach((sel, i) => {
+                const prev = sel.value;
+                sel.innerHTML = i === 0 ? options.replace('— Nessuno —', '— 1° classificato —') : options;
+                sel.value = prev;
+            });
+
+            if (!hallOfFame.length) {
+                medalTable.innerHTML = '';
+                container.innerHTML = `
+                    <div class="card rounded-lg p-8 text-center">
+                        <div class="text-4xl mb-3">🏐</div>
+                        <p class="text-gray-300">L'Albo d'Oro è ancora vuoto.</p>
+                        <p class="text-gray-500 text-sm mt-1">Il primo podio comparirà qui alla chiusura della stagione.</p>
+                    </div>`;
+                return;
+            }
+
+            // Bacheca trofei: medaglie totali per giocatore
+            const tally = {};
+            hallOfFame.forEach(s => s.podium.forEach(e => {
+                const key = e.playerId || e.name;
+                if (!tally[key]) tally[key] = { entry: e, gold: 0, silver: 0, bronze: 0 };
+                if (e.rank === 1) tally[key].gold++;
+                else if (e.rank === 2) tally[key].silver++;
+                else tally[key].bronze++;
+            }));
+            const tallyRows = Object.values(tally).sort((a, b) =>
+                b.gold - a.gold || b.silver - a.silver || b.bronze - a.bronze);
+            medalTable.innerHTML = `
+                <div class="card rounded-lg p-4 md:p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Bacheca Trofei</h3>
+                    <div class="space-y-2">
+                        ${tallyRows.map(t => `
+                            <div class="medal-row">
+                                <img src="${podiumPhoto(t.entry)}" alt="${esc(t.entry.name)}" class="w-10 h-10 rounded-full object-cover border-2 border-secondary">
+                                <span class="flex-grow text-white font-semibold truncate">${esc(t.entry.alias || t.entry.name)}</span>
+                                <span class="whitespace-nowrap">${t.gold ? '🥇×' + t.gold + ' ' : ''}${t.silver ? '🥈×' + t.silver + ' ' : ''}${t.bronze ? '🥉×' + t.bronze : ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+
+            // Una card per stagione, dalla più recente
+            const seasons = [...hallOfFame].sort((a, b) => (b.closedAt || '').localeCompare(a.closedAt || ''));
+            container.innerHTML = seasons.map(s => {
+                const byRank = r => s.podium.filter(e => e.rank === r);
+                const closed = (s.closedAt && !s.manual) ? new Date(s.closedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                return `
+                <div class="season-card rounded-xl p-4 md:p-6 shadow-xl relative">
+                    ${isAdmin ? `<button onclick="app_deleteSeason('${s.id}')" class="absolute top-3 right-4 text-red-400 hover:text-red-600 text-2xl font-bold" title="Elimina stagione">&times;</button>` : ''}
+                    <div class="text-center mb-6">
+                        <p class="text-xs uppercase tracking-widest text-yellow-500">Stagione</p>
+                        <h3 class="text-2xl md:text-3xl font-bold gold-text">${esc(s.season)}</h3>
+                        ${closed ? `<p class="text-xs text-gray-500 mt-1">Chiusa il ${closed}</p>` : ''}
+                    </div>
+                    <div class="podium">
+                        ${renderPodiumColumn(byRank(2), 2)}
+                        ${renderPodiumColumn(byRank(1), 1)}
+                        ${renderPodiumColumn(byRank(3), 3)}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.app_deleteSeason = (id) => {
+            showConfirmModal('Elimina stagione', 'Vuoi togliere questa stagione dall\'Albo d\'Oro?', async () => {
+                hallOfFame = hallOfFame.filter(s => s.id !== id);
+                renderHallOfFame();
+                await saveData();
+            });
+        };
+
+        const handleAlboForm = async (e) => {
+            e.preventDefault();
+            const season = document.getElementById('alboSeason').value.trim();
+            const picks = [
+                ['alboFirst', 'alboFirstPts', 1],
+                ['alboSecond', 'alboSecondPts', 2],
+                ['alboThird', 'alboThirdPts', 3]
+            ];
+            const podium = [];
+            picks.forEach(([selId, ptsId, rank]) => {
+                const pid = document.getElementById(selId).value;
+                const p = players.find(pl => pl.id === pid);
+                if (!p) return;
+                const pts = document.getElementById(ptsId).value;
+                podium.push({
+                    playerId: p.id, name: p.name, surname: p.surname || '', alias: p.alias || '',
+                    rank, points: pts === '' ? null : parseInt(pts, 10), attendance: null, setsWon: null
+                });
+            });
+            if (!season || !podium.length) {
+                showToast('Inserisci almeno il nome della stagione e il 1° classificato.');
+                return;
+            }
+            // Data fittizia prima di tutte le altre, così le stagioni passate finiscono in fondo
+            const oldest = hallOfFame.reduce((min, s) => (s.closedAt && s.closedAt < min) ? s.closedAt : min, new Date().toISOString());
+            const closedAt = new Date(new Date(oldest).getTime() - 1000).toISOString();
+            hallOfFame.push({ id: 'h' + Date.now(), season, closedAt, manual: true, podium });
+            document.getElementById('albo-form').reset();
+            renderHallOfFame();
+            await saveData();
+        };
+
+        const renderLeaderboard = () => {
+            const container = document.getElementById('leaderboard-container');
+            if (players.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center">Nessun giocatore ancora inserito.</p>`;
+                return;
+            }
+            const leaderboardData = computeStandings();
             
             container.innerHTML = leaderboardData.map((player, index) => {
                 const rankColor = index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-yellow-700' : 'bg-gray-600';
@@ -637,7 +1084,7 @@
                         <img src="${player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-12 h-12 rounded-full object-cover">
                         <div>
                             <p class="font-bold text-lg text-white">${player.name} ${player.surname}</p>
-                            <p class="text-sm text-gray-400">${player.role || 'Ruolo non specificato'}</p>
+                            <p class="text-sm text-gray-400">${player.role || 'Ruolo non specificato'} ${ovr(player) !== null ? `<span class="ovr-pill ml-1">${ovr(player)}</span>` : ''}</p>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -746,6 +1193,7 @@
                 document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.admin-content[readonly]').forEach(el => el.removeAttribute('readonly'));
             }
+            document.getElementById('season-name').value = defaultSeasonName();
             initializeDatePicker();
             renderAll();
 
@@ -777,7 +1225,8 @@
                 link.classList.toggle('active', link.dataset.page === pageId);
             });
             mobileMenu.classList.add('hidden');
-            currentPage = pageId; // ← AGGIORNA LA PAGINA CORRENTE
+            currentPage = pageId;
+            if (pageId === 'album') renderAlbum();
             if (pushState) {
                 history.pushState({ page: pageId }, '', '#' + pageId);
             }
@@ -799,6 +1248,8 @@
                 document.getElementById('playerRole').value = player.role;
                 document.getElementById('playerDeficit').value = player.deficit;
                 document.getElementById('playerNotes').value = player.notes;
+                document.getElementById('playerNumber').value = player.number ?? '';
+                setSkillSliders(player.skills);
                 window.scrollTo(0, 0);
             }
         };
@@ -839,6 +1290,7 @@
                 document.getElementById('playerId').value = '';
                 document.getElementById('playerPhotoData').value = '';
                 document.getElementById('playerPhotoPreview').src = 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto';
+                setSkillSliders(null);
             }
         };
         
@@ -906,6 +1358,13 @@
                         <p><strong>Badge Ottenuti:</strong></p>
                         <div class="p-2 flex flex-wrap gap-2 mt-1">${playerBadges || 'Nessun badge'}</div>
                     </div>
+                    <div>
+                        <p class="mb-2"><strong>Caratteristiche tecniche:</strong> ${hasSkills(player) ? `<span class="ovr-pill ml-1">${ovr(player)}</span>` : '<span class="text-gray-400 text-sm">non ancora valutato</span>'}</p>
+                        <div class="space-y-1">${skillBarsHtml(getSkills(player))}</div>
+                    </div>
+                    <div class="text-center pt-2">
+                        <button onclick="app_closePlayerDetail(); app_openCard('${player.id}')" class="btn-accent text-white font-bold py-2 px-5 rounded-lg">🃏 Vedi figurina</button>
+                    </div>
                 </div>
             `;
             modal.classList.remove('hidden');
@@ -918,6 +1377,551 @@
             content.classList.remove('scale-100', 'opacity-100');
             setTimeout(() => modal.classList.add('hidden'), 300);
         };
+
+        // =====================================================================
+        // CARATTERISTICHE TECNICHE
+        // =====================================================================
+        const SKILLS = [
+            { key: 'attacco',   label: 'Attacco',   short: 'ATT' },
+            { key: 'difesa',    label: 'Difesa',    short: 'DIF' },
+            { key: 'ricezione', label: 'Ricezione', short: 'RIC' },
+            { key: 'palleggio', label: 'Palleggio', short: 'PAL' },
+            { key: 'battuta',   label: 'Battuta',   short: 'BAT' },
+            { key: 'muro',      label: 'Muro',      short: 'MUR' }
+        ];
+        const DEFAULT_SKILL = 5;
+
+        function hasSkills(p) { return !!(p && p.skills && SKILLS.some(k => p.skills[k.key] != null)); }
+        function getSkills(p) {
+            const out = {};
+            SKILLS.forEach(k => {
+                const v = p && p.skills ? parseInt(p.skills[k.key], 10) : NaN;
+                out[k.key] = isNaN(v) ? DEFAULT_SKILL : Math.min(10, Math.max(1, v));
+            });
+            return out;
+        }
+        function skillAvg(p) { const s = getSkills(p); return SKILLS.reduce((a, k) => a + s[k.key], 0) / SKILLS.length; }
+        function ovr(p) { return hasSkills(p) ? Math.round(skillAvg(p) * 10) : null; }
+        function isSetter(p) { return /palleg|alzat/i.test((p && p.role) || ''); }
+        function playerThumb(p, size = 100) {
+            return (p && p.photo) || ('https://placehold.co/' + size + 'x' + size + '/16213e/dcdcdc?text=' + encodeURIComponent(((p && p.name) || '?').charAt(0)));
+        }
+
+        function buildSkillSliders() {
+            const box = document.getElementById('skill-sliders');
+            box.innerHTML = SKILLS.map(k => `
+                <label class="block">
+                    <div class="flex justify-between text-sm text-gray-300">
+                        <span>${k.label}</span><span id="skill-val-${k.key}" class="font-bold text-white">${DEFAULT_SKILL}</span>
+                    </div>
+                    <input type="range" min="1" max="10" step="1" value="${DEFAULT_SKILL}" id="skill-${k.key}" class="w-full skill-range">
+                </label>`).join('');
+            SKILLS.forEach(k => {
+                document.getElementById('skill-' + k.key).addEventListener('input', e => {
+                    document.getElementById('skill-val-' + k.key).textContent = e.target.value;
+                });
+            });
+        }
+        function setSkillSliders(skills) {
+            SKILLS.forEach(k => {
+                const v = skills && skills[k.key] != null ? skills[k.key] : DEFAULT_SKILL;
+                document.getElementById('skill-' + k.key).value = v;
+                document.getElementById('skill-val-' + k.key).textContent = v;
+            });
+        }
+        function readSkillSliders() {
+            const out = {};
+            SKILLS.forEach(k => { out[k.key] = parseInt(document.getElementById('skill-' + k.key).value, 10); });
+            return out;
+        }
+        function skillBarsHtml(skillsObj, color = 'var(--accent)') {
+            return SKILLS.map(k => {
+                const v = skillsObj[k.key];
+                return `
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="w-20 text-gray-300">${k.label}</span>
+                    <div class="flex-grow h-2 rounded bg-primary"><div class="h-2 rounded" style="width:${Math.round(v * 10)}%;background:${color}"></div></div>
+                    <span class="w-8 text-right text-white font-semibold">${Number.isInteger(v) ? v : v.toFixed(1)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // =====================================================================
+        // RITAGLIO FOTO (stessa inquadratura per tutti, foto leggera per il database)
+        // =====================================================================
+        const CROP_W = 240, CROP_H = 300, OUT_W = 360, OUT_H = 450;
+        const crop = { img: null, base: 1, zoom: 1, x: 0, y: 0, drag: null };
+        const cropCanvas = document.getElementById('crop-canvas');
+        const cropCtx = cropCanvas.getContext('2d');
+
+        function cropScale() { return crop.base * crop.zoom; }
+        function cropClamp() {
+            const s = cropScale();
+            const w = crop.img.width * s, h = crop.img.height * s;
+            crop.x = Math.min(0, Math.max(CROP_W - w, crop.x));
+            crop.y = Math.min(0, Math.max(CROP_H - h, crop.y));
+        }
+        function cropDraw() {
+            cropCtx.fillStyle = '#0f3460';
+            cropCtx.fillRect(0, 0, CROP_W, CROP_H);
+            const s = cropScale();
+            cropCtx.drawImage(crop.img, crop.x, crop.y, crop.img.width * s, crop.img.height * s);
+        }
+        function openCropper(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    crop.img = img;
+                    crop.base = Math.max(CROP_W / img.width, CROP_H / img.height);
+                    crop.zoom = 1;
+                    document.getElementById('crop-zoom').value = 1;
+                    crop.x = (CROP_W - img.width * crop.base) / 2;
+                    crop.y = (CROP_H - img.height * crop.base) / 2;
+                    cropClamp();
+                    cropDraw();
+                    document.getElementById('crop-modal').classList.remove('hidden');
+                };
+                img.onerror = () => showToast('Formato immagine non supportato.');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        function closeCropper() {
+            document.getElementById('crop-modal').classList.add('hidden');
+            document.getElementById('playerPhoto').value = '';
+        }
+        document.getElementById('crop-zoom').addEventListener('input', e => {
+            if (!crop.img) return;
+            const sOld = cropScale();
+            const ix = (CROP_W / 2 - crop.x) / sOld, iy = (CROP_H / 2 - crop.y) / sOld;
+            crop.zoom = parseFloat(e.target.value);
+            const sNew = cropScale();
+            crop.x = CROP_W / 2 - ix * sNew;
+            crop.y = CROP_H / 2 - iy * sNew;
+            cropClamp();
+            cropDraw();
+        });
+        cropCanvas.addEventListener('pointerdown', e => {
+            crop.drag = { x: e.clientX, y: e.clientY };
+            cropCanvas.setPointerCapture(e.pointerId);
+            cropCanvas.style.cursor = 'grabbing';
+        });
+        cropCanvas.addEventListener('pointermove', e => {
+            if (!crop.drag || !crop.img) return;
+            crop.x += e.clientX - crop.drag.x;
+            crop.y += e.clientY - crop.drag.y;
+            crop.drag = { x: e.clientX, y: e.clientY };
+            cropClamp();
+            cropDraw();
+        });
+        const endDrag = () => { crop.drag = null; cropCanvas.style.cursor = 'grab'; };
+        cropCanvas.addEventListener('pointerup', endDrag);
+        cropCanvas.addEventListener('pointercancel', endDrag);
+        document.getElementById('crop-cancel').addEventListener('click', closeCropper);
+        document.getElementById('crop-ok').addEventListener('click', () => {
+            const out = document.createElement('canvas');
+            out.width = OUT_W; out.height = OUT_H;
+            const octx = out.getContext('2d');
+            const f = OUT_W / CROP_W, s = cropScale();
+            octx.fillStyle = '#0f3460';
+            octx.fillRect(0, 0, OUT_W, OUT_H);
+            octx.drawImage(crop.img, crop.x * f, crop.y * f, crop.img.width * s * f, crop.img.height * s * f);
+            const data = out.toDataURL('image/jpeg', 0.8);
+            document.getElementById('playerPhotoData').value = data;
+            document.getElementById('playerPhotoPreview').src = data;
+            closeCropper();
+        });
+
+        // Testo da incollare in Gemini: uguale per tutti = foto tutte con lo stesso stile
+        const AI_PROMPT = `Trasforma questa foto in un ritratto ufficiale da album di figurine sportive, stile foto di squadra professionale.
+
+- Mantieni ESATTAMENTE la stessa persona: stesso viso, lineamenti, capelli, età ed espressione. Non abbellire e non cambiare i tratti.
+- Inquadratura a mezzo busto, frontale, spalle dritte, viso al centro nella parte alta dell'immagine, sguardo in camera.
+- Indossa una maglia da pallavolo blu notte (#16213e) con colletto e bordi delle maniche rosso corallo (#e94560) e una sottile banda viola (#533483) sulle spalle. Nessun numero, nessuna scritta, nessun logo.
+- Sfondo in studio a tinta unita blu scuro con una leggera sfumatura più chiara dietro la testa.
+- Luce da studio morbida e frontale, colori naturali, buon contrasto, pelle realistica, nitidezza alta.
+- Formato verticale 4:5, fotografico e realistico, niente effetto cartone animato.`;
+        document.getElementById('ai-prompt').value = AI_PROMPT;
+        document.getElementById('copy-ai-prompt').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(AI_PROMPT);
+            } catch (e) {
+                const ta = document.getElementById('ai-prompt');
+                ta.select();
+                document.execCommand('copy');
+            }
+            showToast('Testo copiato! Incollalo in Gemini insieme alla foto.');
+        });
+
+        // =====================================================================
+        // GENERATORE SQUADRE EQUILIBRATE
+        // =====================================================================
+        const TEAM_STYLES = [
+            { name: 'Squadra Rossa',  color: '#e94560' },
+            { name: 'Squadra Blu',    color: '#3b82f6' },
+            { name: 'Squadra Verde',  color: '#22c55e' },
+            { name: 'Squadra Gialla', color: '#f59e0b' }
+        ];
+        const teamSelection = new Set();
+        let teamSelectionInitialized = false;
+        let lastTeamsKey = null;
+
+        function todayKey() { return new Date().toISOString().split('T')[0]; }
+        function presentToday() {
+            const day = trainings[todayKey()];
+            if (!day || !day.players) return [];
+            return players.filter(p => day.players[p.id] && day.players[p.id].present).map(p => p.id);
+        }
+
+        function renderTeamPicker() {
+            // tieni solo giocatori ancora esistenti
+            [...teamSelection].forEach(id => { if (!players.some(p => p.id === id)) teamSelection.delete(id); });
+            if (!teamSelectionInitialized && players.length) {
+                presentToday().forEach(id => teamSelection.add(id));
+                teamSelectionInitialized = true;
+            }
+            const box = document.getElementById('team-player-picker');
+            box.innerHTML = players.map(p => {
+                const o = ovr(p);
+                return `
+                <button type="button" class="pick-chip ${teamSelection.has(p.id) ? 'selected' : ''}" data-pick="${p.id}">
+                    <img src="${playerThumb(p)}" alt="">
+                    <span class="flex-grow min-w-0">
+                        <span class="block text-sm font-semibold text-white truncate">${esc(p.alias || p.name)}</span>
+                        <span class="block text-xs text-gray-400 truncate">${esc(p.role || '—')}</span>
+                    </span>
+                    <span class="ovr-pill">${o ?? '—'}</span>
+                </button>`;
+            }).join('') || '<p class="text-gray-400 col-span-full">Nessun giocatore inserito.</p>';
+            document.getElementById('sel-count').textContent = teamSelection.size;
+        }
+
+        function variance(arr) {
+            const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+            return arr.reduce((a, b) => a + (b - m) * (b - m), 0) / arr.length;
+        }
+        function teamCost(teams) {
+            let c = 3 * variance(teams.map(t => t.reduce((a, p) => a + p._avg, 0)));
+            SKILLS.forEach((k, i) => { c += 0.6 * variance(teams.map(t => t.reduce((a, p) => a + p._v[i], 0))); });
+            c += 25 * variance(teams.map(t => t.filter(p => p._setter).length));
+            return c;
+        }
+        function shuffle(a) {
+            for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+            return a;
+        }
+        function teamsKey(teams) {
+            return teams.map(t => t.map(p => p.id).sort().join(',')).sort().join('|');
+        }
+        // Prova tante combinazioni partendo da punti diversi e tiene le più equilibrate
+        function buildBalancedTeams(selected, n) {
+            const pool = selected.map(p => {
+                const sk = getSkills(p);
+                return { ...p, _v: SKILLS.map(k => sk[k.key]), _avg: skillAvg(p), _setter: isSetter(p) };
+            });
+            const sizes = Array.from({ length: n }, (_, i) => Math.floor(pool.length / n) + (i < pool.length % n ? 1 : 0));
+            const found = new Map();
+            for (let r = 0; r < 250; r++) {
+                const order = shuffle([...pool]);
+                const teams = []; let idx = 0;
+                sizes.forEach(sz => { teams.push(order.slice(idx, idx + sz)); idx += sz; });
+                let cost = teamCost(teams), improved = true;
+                while (improved) {
+                    improved = false;
+                    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++)
+                        for (let i = 0; i < teams[a].length; i++) for (let j = 0; j < teams[b].length; j++) {
+                            [teams[a][i], teams[b][j]] = [teams[b][j], teams[a][i]];
+                            const c2 = teamCost(teams);
+                            if (c2 < cost - 1e-9) { cost = c2; improved = true; }
+                            else { [teams[a][i], teams[b][j]] = [teams[b][j], teams[a][i]]; }
+                        }
+                }
+                const key = teamsKey(teams);
+                if (!found.has(key)) found.set(key, { cost, teams: teams.map(t => [...t]), key });
+            }
+            // Aggiunge le alternative "a uno scambio di distanza" dalle soluzioni migliori
+            [...found.values()].sort((x, y) => x.cost - y.cost).slice(0, 5).forEach(sol => {
+                for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++)
+                    for (let i = 0; i < sol.teams[a].length; i++) for (let j = 0; j < sol.teams[b].length; j++) {
+                        const t2 = sol.teams.map(t => [...t]);
+                        [t2[a][i], t2[b][j]] = [t2[b][j], t2[a][i]];
+                        const k2 = teamsKey(t2);
+                        if (!found.has(k2)) found.set(k2, { cost: teamCost(t2), teams: t2, key: k2 });
+                    }
+            });
+            const sorted = [...found.values()].sort((x, y) => x.cost - y.cost);
+            const best = sorted[0].cost;
+            // "Rimescola" deve sempre proporre una combinazione diversa dall'ultima
+            const others = sorted.filter(o => o.key !== lastTeamsKey);
+            let good = others.filter(o => o.cost <= best * 1.25 + 0.3).slice(0, 8);
+            if (!good.length) good = others.slice(0, 3);
+            if (!good.length) good = [sorted[0]];
+            return good[Math.floor(Math.random() * good.length)];
+        }
+
+        function renderTeamsResult(result) {
+            const box = document.getElementById('teams-result');
+            const strengths = result.teams.map(t => t.reduce((a, p) => a + p._avg * 10, 0));
+            const diff = Math.round(Math.max(...strengths) - Math.min(...strengths));
+            const unrated = result.teams.flat().filter(p => !hasSkills(p));
+            box.innerHTML = `
+                <div class="card rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-white font-semibold">⚖️ Differenza di forza tra le squadre: <span class="text-accent">${diff} punti</span></span>
+                    ${unrated.length ? `<span class="text-xs text-yellow-300">⚠️ ${unrated.length} senza voti tecnici (valgono ${DEFAULT_SKILL} in tutto): ${unrated.map(p => esc(p.alias || p.name)).join(', ')}</span>` : ''}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${result.teams.map((t, i) => {
+                        const st = TEAM_STYLES[i];
+                        const avgSkills = {};
+                        SKILLS.forEach((k, si) => { avgSkills[k.key] = t.reduce((a, p) => a + p._v[si], 0) / t.length; });
+                        const teamOvr = Math.round(t.reduce((a, p) => a + p._avg, 0) / t.length * 10);
+                        return `
+                        <div class="card rounded-xl p-4 border-t-4" style="border-top-color:${st.color}">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-xl font-bold" style="color:${st.color}">${st.name}</h3>
+                                <span class="text-sm text-gray-300">Media <strong class="text-white text-lg">${teamOvr}</strong> · Forza ${Math.round(strengths[i])}</span>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                ${[...t].sort((a, b) => b._avg - a._avg).map(p => `
+                                    <div class="flex items-center gap-3">
+                                        <img src="${playerThumb(p)}" alt="" class="w-10 h-10 rounded-full object-cover border-2" style="border-color:${st.color}">
+                                        <div class="flex-grow min-w-0">
+                                            <p class="text-white font-semibold truncate">${esc(p.alias || p.name)}</p>
+                                            <p class="text-xs text-gray-400 truncate">${esc(p.role || '—')}</p>
+                                        </div>
+                                        <span class="ovr-pill">${ovr(p) ?? '—'}</span>
+                                    </div>`).join('')}
+                            </div>
+                            <div class="space-y-1 border-t border-primary pt-3">${skillBarsHtml(avgSkills, st.color)}</div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+        }
+
+        function makeTeams() {
+            const n = parseInt(document.getElementById('team-count').value, 10);
+            const selected = players.filter(p => teamSelection.has(p.id));
+            if (selected.length < n * 2) {
+                showToast(`Seleziona almeno ${n * 2} giocatori per ${n} squadre.`);
+                return;
+            }
+            const result = buildBalancedTeams(selected, n);
+            lastTeamsKey = result.key;
+            renderTeamsResult(result);
+            document.getElementById('reshuffle-teams').classList.remove('hidden');
+            document.getElementById('teams-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('team-player-picker').addEventListener('click', e => {
+            const chip = e.target.closest('[data-pick]');
+            if (!chip) return;
+            const id = chip.dataset.pick;
+            teamSelection.has(id) ? teamSelection.delete(id) : teamSelection.add(id);
+            chip.classList.toggle('selected');
+            document.getElementById('sel-count').textContent = teamSelection.size;
+        });
+        document.getElementById('sel-present').addEventListener('click', () => {
+            const ids = presentToday();
+            if (!ids.length) showToast('Nessuna presenza segnata per oggi nel registro.');
+            teamSelection.clear(); ids.forEach(id => teamSelection.add(id)); renderTeamPicker();
+        });
+        document.getElementById('sel-all').addEventListener('click', () => { players.forEach(p => teamSelection.add(p.id)); renderTeamPicker(); });
+        document.getElementById('sel-none').addEventListener('click', () => { teamSelection.clear(); renderTeamPicker(); });
+        document.getElementById('make-teams').addEventListener('click', makeTeams);
+        document.getElementById('reshuffle-teams').addEventListener('click', makeTeams);
+
+        // =====================================================================
+        // FIGURINE (disegnate su canvas, scaricabili come immagine)
+        // =====================================================================
+        function currentSeasonLabel() {
+            const d = new Date(), y = d.getFullYear();
+            return d.getMonth() >= 6 ? y + '/' + (y + 1) : (y - 1) + '/' + y;
+        }
+        function roleShort(role) {
+            const r = (role || '').toLowerCase();
+            if (/palleg|alzat/.test(r)) return 'PAL';
+            if (/liber/.test(r)) return 'LIB';
+            if (/centr/.test(r)) return 'CEN';
+            if (/oppost/.test(r)) return 'OPP';
+            if (/schiacc|banda|attacc/.test(r)) return 'SCH';
+            return r ? r.slice(0, 3).toUpperCase() : '';
+        }
+        function loadImage(src) {
+            return new Promise(res => {
+                if (!src || !src.startsWith('data:')) return res(null);
+                const i = new Image();
+                i.onload = () => res(i); i.onerror = () => res(null); i.src = src;
+            });
+        }
+        function meanLuma(img) {
+            const c = document.createElement('canvas'); c.width = 32; c.height = 40;
+            const x = c.getContext('2d'); x.drawImage(img, 0, 0, 32, 40);
+            const d = x.getImageData(0, 0, 32, 40).data; let sum = 0;
+            for (let i = 0; i < d.length; i += 4) sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            return sum / (d.length / 4);
+        }
+        function rrPath(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+        }
+        function fitText(ctx, text, maxW, size, weight = '700') {
+            let s = size;
+            do { ctx.font = `${weight} ${s}px Poppins, sans-serif`; s -= 1; } while (ctx.measureText(text).width > maxW && s > 10);
+        }
+        function drawBallCrest(ctx, cx, cy, r) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#16213e'; ctx.lineWidth = 2.2;
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx - r * 0.9, cy - r * 0.2, r * 1.05, -0.55, 0.75); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx + r * 0.5, cy - r * 1.0, r * 1.05, 1.35, 2.55); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx + r * 0.4, cy + r * 1.0, r * 1.05, 3.6, 4.85); ctx.stroke();
+            ctx.restore();
+        }
+
+        const cardCache = new Map();
+        async function drawCard(p) {
+            const photoKey = p.photo ? p.photo.length + p.photo.slice(-24) : '';
+            const key = [p.name, p.surname, p.alias, p.role, p.number, p.height, JSON.stringify(p.skills || {}), photoKey, currentSeasonLabel()].join('|');
+            if (cardCache.has(p.id) && cardCache.get(p.id).key === key) return cardCache.get(p.id).url;
+            if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+            const W = 600, H = 840;
+            const c = document.createElement('canvas'); c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+
+            // bordo bianco da figurina
+            ctx.fillStyle = '#ffffff'; rrPath(ctx, 0, 0, W, H, 30); ctx.fill();
+            const ix = 16, iy = 16, iw = W - 32, ih = H - 32;
+            ctx.save(); rrPath(ctx, ix, iy, iw, ih, 20); ctx.clip();
+
+            // sfondo con i colori della squadra + strisce diagonali
+            const bg = ctx.createLinearGradient(0, 0, W, H);
+            bg.addColorStop(0, '#0f3460'); bg.addColorStop(0.55, '#16213e'); bg.addColorStop(1, '#533483');
+            ctx.fillStyle = bg; ctx.fillRect(ix, iy, iw, ih);
+            ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 6);
+            ctx.fillStyle = 'rgba(233,69,96,0.07)';
+            for (let x = -W * 1.5; x < W * 1.5; x += 70) ctx.fillRect(x, -H, 28, H * 2);
+            ctx.restore();
+
+            // barra superiore
+            ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(ix, iy, iw, 66);
+            drawBallCrest(ctx, ix + 38, iy + 33, 20);
+            ctx.fillStyle = '#ffffff'; ctx.font = '700 27px Poppins, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText('SCANDO VOLLEY', ix + 70, iy + 43);
+            ctx.fillStyle = '#f6d365'; ctx.font = '600 18px Poppins, sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText(currentSeasonLabel(), ix + iw - 20, iy + 41);
+
+            // foto
+            const px = ix + 20, py = iy + 82, pw = iw - 40, ph = 470;
+            ctx.save(); rrPath(ctx, px, py, pw, ph, 16); ctx.clip();
+            const back = ctx.createRadialGradient(px + pw / 2, py + ph * 0.35, 20, px + pw / 2, py + ph * 0.35, pw * 0.8);
+            back.addColorStop(0, '#3a5390'); back.addColorStop(1, '#0f3460');
+            ctx.fillStyle = back; ctx.fillRect(px, py, pw, ph);
+            const img = await loadImage(p.photo);
+            if (img) {
+                const sc = Math.max(pw / img.width, ph / img.height);
+                const dw = img.width * sc, dh = img.height * sc;
+                const b = Math.min(1.35, Math.max(0.8, 128 / Math.max(1, meanLuma(img))));
+                ctx.filter = `brightness(${b.toFixed(2)}) contrast(1.08) saturate(1.1)`;
+                ctx.drawImage(img, px + (pw - dw) / 2, py - (dh - ph) * 0.2, dw, dh);
+                ctx.filter = 'none';
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.14)';
+                ctx.beginPath(); ctx.arc(px + pw / 2, py + ph * 0.36, 78, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(px + pw / 2, py + ph * 0.95, 175, 150, 0, Math.PI, 0); ctx.fill();
+            }
+            const fade = ctx.createLinearGradient(0, py + ph - 170, 0, py + ph);
+            fade.addColorStop(0, 'rgba(15,52,96,0)'); fade.addColorStop(1, 'rgba(15,52,96,0.95)');
+            ctx.fillStyle = fade; ctx.fillRect(px, py + ph - 170, pw, 170);
+            ctx.restore();
+            ctx.strokeStyle = 'rgba(246,211,101,0.55)'; ctx.lineWidth = 2; rrPath(ctx, px, py, pw, ph, 16); ctx.stroke();
+
+            // valutazione complessiva (in alto a sinistra)
+            const o = ovr(p);
+            const gx = px + 14, gy = py + 14, gw = 96, gh = 112;
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 12;
+            const gold = ctx.createLinearGradient(gx, gy, gx, gy + gh);
+            gold.addColorStop(0, '#fff1b8'); gold.addColorStop(0.5, '#f6d365'); gold.addColorStop(1, '#c9a227');
+            ctx.fillStyle = gold;
+            ctx.beginPath();
+            ctx.moveTo(gx, gy); ctx.lineTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + gh - 26);
+            ctx.lineTo(gx + gw / 2, gy + gh); ctx.lineTo(gx, gy + gh - 26); ctx.closePath(); ctx.fill();
+            ctx.restore();
+            ctx.fillStyle = '#16213e'; ctx.textAlign = 'center';
+            ctx.font = '700 46px Poppins, sans-serif'; ctx.fillText(o ?? '--', gx + gw / 2, gy + 56);
+            ctx.font = '700 17px Poppins, sans-serif'; ctx.fillText(roleShort(p.role) || 'OVR', gx + gw / 2, gy + 80);
+
+            // numero di maglia (in alto a destra)
+            if (p.number !== undefined && p.number !== null && String(p.number).trim() !== '') {
+                ctx.textAlign = 'right'; ctx.font = '700 84px Poppins, sans-serif';
+                ctx.lineWidth = 5; ctx.strokeStyle = '#e94560'; ctx.strokeText(String(p.number), px + pw - 18, py + 88);
+                ctx.fillStyle = '#ffffff'; ctx.fillText(String(p.number), px + pw - 18, py + 88);
+            }
+
+            // fascia con il nome
+            const by = py + ph + 12, bh = 80;
+            const band = ctx.createLinearGradient(px, 0, px + pw, 0);
+            band.addColorStop(0, '#e94560'); band.addColorStop(1, '#b8324a');
+            ctx.fillStyle = band; rrPath(ctx, px, by, pw, bh, 12); ctx.fill();
+            const main = (p.alias || p.name || '').toUpperCase();
+            const sub = p.alias ? `${p.name || ''} ${p.surname || ''}` : (p.surname || '').toUpperCase();
+            ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+            fitText(ctx, main, pw - 30, 36);
+            ctx.fillText(main, px + pw / 2, by + (sub.trim() ? 42 : 52));
+            if (sub.trim()) { fitText(ctx, sub, pw - 30, 18, '600'); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillText(sub, px + pw / 2, by + 67); }
+
+            // statistiche
+            const sy = by + bh + 16, colW = pw / SKILLS.length;
+            const sk = getSkills(p), rated = hasSkills(p);
+            SKILLS.forEach((k, i) => {
+                const cx = px + colW * i + colW / 2;
+                ctx.fillStyle = '#ffffff'; ctx.font = '700 32px Poppins, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(rated ? String(sk[k.key] * 10) : '--', cx, sy + 32);
+                ctx.fillStyle = '#f6d365'; ctx.font = '600 15px Poppins, sans-serif';
+                ctx.fillText(k.short, cx, sy + 54);
+                if (i > 0) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(px + colW * i, sy + 6, 1.5, 52); }
+            });
+
+            // piè di pagina
+            const foot = [p.role, p.height ? p.height + ' cm' : ''].filter(Boolean).join('  ·  ');
+            if (foot) {
+                ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '500 16px Poppins, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(foot, W / 2, iy + ih - 20);
+            }
+            ctx.restore();
+
+            const url = c.toDataURL('image/png');
+            cardCache.set(p.id, { key, url });
+            return url;
+        }
+
+        async function renderAlbum() {
+            document.getElementById('album-season').textContent = currentSeasonLabel();
+            const grid = document.getElementById('album-grid');
+            if (!players.length) { grid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Nessun giocatore inserito.</p>'; return; }
+            const sorted = [...players].sort((a, b) => (parseInt(a.number, 10) || 999) - (parseInt(b.number, 10) || 999));
+            const urls = await Promise.all(sorted.map(drawCard));
+            grid.innerHTML = sorted.map((p, i) => `<img src="${urls[i]}" alt="Figurina di ${esc(p.alias || p.name)}" class="album-card w-full" onclick="app_openCard('${p.id}')">`).join('');
+        }
+
+        window.app_openCard = async (id) => {
+            const p = players.find(pl => pl.id === id);
+            if (!p) return;
+            const url = await drawCard(p);
+            document.getElementById('card-modal-img').src = url;
+            const dl = document.getElementById('card-modal-download');
+            dl.href = url;
+            dl.download = 'figurina-' + (p.alias || p.name || 'giocatore').toLowerCase().replace(/[^a-z0-9]+/gi, '-') + '.png';
+            document.getElementById('card-modal').classList.remove('hidden');
+        };
+        document.getElementById('card-modal-close').addEventListener('click', () => document.getElementById('card-modal').classList.add('hidden'));
+        document.getElementById('card-modal').addEventListener('click', e => { if (e.target.id === 'card-modal') e.currentTarget.classList.add('hidden'); });
+
+        buildSkillSliders();
 
         function checkAndAwardBadges(currentTrainingDate) {
             const awardedMessages = [];
@@ -996,20 +2000,14 @@
         document.getElementById('player-form').addEventListener('submit', handlePlayerForm);
         document.getElementById('badge-form').addEventListener('submit', handleBadgeForm);
         document.getElementById('event-form').addEventListener('submit', handleEventForm);
+        document.getElementById('albo-form').addEventListener('submit', handleAlboForm);
         document.getElementById('save-data-button').addEventListener('click', saveData);
         document.getElementById('training-log-container').addEventListener('change', handleTrainingDataChange);
         document.getElementById('training-notes').addEventListener('input', debounce(handleTrainingNotesChange, 500));
         
         document.getElementById('playerPhoto').addEventListener('change', (event) => {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('playerPhotoPreview').src = e.target.result;
-                    document.getElementById('playerPhotoData').value = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+            if (file) openCropper(file);
         });
         
         document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
