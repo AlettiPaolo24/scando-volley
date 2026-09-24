@@ -1404,30 +1404,6 @@
             ctx.restore();
         }
 
-        // Trova i vincitori dell'ultimo allenamento (maggior numero di set vinti)
-        function getLastTrainingWinners() {
-            const dates = Object.keys(trainings).sort();
-            const lastDate = dates[dates.length - 1];
-            if (!lastDate) return { date: null, winners: [], maxSets: 0 };
-            const day = trainings[lastDate];
-            if (!day || !day.players) return { date: lastDate, winners: [], maxSets: 0 };
-            let maxSets = 0;
-            let winnerIds = [];
-            Object.entries(day.players).forEach(([playerId, data]) => {
-                if (!data || !data.present) return;
-                const sets = parseInt(data.setsWon, 10) || 0;
-                if (sets <= 0) return;
-                if (sets > maxSets) { maxSets = sets; winnerIds = [playerId]; }
-                else if (sets === maxSets) { winnerIds.push(playerId); }
-            });
-            // Ordina per nome per coerenza visiva
-            const winners = winnerIds
-                .map(id => players.find(p => p.id === id))
-                .filter(Boolean)
-                .sort((a, b) => (a.alias || a.name).localeCompare(b.alias || b.name));
-            return { date: lastDate, winners, maxSets };
-        }
-
         async function buildStandingsImage() {
             const standings = rankedStandings();
             if (!standings.length) return null;
@@ -1438,10 +1414,7 @@
 
             const W = 1080;
 
-            // === Vincitori ultimo allenamento ===
-            const { date: lastDate, winners: winnerPlayers, maxSets } = getLastTrainingWinners();
-
-            // === PAGAMENTI: Nomi di chi non ha pagato ===
+            // === SEZIONE PAGAMENTI: Nomi di chi non ha pagato ===
             const season = defaultSeasonName();
             let unpaidMeals = [];
             let unpaidFees = [];
@@ -1466,288 +1439,144 @@
 
             const hasPaymentData = unpaidMeals.length > 0 || unpaidFees.length > 0;
 
-            // === Layout: 30% vincitori / 63% classifica / 7% remember ===
-            const totalHeight = 2000;
-            const topH = Math.round(totalHeight * 0.30);        // 600
-            const bottomH = Math.round(totalHeight * 0.07);     // 140
-            const middleH = totalHeight - topH - bottomH;       // 1260
-            const H = totalHeight;
+            // === Calcolo dimensioni ===
+            // Header: 220px
+            // Classifica+Podio: 94% dello spazio content
+            // Pagamenti: 6% dello spazio content
+            // Footer: 60px
+
+            const headerHeight = 220;
+            const footerHeight = 60;
+
+            const baseContentHeight = 1600;
+            const classicaHeight = Math.round(baseContentHeight * 0.94);
+            const paymentHeight = hasPaymentData ? Math.round(baseContentHeight * 0.06) : 0;
+
+            const H = headerHeight + classicaHeight + paymentHeight + footerHeight;
 
             const canvas = document.createElement('canvas');
             canvas.width = W; canvas.height = H;
             const ctx = canvas.getContext('2d');
 
             paintBackdrop(ctx, W, H);
+            paintHeader(ctx, W, 'Classifica', new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }));
 
-            // ============================================================
-            //  TOP SECTION — Vincitori ultimo allenamento
-            // ============================================================
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'alphabetic';
+            let currentY = headerHeight;
 
-            // Titolo principale
-            ctx.fillStyle = '#e94560';
-            ctx.font = '700 44px Poppins, sans-serif';
-            ctx.fillText('SCANDOLARA VOLLEY', W / 2, 88);
+            // === SEZIONE 1: Classifica (Podio + Top 10) ===
+            const classicaY = currentY;
 
-            // Sottotitolo
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '700 52px Poppins, sans-serif';
-            ctx.fillText('Vincitori ultimo allenamento', W / 2, 158);
+            // Podio occupa circa il 25% della sezione classifica
+            const podiumHeight = Math.round(classicaHeight * 0.25);
 
-            // Data ultimo allenamento
-            if (lastDate) {
-                const dateLabel = new Date(lastDate + 'T00:00:00').toLocaleDateString('it-IT', {
-                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                });
-                ctx.fillStyle = '#a0a0a0';
-                ctx.font = '400 26px Poppins, sans-serif';
-                ctx.fillText(dateLabel, W / 2, 205);
-            }
-
-            // Divisorio
-            ctx.fillStyle = 'rgba(233,69,96,0.35)';
-            ctx.fillRect(W * 0.30, 228, W * 0.40, 2);
-
-            // Foto vincitori
-            if (winnerPlayers.length === 0) {
-                ctx.fillStyle = '#a0a0a0';
-                ctx.font = '400 32px Poppins, sans-serif';
-                ctx.fillText('Nessun vincitore registrato', W / 2, (230 + topH) / 2);
-            } else {
-                const n = winnerPlayers.length;
-                const padding = 80;
-                const gap = n <= 2 ? 40 : n <= 4 ? 22 : 12;
-                const availW = W - padding;
-                const slotW = (availW - (n - 1) * gap) / n;
-
-                // Raggio: minimo tra metà slot e 90px
-                let R = Math.floor((slotW - 16) / 2);
-                R = Math.min(R, 90);
-                R = Math.max(R, 40);
-
-                const baseY = 258;        // Top foto
-                const cy = baseY + R;     // Centro verticale foto
-
-                const winnerImgs = await Promise.all(winnerPlayers.map(p => loadImageSafe(p.photo)));
-
-                // Font size nome adattivo
-                const nameFont = n <= 2 ? 30 : n <= 4 ? 24 : 20;
-                const setFont = nameFont - 4;
-
-                winnerPlayers.forEach((p, i) => {
-                    const cx = padding / 2 + slotW / 2 + i * (slotW + gap);
-
-                    // Alone dorato dietro alla foto
-                    ctx.save();
-                    const haloG = ctx.createRadialGradient(cx, cy, R * 0.5, cx, cy, R * 1.4);
-                    haloG.addColorStop(0, 'rgba(246,215,0,0.22)');
-                    haloG.addColorStop(1, 'rgba(246,215,0,0)');
-                    ctx.fillStyle = haloG;
-                    ctx.beginPath(); ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2); ctx.fill();
-                    ctx.restore();
-
-                    // Avatar
-                    drawAvatar(ctx, winnerImgs[i], p, cx, cy, R, '#f6d700');
-
-                    // Medaglia in basso a destra
-                    const medalR = Math.max(16, Math.round(R * 0.30));
-                    const medalOff = R * 0.72;
-                    drawMedal(ctx, cx + medalOff, cy + medalOff, medalR, 1);
-
-                    // Nome
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'alphabetic';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `700 ${nameFont}px Poppins, sans-serif`;
-                    const displayName = p.alias || p.name;
-                    const nameY = cy + R + 38;
-                    ctx.fillText(wrapLines(ctx, displayName, slotW - 8, 1)[0] || '', cx, nameY);
-
-                    // Set vinti
-                    ctx.fillStyle = '#f6d700';
-                    ctx.font = `700 ${setFont}px Poppins, sans-serif`;
-                    ctx.fillText(maxSets + (maxSets === 1 ? ' set vinto' : ' set vinti'), cx, nameY + setFont + 8);
-                });
-            }
-
-            // ============================================================
-            //  MIDDLE SECTION — Classifica generale con podio
-            // ============================================================
-            const midY = topH;
-            const podiumH = Math.round(middleH * 0.30); // ~378
-            const listH = middleH - podiumH;             // ~882
-
-            // Banda titolo sezione
-            ctx.fillStyle = 'rgba(233,69,96,0.10)';
-            roundRectPath(ctx, 40, midY + 8, W - 80, 60, 12);
+            ctx.fillStyle = 'rgba(83,52,131,0.2)';
+            roundRectPath(ctx, 40, classicaY + 10, W - 80, podiumHeight, 12);
             ctx.fill();
 
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#e94560';
-            ctx.font = '700 34px Poppins, sans-serif';
-            ctx.fillText('CLASSIFICA GENERALE', W / 2, midY + 38);
+            const podioImgs = await Promise.all(podio.map(p => loadImageSafe(p.photo)));
+            const altezze = { 1: podiumHeight * 0.8, 2: podiumHeight * 0.68, 3: podiumHeight * 0.56 };
+            const anelli = { 1: '#f6c700', 2: '#c9c9c9', 3: '#cd7f32' };
+            const posti = [W / 2, W / 2 - 280, W / 2 + 280];
+            const cols = podio.map((p, i) => ({
+                p, img: podioImgs[i],
+                x: posti[i],
+                hgt: altezze[p.rank] || podiumHeight * 0.5,
+                r: p.rank === 1 ? 75 : 65,
+                ring: anelli[p.rank] || anelli[3]
+            }));
 
-            // Podio
-            const podiumTop = midY + 82;
-            const podiumAvailH = podiumH - 90;
-
-            if (podio.length > 0) {
-                const podioImgs = await Promise.all(podio.map(p => loadImageSafe(p.photo)));
-                const altezze = { 1: podiumAvailH * 0.60, 2: podiumAvailH * 0.46, 3: podiumAvailH * 0.36 };
-                const anelli = { 1: '#f6c700', 2: '#c9c9c9', 3: '#cd7f32' };
-                const posti = { 1: W / 2, 2: W / 2 - 260, 3: W / 2 + 260 };
-                const avatarR = { 1: 72, 2: 58, 3: 58 };
-
-                const cols = podio.map((p, i) => ({
-                    p,
-                    img: podioImgs[i],
-                    x: posti[p.rank] || (W / 2 + (i - 1) * 260),
-                    hgt: altezze[p.rank] || podiumAvailH * 0.35,
-                    r: avatarR[p.rank] || 55,
-                    ring: anelli[p.rank] || anelli[3]
-                }));
-
-                cols.forEach(c => {
-                    const baseY = podiumTop + podiumAvailH;
-                    const stepTop = baseY - c.hgt;
-                    const avatarCY = stepTop - c.r - 18;
-
-                    // Gradino
-                    const stepG = ctx.createLinearGradient(0, stepTop, 0, baseY);
-                    if (c.p.rank === 1) { stepG.addColorStop(0, '#f6d365'); stepG.addColorStop(1, '#c9a227'); }
-                    else if (c.p.rank === 2) { stepG.addColorStop(0, '#e6e6e6'); stepG.addColorStop(1, '#9e9e9e'); }
-                    else { stepG.addColorStop(0, '#e8a871'); stepG.addColorStop(1, '#9c5a2c'); }
-                    ctx.fillStyle = stepG;
-                    roundRectPath(ctx, c.x - 110, stepTop, 220, c.hgt, 10);
-                    ctx.fill();
-
-                    // Avatar
-                    drawAvatar(ctx, c.img, c.p, c.x, avatarCY, c.r, c.ring);
-
-                    // Medaglia al centro del gradino
-                    drawMedal(ctx, c.x, stepTop + 42, 26, c.p.rank);
-
-                    // Nome
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'alphabetic';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '700 24px Poppins, sans-serif';
-                    ctx.fillText(wrapLines(ctx, c.p.alias || c.p.name, 200, 1)[0] || '', c.x, stepTop + 100);
-
-                    // Punti
-                    ctx.fillStyle = '#e94560';
-                    ctx.font = '700 22px Poppins, sans-serif';
-                    ctx.fillText(c.p.totalPoints + ' pt', c.x, stepTop + 130);
-                });
-            }
-
-            // Lista dal 4° in giù
-            const listTop = midY + podiumH + 12;
-
-            if (resto.length > 0) {
-                const rowH = Math.min(90, Math.max(48, (listH - 20) / resto.length));
-
-                ctx.fillStyle = 'rgba(83,52,131,0.12)';
-                roundRectPath(ctx, 40, listTop - 4, W - 80, listH - 16, 12);
+            cols.forEach(c => {
+                const stepTop = classicaY + podiumHeight - c.hgt - 15;
+                ctx.fillStyle = 'rgba(83,52,131,0.4)';
+                roundRectPath(ctx, c.x - 120, stepTop - 5, 240, c.hgt, 10);
                 ctx.fill();
 
-                resto.forEach((p, i) => {
-                    const y = listTop + 8 + i * rowH;
-                    const rowInner = rowH - 8;
+                drawAvatar(ctx, c.img, c.p, c.x, stepTop - c.r - 15, c.r, c.ring);
+                drawMedal(ctx, c.x, stepTop + 40, 30, c.p.rank);
 
-                    ctx.fillStyle = i % 2 ? 'rgba(22,33,62,0.6)' : 'rgba(22,33,62,0.35)';
-                    roundRectPath(ctx, 60, y, W - 120, rowInner, 10);
-                    ctx.fill();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '700 26px Poppins, sans-serif';
+                ctx.fillText(wrapLines(ctx, c.p.alias || c.p.name, 220, 1)[0] || '', c.x, stepTop + 90);
+                ctx.fillStyle = '#e94560';
+                ctx.font = '700 24px Poppins, sans-serif';
+                ctx.fillText(c.p.totalPoints + ' pt', c.x, stepTop + 125);
+            });
 
-                    const mid = y + rowInner / 2;
+            // Top 10 (dal 4° in giù) occupa il resto
+            const rowHeightClassifica = (classicaHeight - podiumHeight - 30) / Math.max(1, resto.length);
+            const restY = classicaY + podiumHeight + 20;
 
-                    // Posizione
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#a0a0a0';
-                    ctx.font = `700 ${Math.max(20, rowInner * 0.42)}px Poppins, sans-serif`;
-                    ctx.fillText(p.rank + '°', 88, mid);
+            ctx.fillStyle = 'rgba(83,52,131,0.15)';
+            roundRectPath(ctx, 40, restY - 10, W - 80, classicaHeight - podiumHeight - 20, 12);
+            ctx.fill();
 
-                    // Nome
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `600 ${Math.max(22, rowInner * 0.42)}px Poppins, sans-serif`;
-                    ctx.fillText(wrapLines(ctx, p.alias || p.name, 500, 1)[0] || '', 165, mid);
+            resto.forEach((p, i) => {
+                const y = restY + i * rowHeightClassifica;
+                ctx.fillStyle = i % 2 ? 'rgba(22,33,62,0.6)' : 'rgba(22,33,62,0.35)';
+                roundRectPath(ctx, 60, y, W - 120, rowHeightClassifica - 6, 10);
+                ctx.fill();
 
-                    // Fiamma serie
-                    const st = streaks[p.id] ? streaks[p.id].current : 0;
-                    if (streakLevel(st)) {
-                        ctx.fillStyle = '#d95926';
-                        ctx.font = `600 ${Math.max(16, rowInner * 0.34)}px Poppins, sans-serif`;
-                        ctx.textAlign = 'right';
-                        ctx.fillText('🔥 ' + st, W - 200, mid);
-                    }
+                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                const mid = y + rowHeightClassifica / 2;
 
-                    // Punti
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = `700 ${Math.max(18, rowHeightClassifica * 0.4)}px Poppins, sans-serif`;
+                ctx.fillText(p.rank + '°', 85, mid);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `600 ${Math.max(20, rowHeightClassifica * 0.42)}px Poppins, sans-serif`;
+                ctx.fillText(wrapLines(ctx, p.alias || p.name, 500, 1)[0] || '', 150, mid);
+
+                const st = streaks[p.id] ? streaks[p.id].current : 0;
+                if (streakLevel(st)) {
+                    ctx.fillStyle = '#d95926';
+                    ctx.font = `600 ${Math.max(16, rowHeightClassifica * 0.35)}px Poppins, sans-serif`;
                     ctx.textAlign = 'right';
-                    ctx.fillStyle = '#e94560';
-                    ctx.font = `700 ${Math.max(22, rowInner * 0.45)}px Poppins, sans-serif`;
-                    ctx.fillText(p.totalPoints + ' pt', W - 80, mid);
-                });
-            }
+                    ctx.fillText('🔥 ' + st, W - 200, mid);
+                }
 
-            // ============================================================
-            //  BOTTOM SECTION — REMEMBER (pagamenti)
-            // ============================================================
-            const bottomY = topH + middleH;
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#e94560';
+                ctx.font = `700 ${Math.max(20, rowHeightClassifica * 0.45)}px Poppins, sans-serif`;
+                ctx.fillText(p.totalPoints + ' pt', W - 80, mid);
+            });
 
+            currentY = classicaY + classicaHeight;
+
+            // === SEZIONE 2: Pagamenti (solo se ci sono debiti) ===
             if (hasPaymentData) {
-                ctx.fillStyle = 'rgba(83,52,131,0.35)';
-                roundRectPath(ctx, 40, bottomY + 6, W - 80, bottomH - 12, 12);
+                const paymentY = currentY;
+
+                ctx.fillStyle = 'rgba(83,52,131,0.3)';
+                roundRectPath(ctx, 40, paymentY + 5, W - 80, paymentHeight - 10, 12);
                 ctx.fill();
 
-                // Titolo
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
                 ctx.fillStyle = '#FFD700';
-                ctx.font = '700 20px Poppins, sans-serif';
-                ctx.fillText('💰 REMEMBER', W / 2, bottomY + 24);
+                ctx.font = '700 18px Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('💰 PAGAMENTI', W / 2, paymentY + 25);
 
-                // Lista in 3 colonne
+                // Dividi i nomi su 3 colonne per stare compatti
+                const colWidth = (W - 100) / 3;
                 const allUnpaid = [];
-                unpaidMeals.forEach(p => allUnpaid.push({ ...p, type: 'meal', amount: 10 }));
-                unpaidFees.forEach(p => allUnpaid.push({ ...p, type: 'fee', amount: 100 }));
+                unpaidMeals.forEach(p => allUnpaid.push({ ...p, type: 'meal' }));
+                unpaidFees.forEach(p => allUnpaid.push({ ...p, type: 'fee' }));
 
-                const numCols = 3;
-                const colW = (W - 100) / numCols;
-                const itemsStartY = bottomY + 48;
-                const rowH = 20;
-                const maxRowsPerCol = Math.max(1, Math.floor((bottomH - 52) / rowH));
-                const maxItems = numCols * maxRowsPerCol;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '500 14px Poppins, sans-serif';
 
-                ctx.font = '500 15px Poppins, sans-serif';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'middle';
-
-                const visible = allUnpaid.slice(0, maxItems);
-                visible.forEach((item, idx) => {
-                    const col = Math.floor(idx / maxRowsPerCol);
-                    const row = idx % maxRowsPerCol;
-                    const x = 60 + col * colW;
-                    const y = itemsStartY + row * rowH;
+                allUnpaid.forEach((item, idx) => {
+                    const col = idx % 3;
+                    const row = Math.floor(idx / 3);
+                    const x = 60 + col * colWidth;
+                    const y = paymentY + 40 + row * 18;
 
                     const icon = item.type === 'meal' ? '🍽️' : '🎫';
-                    const label = (item.alias || item.name) + ' (' + item.amount + '€)';
-                    ctx.fillStyle = item.type === 'meal' ? '#ffffff' : '#f6d365';
-                    ctx.fillText(icon + ' ' + label, x, y);
+                    ctx.fillText(icon + ' ' + (item.alias || item.name), x, y);
                 });
-
-                // Se ci sono più voci di quelle visibili, mostrane il conteggio extra
-                if (allUnpaid.length > maxItems) {
-                    ctx.textAlign = 'right';
-                    ctx.fillStyle = '#a0a0a0';
-                    ctx.font = '500 13px Poppins, sans-serif';
-                    ctx.fillText('+' + (allUnpaid.length - maxItems) + ' altri', W - 60, bottomY + bottomH - 16);
-                }
             }
 
-            // Footer
             paintFooter(ctx, W, H);
             return { canvas, standings };
         }
@@ -1879,4 +1708,1643 @@
         }
 
         function esc(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // --- ALBO D'ORO ---
+        function podiumPhoto(entry) {
+            const current = players.find(p => p.id === entry.playerId);
+            return (current && current.photo) || ('https://placehold.co/150x150/16213e/dcdcdc?text=' + encodeURIComponent((entry.name || '?').charAt(0)));
+        }
+
+        function renderPodiumColumn(entries, rank) {
+            if (!entries.length) return `<div class="podium-col"></div>`;
+            const people = entries.map(e => `
+                <div class="flex flex-col items-center mb-2">
+                    ${rank === 1 ? '<div class="crown">👑</div>' : ''}
+                    <img src="${podiumPhoto(e)}" alt="${esc(e.name)}" class="podium-avatar avatar-${rank}">
+                    <div class="podium-name text-sm md:text-base">${esc(e.alias || e.name)}</div>
+                    ${e.alias ? `<div class="text-xs text-gray-400">${esc(e.name)} ${esc(e.surname)}</div>` : ''}
+                    ${e.points !== null && e.points !== undefined && e.points !== '' ? `<div class="text-xs mt-1 font-semibold ${rank === 1 ? 'text-yellow-300' : 'text-gray-300'}">${esc(e.points)} punti</div>` : ''}
+                </div>
+            `).join('');
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+            return `
+                <div class="podium-col">
+                    ${people}
+                    <div class="podium-step step-${rank}">${medal}</div>
+                </div>
+            `;
+        }
+
+        function renderHallOfFame() {
+            const container = document.getElementById('albo-list-container');
+            const medalTable = document.getElementById('albo-medal-table');
+
+            // Menu a tendina del form admin
+            const options = '<option value="">— Nessuno —</option>' + players
+                .map(p => `<option value="${p.id}">${esc(p.name)} ${esc(p.surname)}${p.alias ? ' (' + esc(p.alias) + ')' : ''}</option>`).join('');
+            document.querySelectorAll('.albo-player-select').forEach((sel, i) => {
+                const prev = sel.value;
+                sel.innerHTML = i === 0 ? options.replace('— Nessuno —', '— 1° classificato —') : options;
+                sel.value = prev;
+            });
+
+            if (!hallOfFame.length) {
+                medalTable.innerHTML = '';
+                container.innerHTML = `
+                    <div class="card rounded-lg p-8 text-center">
+                        <div class="text-4xl mb-3">🏐</div>
+                        <p class="text-gray-300">L'Albo d'Oro è ancora vuoto.</p>
+                        <p class="text-gray-500 text-sm mt-1">Il primo podio comparirà qui alla chiusura della stagione.</p>
+                    </div>`;
+                return;
+            }
+
+            // Posizioni ricalcolate dai punti: corregge eventuali podi salvati con il vecchio calcolo
+            const seasonsFixed = hallOfFame.map(s => ({ ...s, podium: normalizePodium(s.podium) }));
+
+            // Bacheca trofei: medaglie totali per giocatore
+            const tally = {};
+            seasonsFixed.forEach(s => s.podium.forEach(e => {
+                const key = e.playerId || e.name;
+                if (!tally[key]) tally[key] = { entry: e, gold: 0, silver: 0, bronze: 0 };
+                if (e.rank === 1) tally[key].gold++;
+                else if (e.rank === 2) tally[key].silver++;
+                else tally[key].bronze++;
+            }));
+            const tallyRows = Object.values(tally).sort((a, b) =>
+                b.gold - a.gold || b.silver - a.silver || b.bronze - a.bronze);
+            medalTable.innerHTML = `
+                <div class="card rounded-lg p-4 md:p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Bacheca Trofei</h3>
+                    <div class="space-y-2">
+                        ${tallyRows.map(t => `
+                            <div class="medal-row">
+                                <img src="${podiumPhoto(t.entry)}" alt="${esc(t.entry.name)}" class="w-10 h-10 rounded-full object-cover border-2 border-secondary">
+                                <span class="flex-grow text-white font-semibold truncate">${esc(t.entry.alias || t.entry.name)}</span>
+                                <span class="whitespace-nowrap">${t.gold ? '🥇×' + t.gold + ' ' : ''}${t.silver ? '🥈×' + t.silver + ' ' : ''}${t.bronze ? '🥉×' + t.bronze : ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+
+            // Una card per stagione, dalla più recente
+            const seasons = [...seasonsFixed].sort((a, b) => (b.closedAt || '').localeCompare(a.closedAt || ''));
+            container.innerHTML = seasons.map(s => {
+                const byRank = r => s.podium.filter(e => e.rank === r);
+                const closed = (s.closedAt && !s.manual) ? new Date(s.closedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                return `
+                <div class="season-card rounded-xl p-4 md:p-6 shadow-xl relative">
+                    ${isAdmin ? `<button onclick="app_deleteSeason('${s.id}')" class="absolute top-3 right-4 text-red-400 hover:text-red-600 text-2xl font-bold" title="Elimina stagione">&times;</button>` : ''}
+                    <div class="text-center mb-6">
+                        <p class="text-xs uppercase tracking-widest text-yellow-500">Stagione</p>
+                        <h3 class="text-2xl md:text-3xl font-bold gold-text">${esc(s.season)}</h3>
+                        ${closed ? `<p class="text-xs text-gray-500 mt-1">Chiusa il ${closed}</p>` : ''}
+                    </div>
+                    <div class="podium">
+                        ${renderPodiumColumn(byRank(2), 2)}
+                        ${renderPodiumColumn(byRank(1), 1)}
+                        ${renderPodiumColumn(byRank(3), 3)}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.app_deleteSeason = (id) => {
+            showConfirmModal('Elimina stagione', 'Vuoi togliere questa stagione dall\'Albo d\'Oro?', async () => {
+                hallOfFame = hallOfFame.filter(s => s.id !== id);
+                renderHallOfFame();
+                await saveData();
+            });
+        };
+
+        const handleAlboForm = async (e) => {
+            e.preventDefault();
+            const season = document.getElementById('alboSeason').value.trim();
+            const picks = [
+                ['alboFirst', 'alboFirstPts', 1],
+                ['alboSecond', 'alboSecondPts', 2],
+                ['alboThird', 'alboThirdPts', 3]
+            ];
+            const podium = [];
+            picks.forEach(([selId, ptsId, rank]) => {
+                const pid = document.getElementById(selId).value;
+                const p = players.find(pl => pl.id === pid);
+                if (!p) return;
+                const pts = document.getElementById(ptsId).value;
+                podium.push({
+                    playerId: p.id, name: p.name, surname: p.surname || '', alias: p.alias || '',
+                    rank, points: pts === '' ? null : parseInt(pts, 10), attendance: null, setsWon: null
+                });
+            });
+            if (!season || !podium.length) {
+                showToast('Inserisci almeno il nome della stagione e il 1° classificato.');
+                return;
+            }
+            // Data fittizia prima di tutte le altre, così le stagioni passate finiscono in fondo
+            const oldest = hallOfFame.reduce((min, s) => (s.closedAt && s.closedAt < min) ? s.closedAt : min, new Date().toISOString());
+            const closedAt = new Date(new Date(oldest).getTime() - 1000).toISOString();
+            hallOfFame.push({ id: 'h' + Date.now(), season, closedAt, manual: true, podium });
+            document.getElementById('albo-form').reset();
+            renderHallOfFame();
+            await saveData();
+        };
+
+        const renderLeaderboard = () => {
+            const container = document.getElementById('leaderboard-container');
+            if (players.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center">Nessun giocatore ancora inserito.</p>`;
+                return;
+            }
+            const leaderboardData = computeStandings();
+            const streaks = computeStreaks();
+
+            container.innerHTML = leaderboardData.map((player, index) => {
+                const streak = streaks[player.id] ? streaks[player.id].current : 0;
+                const rankColor = index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-yellow-700' : 'bg-gray-600';
+                return `
+                <div class="card rounded-lg p-3 flex items-center space-x-3 shadow-md">
+                    <div class="flex-shrink-0 w-10 h-10 ${rankColor} rounded-full flex items-center justify-center text-lg font-bold text-white">${index + 1}</div>
+                    <img src="${player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-14 h-14 rounded-full object-cover border-2 border-secondary">
+                    <div class="flex-grow">
+                        <h3 class="text-lg font-bold text-white cursor-pointer hover:underline" onclick="app_showPlayerDetail('${player.id}')">
+                            ${player.alias || player.name}
+                        </h3>
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 mt-1">
+                            <span><strong class="text-gray-200">${player.attendanceCount}</strong> Pres.</span>
+                            <span><strong class="text-gray-200">${player.setsWon}</strong> Set</span>
+                            <span><strong class="text-gray-200">${player.dishPoints}</strong> Piatti</span>
+                            <span><strong class="text-gray-200">${player.badgePoints}</strong> Badge</span>
+                            <span><strong class="text-gray-200">${player.pointAverage}</strong> Media</span>
+                            ${streakChipHtml(streak)}
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-accent">${player.totalPoints}</div>
+                </div>
+                `;
+            }).join('');
+        };
+
+        const renderPlayersList = () => {
+            const container = document.getElementById('players-list-container');
+            initSeasonFees();
+            const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            container.innerHTML = players.map(player => {
+                const isPaid = appState.seasonFees[season] && appState.seasonFees[season][player.id] && appState.seasonFees[season][player.id].paid;
+                return `
+                <div class="card rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-4 flex-grow">
+                        <img src="${player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-12 h-12 rounded-full object-cover">
+                        <div class="flex-grow">
+                            <p class="font-bold text-lg text-white">${player.name} ${player.surname}</p>
+                            <p class="text-sm text-gray-400">${player.role || 'Ruolo non specificato'} ${ovr(player) !== null ? `<span class="ovr-pill ml-1">${ovr(player)}</span>` : ''}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 flex-wrap gap-2">
+                        ${isAdmin ? `
+                        <label class="flex items-center space-x-2 bg-primary rounded px-2 py-1">
+                            <input type="checkbox" ${isPaid ? 'checked' : ''} onchange="app_toggleSeasonFee('${player.id}')" class="w-4 h-4">
+                            <span class="text-xs text-white">Pagata</span>
+                        </label>
+                        ` : ''}
+                        <button onclick="app_showPlayerDetail('${player.id}')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </button>
+                        ${isAdmin ? `
+                        <button onclick="app_editPlayer('${player.id}')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="app_deletePlayer('${player.id}')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        };
+
+        const renderTrainingLog = () => {
+            const container = document.getElementById('training-log-container');
+            const trainingDayData = trainings[selectedTrainingDate] || { players: {} };
+            document.getElementById('training-notes').value = trainingDayData.notes || '';
+
+            // Assicurati che esista la struttura base per questo allenamento
+            if (!trainings[selectedTrainingDate]) {
+                trainings[selectedTrainingDate] = { date: selectedTrainingDate, players: {}, notes: '' };
+            }
+
+            container.innerHTML = players.map(player => {
+                const playerData = trainingDayData.players ? (trainingDayData.players[player.id] || {}) : {};
+                return `
+                <div class="card rounded-lg p-3 flex flex-wrap items-center gap-4">
+                    <div class="flex items-center space-x-3 cursor-pointer flex-grow basis-full sm:basis-1/3" onclick="app_showPlayerDetail('${player.id}')">
+                        <img src="${player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-12 h-12 rounded-full object-cover">
+                        <p class="font-semibold text-white">${player.name} ${player.surname}</p>
+                    </div>
+                    <div class="flex items-center space-x-4 flex-wrap gap-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="present" ${playerData.present ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Presenza</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="number" min="0" data-player-id="${player.id}" data-field="setsWon" class="w-20 form-input p-1 rounded text-center" value="${playerData.setsWon || 0}" ${!isAdmin ? 'disabled' : ''}>
+                            <span>Set Vinti</span>
+                        </label>
+                        <label class="flex items-center space-x-2" title="Ha partecipato alla cena">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="dinnerAttended" ${playerData.dinnerAttended ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Ha Mangiato</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="dishes" ${playerData.dishes ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Piatti</span>
+                        </label>
+                        <label class="flex items-center space-x-2" title="Pagamento cena 10€">
+                            <input type="checkbox" data-player-id="${player.id}" data-field="dinnerPaid" ${playerData.dinnerPaid ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''}>
+                            <span>Cena Pagata (10€)</span>
+                        </label>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // Aggiungi event listeners ai checkbox
+            document.querySelectorAll('[data-player-id]').forEach(input => {
+                input.addEventListener('change', handleTrainingDataChange);
+            });
+        };
+        
+        const renderBadges = () => {
+            const container = document.getElementById('badges-list-container');
+            container.innerHTML = `
+                <h3 class="text-2xl font-semibold mb-4 text-white">Badge Esistenti</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${badges.map(badge => `
+                        <div class="card rounded-lg p-4 flex items-start space-x-4">
+                            <div class="text-4xl">${badge.icon || '🏅'}</div>
+                            <div class="flex-grow">
+                                <p class="font-bold text-lg text-white">${badge.name} (+${badge.points} P.ti)</p>
+                                <p class="text-sm text-gray-400">${badge.description}</p>
+                            </div>
+                            ${isAdmin ? `<button onclick="app_deleteBadge('${badge.id}')" class="text-red-400 hover:text-red-600 text-2xl font-bold">&times;</button>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+
+        const renderEvents = () => {
+            const container = document.getElementById('events-list-container');
+            const sortedEvents = [...events].sort((a,b) => new Date(a.date) - new Date(b.date));
+            container.innerHTML = sortedEvents.map(event => `
+                <div class="card rounded-lg p-4 flex justify-between items-start">
+                    <div>
+                        <p class="font-bold text-lg text-white">${event.name}</p>
+                        <p class="text-sm text-accent">${new Date(event.date).toLocaleString('it-IT', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                        <p class="mt-2 text-gray-300 whitespace-pre-wrap">${event.description}</p>
+                        <button onclick="app_shareEvent('${event.id}', event)" class="share-btn share-btn-sm mt-3" title="Crea la locandina dell'evento per WhatsApp">
+                            <span class="leading-none">📲</span> Condividi
+                        </button>
+                    </div>
+                    ${isAdmin ? `<button onclick="app_deleteEvent('${event.id}')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full h-10 w-10 flex-shrink-0 ml-4 flex items-center justify-center text-xl font-bold">&times;</button>` : ''}
+                </div>
+            `).join('');
+        };
+
+        const renderPagamenti = () => {
+            const container = document.getElementById('iscrizioni-table-body');
+            const season = defaultSeasonName();
+
+            // Inizializza stagione se non esiste
+            if (!appState.seasonFees[season]) {
+                appState.seasonFees[season] = {};
+            }
+
+            // Ordina i giocatori per cognome, poi nome
+            const sortedPlayers = [...players].sort((a, b) => {
+                const cognomeComp = (a.surname || '').localeCompare(b.surname || '');
+                return cognomeComp !== 0 ? cognomeComp : a.name.localeCompare(b.name);
+            });
+
+            container.innerHTML = sortedPlayers.map(player => {
+                const isPaid = appState.seasonFees[season][player.id]?.paid || false;
+
+                // Calcola cene pagate: somma dinnerPaid=true di tutti gli allenamenti
+                let dinnersPaidCount = 0;
+                Object.values(trainings).forEach(dayTrainings => {
+                    if (dayTrainings.players && dayTrainings.players[player.id]) {
+                        const playerData = dayTrainings.players[player.id];
+                        if (playerData.dinnerPaid) {
+                            dinnersPaidCount++;
+                        }
+                    }
+                });
+                const dinnersPaidTotal = dinnersPaidCount * 10; // 10€ per cena
+
+                return `
+                    <tr class="border-b border-gray-700 hover:bg-gray-800">
+                        <td class="p-4 text-white">${player.name}</td>
+                        <td class="p-4 text-white">${player.surname || '-'}</td>
+                        <td class="p-4 text-center">
+                            ${isAdmin ? `
+                                <input type="checkbox"
+                                    data-player-id="${player.id}"
+                                    ${isPaid ? 'checked' : ''}
+                                    onchange="app_toggleSeasonFee('${player.id}', this.checked)"
+                                    class="w-5 h-5 cursor-pointer accent-accent">
+                            ` : `
+                                <span class="text-lg">${isPaid ? '✅' : '⭕'}</span>
+                            `}
+                        </td>
+                        <td class="p-4 text-right text-accent font-semibold">${dinnersPaidCount > 0 ? dinnersPaidCount + ' cene (€' + dinnersPaidTotal + ')' : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.handleLogin = (role) => {
+            if (role === 'user') {
+                isAdmin = false;
+                initApp();
+            } else if (role === 'admin') {
+                const password = document.getElementById('password-input').value;
+                if (password === 'Minnie1970!') {
+                    isAdmin = true;
+                    initApp();
+                } else {
+                    const errorEl = document.getElementById('password-error');
+                    errorEl.classList.remove('hidden');
+                    setTimeout(() => errorEl.classList.add('hidden'), 3000);
+                }
+            }
+        };
+
+        function initApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            if (isAdmin) {
+                document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.admin-content[readonly]').forEach(el => el.removeAttribute('readonly'));
+            }
+            document.getElementById('season-name').value = defaultSeasonName();
+            initializeDatePicker();
+            renderAll();
+
+            // Gestione tasto indietro Android
+            window.addEventListener('popstate', (e) => {
+                if (e.state && e.state.page) {
+                    // Navigazione tra pagine interne
+                    currentPage = e.state.page;
+                    switchPage(e.state.page, false);
+                } else {
+                    // Stiamo per uscire dall'app: blocca e chiedi conferma
+                    history.pushState({ page: currentPage }, '', '#' + currentPage);
+                    showConfirmModal(
+                        "Uscire dall'app?",
+                        "Sei sicuro di voler uscire da Scando Volley?",
+                        () => { history.go(-2); }
+                    );
+                }
+            });
+
+            // Stato iniziale nella cronologia
+            history.pushState({ page: 'classifica' }, '', '#classifica');
+        }
+        
+        function switchPage(pageId, pushState = true) {
+            pages.forEach(page => page.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.page === pageId);
+            });
+            mobileMenu.classList.add('hidden');
+            currentPage = pageId;
+            if (pageId === 'album') renderAlbum();
+            if (pushState) {
+                history.pushState({ page: pageId }, '', '#' + pageId);
+            }
+        }
+
+        window.toggleSeasonManagement = () => {
+            const content = document.getElementById('season-management-content');
+            if (content) {
+                content.classList.toggle('hidden');
+            }
+        };
+        
+        window.app_editPlayer = (id) => {
+            const player = players.find(p => p.id === id);
+            if (player) {
+                switchPage('giocatori');
+                document.getElementById('playerId').value = player.id;
+                document.getElementById('playerName').value = player.name;
+                document.getElementById('playerSurname').value = player.surname;
+                document.getElementById('playerAlias').value = player.alias;
+                document.getElementById('playerPhotoData').value = player.photo;
+                document.getElementById('playerPhotoPreview').src = player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto';
+                document.getElementById('playerBirthDate').value = player.birthDate;
+                document.getElementById('playerHeight').value = player.height;
+                document.getElementById('playerWeight').value = player.weight;
+                document.getElementById('playerRole').value = player.role;
+                document.getElementById('playerDeficit').value = player.deficit;
+                document.getElementById('playerNotes').value = player.notes;
+                document.getElementById('playerNumber').value = player.number ?? '';
+                setSkillSliders(player.skills);
+                window.scrollTo(0, 0);
+            }
+        };
+
+        window.app_deletePlayer = (id) => {
+            showConfirmModal('Elimina Giocatore', 'Sei sicuro di voler eliminare questo giocatore?', () => {
+                hasUnsavedChanges = true;
+                players = players.filter(p => p.id !== id);
+                renderAll();
+            });
+        };
+
+        window.app_toggleSeasonFee = (playerId) => {
+            hasUnsavedChanges = true;
+            const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            initSeasonFees();
+            if (!appState.seasonFees[season]) appState.seasonFees[season] = {};
+            const player = players.find(p => p.id === playerId);
+            if (!player) return;
+            const current = appState.seasonFees[season][playerId];
+            const isPaid = current && current.paid;
+            appState.seasonFees[season][playerId] = {
+                playerId, playerName: player.name + ' ' + player.surname,
+                amount: 100, paid: !isPaid, paidDate: isPaid ? null : new Date().toISOString().split('T')[0],
+                paymentMethod: 'admin', notes: ''
+            };
+            saveData();
+            renderPlayersList();
+        };
+
+        window.app_deleteBadge = (id) => {
+            showConfirmModal('Elimina Badge', 'Sei sicuro di voler eliminare questo badge?', () => {
+                hasUnsavedChanges = true;
+                badges = badges.filter(b => b.id !== id);
+                players.forEach(p => {
+                    if (p.assignedBadges) {
+                        p.assignedBadges = p.assignedBadges.filter(bid => bid !== id);
+                    }
+                });
+                renderAll();
+            });
+        };
+
+        window.app_deleteEvent = (id) => {
+            showConfirmModal('Elimina Evento', 'Sei sicuro di voler eliminare questo evento?', () => {
+                hasUnsavedChanges = true;
+                events = events.filter(ev => ev.id !== id);
+                renderAll();
+            });
+        };
+
+        window.app_toggleSeasonFee = (playerId, isPaid) => {
+            hasUnsavedChanges = true;
+            const season = defaultSeasonName();
+            if (!appState.seasonFees[season]) {
+                appState.seasonFees[season] = {};
+            }
+            if (!appState.seasonFees[season][playerId]) {
+                appState.seasonFees[season][playerId] = {};
+            }
+            appState.seasonFees[season][playerId].paid = isPaid;
+            renderIscrizioni();
+        };
+
+        window.resetForm = (formId) => {
+            const form = document.getElementById(formId);
+            form.reset();
+            if (formId === 'player-form') {
+                document.getElementById('playerId').value = '';
+                document.getElementById('playerPhotoData').value = '';
+                document.getElementById('playerPhotoPreview').src = 'https://placehold.co/100x100/16213e/dcdcdc?text=Foto';
+                setSkillSliders(null);
+            }
+        };
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+        
+        let confirmCallback = null;
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmModalContent = document.getElementById('confirm-modal-content');
+        const confirmModalTitle = document.getElementById('confirm-modal-title');
+        const confirmModalText = document.getElementById('confirm-modal-text');
+
+        function showConfirmModal(title, text, callback) {
+            confirmModalTitle.textContent = title;
+            confirmModalText.textContent = text;
+            confirmCallback = callback;
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => confirmModalContent.classList.add('scale-100', 'opacity-100'), 10);
+        }
+
+        window.app_showPlayerDetail = (id) => {
+            const player = players.find(p => p.id === id);
+            if(!player) return;
+            const modal = document.getElementById('player-detail-modal');
+            const content = document.getElementById('player-detail-content');
+            const playerBadges = (player.assignedBadges || []).map(badgeId => {
+                const badge = badges.find(b => b.id === badgeId);
+                return badge ? `<span class="bg-accent text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${badge.icon || '🏅'} ${badge.name}</span>` : '';
+            }).join('');
+            const age = calculateAge(player.birthDate);
+            const st = computeStreaks()[player.id] || { current: 0, best: 0 };
+            content.innerHTML = `
+                <button onclick="app_closePlayerDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                    <img src="${player.photo || 'https://placehold.co/150x150/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-32 h-32 rounded-full object-cover border-4 border-secondary flex-shrink-0">
+                    <div class="text-center sm:text-left">
+                        <h2 class="text-3xl font-bold text-white">${player.name} ${player.surname}</h2>
+                        <p class="text-lg text-accent">${player.alias ? `"${player.alias}"` : ''}</p>
+                        <p class="text-md mt-1">${player.role || 'Nessun ruolo'}</p>
+                    </div>
+                </div>
+                <div class="mt-6 border-t border-primary pt-4 space-y-3">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div><strong>Età:</strong> ${age ? age + ' anni' : 'N/D'}</div>
+                        <div><strong>Altezza:</strong> ${player.height ? player.height + ' cm' : 'N/D'}</div>
+                        <div><strong>Peso:</strong> ${player.weight ? player.weight + ' kg' : 'N/D'}</div>
+                        <div><strong>Serie in corso:</strong> ${st.current ? streakChipHtml(st.current) : '<span class="text-gray-400">nessuna</span>'}</div>
+                        <div><strong>Record serie:</strong> ${st.best || 0}</div>
+                    </div>
+                    <div>
+                        <p><strong>Deficit/Caratteristiche:</strong></p>
+                        <p class="p-2 bg-primary rounded mt-1">${player.deficit || 'Nessuna'}</p>
+                    </div>
+                    <div>
+                        <p><strong>Note:</strong></p>
+                        <p class="p-2 bg-primary rounded mt-1">${player.notes || 'Nessuna'}</p>
+                    </div>
+                    <div>
+                        <p><strong>Badge Ottenuti:</strong></p>
+                        <div class="p-2 flex flex-wrap gap-2 mt-1">${playerBadges || 'Nessun badge'}</div>
+                    </div>
+                    <div>
+                        <p class="mb-2"><strong>Caratteristiche tecniche:</strong> ${hasSkills(player) ? `<span class="ovr-pill ml-1">${ovr(player)}</span>` : '<span class="text-gray-400 text-sm">non ancora valutato</span>'}</p>
+                        <div class="space-y-1">${skillBarsHtml(getSkills(player))}</div>
+                    </div>
+                    <div class="text-center pt-2">
+                        <button onclick="app_closePlayerDetail(); app_openCard('${player.id}')" class="btn-accent text-white font-bold py-2 px-5 rounded-lg">🃏 Vedi figurina</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.add('scale-100', 'opacity-100'), 10);
+        };
+
+        window.app_closePlayerDetail = () => {
+            const modal = document.getElementById('player-detail-modal');
+            const content = document.getElementById('player-detail-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        // =====================================================================
+        // CARATTERISTICHE TECNICHE
+        // =====================================================================
+        const SKILLS = [
+            { key: 'attacco',   label: 'Attacco',   short: 'ATT' },
+            { key: 'difesa',    label: 'Difesa',    short: 'DIF' },
+            { key: 'ricezione', label: 'Ricezione', short: 'RIC' },
+            { key: 'palleggio', label: 'Palleggio', short: 'PAL' },
+            { key: 'battuta',   label: 'Battuta',   short: 'BAT' },
+            { key: 'muro',      label: 'Muro',      short: 'MUR' }
+        ];
+        const DEFAULT_SKILL = 5;
+
+        function hasSkills(p) { return !!(p && p.skills && SKILLS.some(k => p.skills[k.key] != null)); }
+        function getSkills(p) {
+            const out = {};
+            SKILLS.forEach(k => {
+                const v = p && p.skills ? parseInt(p.skills[k.key], 10) : NaN;
+                out[k.key] = isNaN(v) ? DEFAULT_SKILL : Math.min(10, Math.max(1, v));
+            });
+            return out;
+        }
+        function skillAvg(p) { const s = getSkills(p); return SKILLS.reduce((a, k) => a + s[k.key], 0) / SKILLS.length; }
+        function ovr(p) { return hasSkills(p) ? Math.round(skillAvg(p) * 10) : null; }
+        function isSetter(p) { return /palleg|alzat/i.test((p && p.role) || ''); }
+        function playerThumb(p, size = 100) {
+            return (p && p.photo) || ('https://placehold.co/' + size + 'x' + size + '/16213e/dcdcdc?text=' + encodeURIComponent(((p && p.name) || '?').charAt(0)));
+        }
+
+        function buildSkillSliders() {
+            const box = document.getElementById('skill-sliders');
+            box.innerHTML = SKILLS.map(k => `
+                <label class="block">
+                    <div class="flex justify-between text-sm text-gray-300">
+                        <span>${k.label}</span><span id="skill-val-${k.key}" class="font-bold text-white">${DEFAULT_SKILL}</span>
+                    </div>
+                    <input type="range" min="1" max="10" step="1" value="${DEFAULT_SKILL}" id="skill-${k.key}" class="w-full skill-range">
+                </label>`).join('');
+            SKILLS.forEach(k => {
+                document.getElementById('skill-' + k.key).addEventListener('input', e => {
+                    document.getElementById('skill-val-' + k.key).textContent = e.target.value;
+                });
+            });
+        }
+        function setSkillSliders(skills) {
+            SKILLS.forEach(k => {
+                const v = skills && skills[k.key] != null ? skills[k.key] : DEFAULT_SKILL;
+                document.getElementById('skill-' + k.key).value = v;
+                document.getElementById('skill-val-' + k.key).textContent = v;
+            });
+        }
+        function readSkillSliders() {
+            const out = {};
+            SKILLS.forEach(k => { out[k.key] = parseInt(document.getElementById('skill-' + k.key).value, 10); });
+            return out;
+        }
+        function skillBarsHtml(skillsObj, color = 'var(--accent)') {
+            return SKILLS.map(k => {
+                const v = skillsObj[k.key];
+                return `
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="w-20 text-gray-300">${k.label}</span>
+                    <div class="flex-grow h-2 rounded bg-primary"><div class="h-2 rounded" style="width:${Math.round(v * 10)}%;background:${color}"></div></div>
+                    <span class="w-8 text-right text-white font-semibold">${Number.isInteger(v) ? v : v.toFixed(1)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // =====================================================================
+        // RITAGLIO FOTO (stessa inquadratura per tutti, foto leggera per il database)
+        // =====================================================================
+        const CROP_W = 240, CROP_H = 300, OUT_W = 360, OUT_H = 450;
+        const crop = { img: null, base: 1, zoom: 1, x: 0, y: 0, drag: null };
+        const cropCanvas = document.getElementById('crop-canvas');
+        const cropCtx = cropCanvas.getContext('2d');
+
+        function cropScale() { return crop.base * crop.zoom; }
+        function cropClamp() {
+            const s = cropScale();
+            const w = crop.img.width * s, h = crop.img.height * s;
+            crop.x = Math.min(0, Math.max(CROP_W - w, crop.x));
+            crop.y = Math.min(0, Math.max(CROP_H - h, crop.y));
+        }
+        function cropDraw() {
+            cropCtx.fillStyle = '#0f3460';
+            cropCtx.fillRect(0, 0, CROP_W, CROP_H);
+            const s = cropScale();
+            cropCtx.drawImage(crop.img, crop.x, crop.y, crop.img.width * s, crop.img.height * s);
+        }
+        function openCropper(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    crop.img = img;
+                    crop.base = Math.max(CROP_W / img.width, CROP_H / img.height);
+                    crop.zoom = 1;
+                    document.getElementById('crop-zoom').value = 1;
+                    crop.x = (CROP_W - img.width * crop.base) / 2;
+                    crop.y = (CROP_H - img.height * crop.base) / 2;
+                    cropClamp();
+                    cropDraw();
+                    document.getElementById('crop-modal').classList.remove('hidden');
+                };
+                img.onerror = () => showToast('Formato immagine non supportato.');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        function closeCropper() {
+            document.getElementById('crop-modal').classList.add('hidden');
+            document.getElementById('playerPhoto').value = '';
+        }
+        document.getElementById('crop-zoom').addEventListener('input', e => {
+            if (!crop.img) return;
+            const sOld = cropScale();
+            const ix = (CROP_W / 2 - crop.x) / sOld, iy = (CROP_H / 2 - crop.y) / sOld;
+            crop.zoom = parseFloat(e.target.value);
+            const sNew = cropScale();
+            crop.x = CROP_W / 2 - ix * sNew;
+            crop.y = CROP_H / 2 - iy * sNew;
+            cropClamp();
+            cropDraw();
+        });
+        cropCanvas.addEventListener('pointerdown', e => {
+            crop.drag = { x: e.clientX, y: e.clientY };
+            cropCanvas.setPointerCapture(e.pointerId);
+            cropCanvas.style.cursor = 'grabbing';
+        });
+        cropCanvas.addEventListener('pointermove', e => {
+            if (!crop.drag || !crop.img) return;
+            crop.x += e.clientX - crop.drag.x;
+            crop.y += e.clientY - crop.drag.y;
+            crop.drag = { x: e.clientX, y: e.clientY };
+            cropClamp();
+            cropDraw();
+        });
+        const endDrag = () => { crop.drag = null; cropCanvas.style.cursor = 'grab'; };
+        cropCanvas.addEventListener('pointerup', endDrag);
+        cropCanvas.addEventListener('pointercancel', endDrag);
+        document.getElementById('crop-cancel').addEventListener('click', closeCropper);
+        document.getElementById('crop-ok').addEventListener('click', () => {
+            const out = document.createElement('canvas');
+            out.width = OUT_W; out.height = OUT_H;
+            const octx = out.getContext('2d');
+            const f = OUT_W / CROP_W, s = cropScale();
+            octx.fillStyle = '#0f3460';
+            octx.fillRect(0, 0, OUT_W, OUT_H);
+            octx.drawImage(crop.img, crop.x * f, crop.y * f, crop.img.width * s * f, crop.img.height * s * f);
+            const data = out.toDataURL('image/jpeg', 0.8);
+            document.getElementById('playerPhotoData').value = data;
+            document.getElementById('playerPhotoPreview').src = data;
+            closeCropper();
+        });
+
+        // Testo da incollare in Gemini: uguale per tutti = foto tutte con lo stesso stile
+        const AI_PROMPT = `Trasforma questa foto in un ritratto ufficiale da album di figurine sportive, stile foto di squadra professionale.
+
+- Mantieni ESATTAMENTE la stessa persona: stesso viso, lineamenti, capelli, età ed espressione. Non abbellire e non cambiare i tratti.
+- Inquadratura a mezzo busto, frontale, spalle dritte, viso al centro nella parte alta dell'immagine, sguardo in camera.
+- Indossa una maglia da pallavolo blu notte (#16213e) con colletto e bordi delle maniche rosso corallo (#e94560) e una sottile banda viola (#533483) sulle spalle. Nessun numero, nessuna scritta, nessun logo.
+- Sfondo in studio a tinta unita blu scuro con una leggera sfumatura più chiara dietro la testa.
+- Luce da studio morbida e frontale, colori naturali, buon contrasto, pelle realistica, nitidezza alta.
+- Formato verticale 4:5, fotografico e realistico, niente effetto cartone animato.`;
+        document.getElementById('ai-prompt').value = AI_PROMPT;
+        document.getElementById('copy-ai-prompt').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(AI_PROMPT);
+            } catch (e) {
+                const ta = document.getElementById('ai-prompt');
+                ta.select();
+                document.execCommand('copy');
+            }
+            showToast('Testo copiato! Incollalo in Gemini insieme alla foto.');
+        });
+
+        // =====================================================================
+        // GENERATORE SQUADRE EQUILIBRATE
+        // =====================================================================
+        const TEAM_STYLES = [
+            { name: 'Squadra Rossa',  color: '#e94560' },
+            { name: 'Squadra Blu',    color: '#3b82f6' },
+            { name: 'Squadra Verde',  color: '#22c55e' },
+            { name: 'Squadra Gialla', color: '#f59e0b' }
+        ];
+        const teamSelection = new Set();
+        let teamSelectionInitialized = false;
+        let lastTeamsKey = null;
+
+        function todayKey() { return new Date().toISOString().split('T')[0]; }
+        function presentToday() {
+            const day = trainings[todayKey()];
+            if (!day || !day.players) return [];
+            return players.filter(p => day.players[p.id] && day.players[p.id].present).map(p => p.id);
+        }
+
+        function renderTeamPicker() {
+            // tieni solo giocatori ancora esistenti
+            [...teamSelection].forEach(id => { if (!players.some(p => p.id === id)) teamSelection.delete(id); });
+            if (!teamSelectionInitialized && players.length) {
+                presentToday().forEach(id => teamSelection.add(id));
+                teamSelectionInitialized = true;
+            }
+            const box = document.getElementById('team-player-picker');
+            box.innerHTML = players.map(p => {
+                const o = ovr(p);
+                return `
+                <button type="button" class="pick-chip ${teamSelection.has(p.id) ? 'selected' : ''}" data-pick="${p.id}">
+                    <img src="${playerThumb(p)}" alt="">
+                    <span class="flex-grow min-w-0">
+                        <span class="block text-sm font-semibold text-white truncate">${esc(p.alias || p.name)}</span>
+                        <span class="block text-xs text-gray-400 truncate">${esc(p.role || '—')}</span>
+                    </span>
+                    <span class="ovr-pill">${o ?? '—'}</span>
+                </button>`;
+            }).join('') || '<p class="text-gray-400 col-span-full">Nessun giocatore inserito.</p>';
+            document.getElementById('sel-count').textContent = teamSelection.size;
+        }
+
+        function variance(arr) {
+            const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+            return arr.reduce((a, b) => a + (b - m) * (b - m), 0) / arr.length;
+        }
+        function teamCost(teams) {
+            let c = 3 * variance(teams.map(t => t.reduce((a, p) => a + p._avg, 0)));
+            SKILLS.forEach((k, i) => { c += 0.6 * variance(teams.map(t => t.reduce((a, p) => a + p._v[i], 0))); });
+            c += 25 * variance(teams.map(t => t.filter(p => p._setter).length));
+            return c;
+        }
+        function shuffle(a) {
+            for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+            return a;
+        }
+        function teamsKey(teams) {
+            return teams.map(t => t.map(p => p.id).sort().join(',')).sort().join('|');
+        }
+        // Prova tante combinazioni partendo da punti diversi e tiene le più equilibrate
+        function buildBalancedTeams(selected, n) {
+            const pool = selected.map(p => {
+                const sk = getSkills(p);
+                return { ...p, _v: SKILLS.map(k => sk[k.key]), _avg: skillAvg(p), _setter: isSetter(p) };
+            });
+            const sizes = Array.from({ length: n }, (_, i) => Math.floor(pool.length / n) + (i < pool.length % n ? 1 : 0));
+            const found = new Map();
+            for (let r = 0; r < 250; r++) {
+                const order = shuffle([...pool]);
+                const teams = []; let idx = 0;
+                sizes.forEach(sz => { teams.push(order.slice(idx, idx + sz)); idx += sz; });
+                let cost = teamCost(teams), improved = true;
+                while (improved) {
+                    improved = false;
+                    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++)
+                        for (let i = 0; i < teams[a].length; i++) for (let j = 0; j < teams[b].length; j++) {
+                            [teams[a][i], teams[b][j]] = [teams[b][j], teams[a][i]];
+                            const c2 = teamCost(teams);
+                            if (c2 < cost - 1e-9) { cost = c2; improved = true; }
+                            else { [teams[a][i], teams[b][j]] = [teams[b][j], teams[a][i]]; }
+                        }
+                }
+                const key = teamsKey(teams);
+                if (!found.has(key)) found.set(key, { cost, teams: teams.map(t => [...t]), key });
+            }
+            // Aggiunge le alternative "a uno scambio di distanza" dalle soluzioni migliori
+            [...found.values()].sort((x, y) => x.cost - y.cost).slice(0, 5).forEach(sol => {
+                for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++)
+                    for (let i = 0; i < sol.teams[a].length; i++) for (let j = 0; j < sol.teams[b].length; j++) {
+                        const t2 = sol.teams.map(t => [...t]);
+                        [t2[a][i], t2[b][j]] = [t2[b][j], t2[a][i]];
+                        const k2 = teamsKey(t2);
+                        if (!found.has(k2)) found.set(k2, { cost: teamCost(t2), teams: t2, key: k2 });
+                    }
+            });
+            const sorted = [...found.values()].sort((x, y) => x.cost - y.cost);
+            const best = sorted[0].cost;
+            // "Rimescola" deve sempre proporre una combinazione diversa dall'ultima
+            const others = sorted.filter(o => o.key !== lastTeamsKey);
+            let good = others.filter(o => o.cost <= best * 1.25 + 0.3).slice(0, 8);
+            if (!good.length) good = others.slice(0, 3);
+            if (!good.length) good = [sorted[0]];
+            return good[Math.floor(Math.random() * good.length)];
+        }
+
+        function renderTeamsResult(result) {
+            const box = document.getElementById('teams-result');
+            const strengths = result.teams.map(t => t.reduce((a, p) => a + p._avg * 10, 0));
+            const diff = Math.round(Math.max(...strengths) - Math.min(...strengths));
+            const unrated = result.teams.flat().filter(p => !hasSkills(p));
+            box.innerHTML = `
+                <div class="card rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-white font-semibold">⚖️ Differenza di forza tra le squadre: <span class="text-accent">${diff} punti</span></span>
+                    ${unrated.length ? `<span class="text-xs text-yellow-300">⚠️ ${unrated.length} senza voti tecnici (valgono ${DEFAULT_SKILL} in tutto): ${unrated.map(p => esc(p.alias || p.name)).join(', ')}</span>` : ''}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${result.teams.map((t, i) => {
+                        const st = TEAM_STYLES[i];
+                        const avgSkills = {};
+                        SKILLS.forEach((k, si) => { avgSkills[k.key] = t.reduce((a, p) => a + p._v[si], 0) / t.length; });
+                        const teamOvr = Math.round(t.reduce((a, p) => a + p._avg, 0) / t.length * 10);
+                        return `
+                        <div class="card rounded-xl p-4 border-t-4" style="border-top-color:${st.color}">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-xl font-bold" style="color:${st.color}">${st.name}</h3>
+                                <span class="text-sm text-gray-300">Media <strong class="text-white text-lg">${teamOvr}</strong> · Forza ${Math.round(strengths[i])}</span>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                ${[...t].sort((a, b) => b._avg - a._avg).map(p => `
+                                    <div class="flex items-center gap-3">
+                                        <img src="${playerThumb(p)}" alt="" class="w-10 h-10 rounded-full object-cover border-2" style="border-color:${st.color}">
+                                        <div class="flex-grow min-w-0">
+                                            <p class="text-white font-semibold truncate">${esc(p.alias || p.name)}</p>
+                                            <p class="text-xs text-gray-400 truncate">${esc(p.role || '—')}</p>
+                                        </div>
+                                        <span class="ovr-pill">${ovr(p) ?? '—'}</span>
+                                    </div>`).join('')}
+                            </div>
+                            <div class="space-y-1 border-t border-primary pt-3">${skillBarsHtml(avgSkills, st.color)}</div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+        }
+
+        function makeTeams() {
+            const n = parseInt(document.getElementById('team-count').value, 10);
+            const selected = players.filter(p => teamSelection.has(p.id));
+            if (selected.length < n * 2) {
+                showToast(`Seleziona almeno ${n * 2} giocatori per ${n} squadre.`);
+                return;
+            }
+            const result = buildBalancedTeams(selected, n);
+            lastTeamsKey = result.key;
+            renderTeamsResult(result);
+            document.getElementById('reshuffle-teams').classList.remove('hidden');
+            document.getElementById('teams-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('team-player-picker').addEventListener('click', e => {
+            const chip = e.target.closest('[data-pick]');
+            if (!chip) return;
+            const id = chip.dataset.pick;
+            teamSelection.has(id) ? teamSelection.delete(id) : teamSelection.add(id);
+            chip.classList.toggle('selected');
+            document.getElementById('sel-count').textContent = teamSelection.size;
+        });
+        document.getElementById('sel-present').addEventListener('click', () => {
+            const ids = presentToday();
+            if (!ids.length) showToast('Nessuna presenza segnata per oggi nel registro.');
+            teamSelection.clear(); ids.forEach(id => teamSelection.add(id)); renderTeamPicker();
+        });
+        document.getElementById('sel-all').addEventListener('click', () => { players.forEach(p => teamSelection.add(p.id)); renderTeamPicker(); });
+        document.getElementById('sel-none').addEventListener('click', () => { teamSelection.clear(); renderTeamPicker(); });
+        document.getElementById('make-teams').addEventListener('click', makeTeams);
+        document.getElementById('reshuffle-teams').addEventListener('click', makeTeams);
+
+        // =====================================================================
+        // FIGURINE (disegnate su canvas, scaricabili come immagine)
+        // =====================================================================
+        function currentSeasonLabel() {
+            const d = new Date(), y = d.getFullYear();
+            return d.getMonth() >= 6 ? y + '/' + (y + 1) : (y - 1) + '/' + y;
+        }
+        function roleShort(role) {
+            const r = (role || '').toLowerCase();
+            if (/palleg|alzat/.test(r)) return 'PAL';
+            if (/liber/.test(r)) return 'LIB';
+            if (/centr/.test(r)) return 'CEN';
+            if (/oppost/.test(r)) return 'OPP';
+            if (/schiacc|banda|attacc/.test(r)) return 'SCH';
+            return r ? r.slice(0, 3).toUpperCase() : '';
+        }
+        function loadImage(src) {
+            return new Promise(res => {
+                if (!src || !src.startsWith('data:')) return res(null);
+                const i = new Image();
+                i.onload = () => res(i); i.onerror = () => res(null); i.src = src;
+            });
+        }
+        function meanLuma(img) {
+            const c = document.createElement('canvas'); c.width = 32; c.height = 40;
+            const x = c.getContext('2d'); x.drawImage(img, 0, 0, 32, 40);
+            const d = x.getImageData(0, 0, 32, 40).data; let sum = 0;
+            for (let i = 0; i < d.length; i += 4) sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            return sum / (d.length / 4);
+        }
+        function rrPath(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+        }
+        function fitText(ctx, text, maxW, size, weight = '700') {
+            let s = size;
+            do { ctx.font = `${weight} ${s}px Poppins, sans-serif`; s -= 1; } while (ctx.measureText(text).width > maxW && s > 10);
+        }
+        function drawBallCrest(ctx, cx, cy, r) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#16213e'; ctx.lineWidth = 2.2;
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx - r * 0.9, cy - r * 0.2, r * 1.05, -0.55, 0.75); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx + r * 0.5, cy - r * 1.0, r * 1.05, 1.35, 2.55); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx + r * 0.4, cy + r * 1.0, r * 1.05, 3.6, 4.85); ctx.stroke();
+            ctx.restore();
+        }
+
+        // =====================================================================
+        // FIGURINA SEMPLICE (versione unica)
+        // =====================================================================
+        const cardCache = new Map();
+        async function drawCard(p) {
+            const photoKey = p.photo ? p.photo.length + p.photo.slice(-24) : '';
+            const streakNow = (computeStreaks()[p.id] || {}).current || 0;
+            const key = [p.name, p.surname, p.alias, p.role, p.number, photoKey, currentSeasonLabel(), streakNow].join('|');
+            if (cardCache.has(p.id) && cardCache.get(p.id).key === key) return cardCache.get(p.id).url;
+
+            const W = 600, H = 840;
+            const c = document.createElement('canvas');
+            c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+
+            // Sfondo gradiente
+            const bg = ctx.createLinearGradient(0, 0, W, H);
+            bg.addColorStop(0, '#0f3460');
+            bg.addColorStop(1, '#16213e');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // Bordo rosso in alto
+            ctx.fillStyle = '#e94560';
+            ctx.fillRect(0, 0, W, 20);
+
+            // Carica e disegna la foto
+            const img = await loadImage(p.photo);
+            if (img) {
+                const photoW = 280, photoH = 350;
+                const photoX = (W - photoW) / 2;
+                const photoY = 80;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(W / 2, photoY + photoH / 2, Math.min(photoW, photoH) / 2, 0, Math.PI * 2);
+                ctx.clip();
+                const side = Math.min(img.width, img.height);
+                ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, photoX, photoY, photoW, photoH);
+                ctx.restore();
+                ctx.beginPath();
+                ctx.arc(W / 2, photoY + photoH / 2, Math.min(photoW, photoH) / 2, 0, Math.PI * 2);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#533483';
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = '#16213e';
+                ctx.fillRect((W - 280) / 2, 80, 280, 350);
+                ctx.fillStyle = '#dcdcdc';
+                ctx.font = '700 80px Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText((p.name || '?').charAt(0), W / 2, 255);
+            }
+
+            // Nome e Cognome
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 36px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText((p.name || '') + ' ' + (p.surname || ''), W / 2, 480);
+
+            // Ruolo
+            ctx.fillStyle = '#e94560';
+            ctx.font = '600 24px Poppins, sans-serif';
+            ctx.fillText(roleShort(p.role) || '—', W / 2, 520);
+
+            // Numero maglia
+            if (p.number) {
+                ctx.fillStyle = '#f6d365';
+                ctx.font = 'bold 48px Poppins, sans-serif';
+                ctx.fillText(p.number, W / 2, 610);
+            }
+
+            // Scritta "SCANDOLARA VOLLEY"
+            ctx.fillStyle = '#533483';
+            ctx.font = '700 20px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCANDOLARA VOLLEY', W / 2, 720);
+            ctx.fillText(currentSeasonLabel(), W / 2, 760);
+
+            const url = c.toDataURL('image/png');
+            cardCache.set(p.id, { key, url });
+            return url;
+        }
+
+        async function renderAlbum() {
+            document.getElementById('album-season').textContent = currentSeasonLabel();
+            const grid = document.getElementById('album-grid');
+            if (!players.length) { grid.innerHTML = '<p class="text-gray-400 col-span-full text-center py-10">Nessun giocatore inserito.</p>'; return; }
+            const sorted = [...players].sort((a, b) => (parseInt(a.number, 10) || 999) - (parseInt(b.number, 10) || 999));
+            grid.innerHTML = sorted.map((p, i) => `
+                <button type="button" class="album-card cursor-pointer relative group overflow-hidden rounded-lg" onclick="app_openCard('${p.id}')" style="aspect-ratio:3/4;background:#16213e;display:flex;align-items:center;justify-content:center;border:1px solid #533483;">
+                    <div class="text-center w-full">
+                        <img src="${p.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + (p.name.charAt(0))}" alt="${p.name}" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
+                        <p class="text-white font-bold text-sm">${p.alias || p.name}</p>
+                        <p class="text-gray-400 text-xs">${roleShort(p.role) || '—'}</p>
+                    </div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition"></div>
+                </button>
+            `).join('');
+        }
+
+        let cardModalPlayerId = null;
+        window.app_openCard = async (id) => {
+            const p = players.find(pl => pl.id === id);
+            if (!p) return;
+            const url = await drawCard(p);
+            document.getElementById('card-modal-img').src = url;
+            cardModalPlayerId = id;
+            const dl = document.getElementById('card-modal-download');
+            dl.href = url;
+            dl.download = 'figurina-' + (p.alias || p.name || 'giocatore').toLowerCase().replace(/[^a-z0-9]+/gi, '-') + '.png';
+            document.getElementById('card-modal').classList.remove('hidden');
+        };
+        document.getElementById('card-modal-close').addEventListener('click', () => document.getElementById('card-modal').classList.add('hidden'));
+        document.getElementById('card-modal-share').addEventListener('click', function () {
+            const p = players.find(pl => pl.id === cardModalPlayerId);
+            const img = document.getElementById('card-modal-img');
+            if (!p || !img.src) return;
+            const nome = p.alias || p.name;
+            const file = 'figurina-' + nome.toLowerCase().replace(/[^a-z0-9]+/gi, '-') + '.png';
+            withButtonBusy(this, 'Preparo…', () =>
+                shareDataUrl(img.src, file, `🏐 La figurina di *${nome}* — Scando Volley\n${location.origin + location.pathname}`));
+        });
+        document.getElementById('card-modal').addEventListener('click', e => { if (e.target.id === 'card-modal') e.currentTarget.classList.add('hidden'); });
+
+        buildSkillSliders();
+
+        function checkAndAwardBadges(currentTrainingDate) {
+            const awardedMessages = [];
+            const sortedTrainingDates = Object.keys(trainings).sort();
+            players.forEach(player => {
+                if (!player.assignedBadges) player.assignedBadges = [];
+                badges.forEach(badge => {
+                    if (player.assignedBadges.includes(badge.id)) return;
+                    let criterionMet = false;
+                    switch (badge.criterion) {
+                        case 'totalAttendance':
+                            let totalAttendance = 0;
+                            sortedTrainingDates.forEach(date => { if(trainings[date].players[player.id]?.present) totalAttendance++; });
+                            if(totalAttendance >= badge.threshold) criterionMet = true;
+                            break;
+                        case 'totalSetsWon':
+                            let totalSetsWon = 0;
+                            sortedTrainingDates.forEach(date => { totalSetsWon += parseInt(trainings[date].players[player.id]?.setsWon || 0, 10); });
+                            if(totalSetsWon >= badge.threshold) criterionMet = true;
+                            break;
+                        case 'totalDishes':
+                            let totalDishes = 0;
+                            sortedTrainingDates.forEach(date => { if(trainings[date].players[player.id]?.dishes) totalDishes++; });
+                            if(totalDishes >= badge.threshold) criterionMet = true;
+                            break;
+                        case 'consecutiveAttendance':
+                            let consecutiveCount = 0, maxConsecutive = 0;
+                            sortedTrainingDates.forEach(date => {
+                                if (trainings[date].players[player.id]?.present) { consecutiveCount++; }
+                                else { consecutiveCount = 0; }
+                                if (consecutiveCount > maxConsecutive) maxConsecutive = consecutiveCount;
+                            });
+                            if(maxConsecutive >= badge.threshold) criterionMet = true;
+                            break;
+                        case 'birthdayWeekTraining':
+                            if (!player.birthDate) break;
+                            const trainingDayData = trainings[currentTrainingDate];
+                            if (!trainingDayData?.players[player.id]?.present) break;
+                            const trainingDate = new Date(currentTrainingDate);
+                            const birthDate = new Date(player.birthDate);
+                            birthDate.setFullYear(trainingDate.getFullYear());
+                            const diffTime = Math.abs(trainingDate - birthDate);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            if (diffDays <= 3) criterionMet = true;
+                            break;
+                    }
+                    if(criterionMet) {
+                        player.assignedBadges.push(badge.id);
+                        awardedMessages.push(`${player.name} ha sbloccato: ${badge.name}!`);
+                    }
+                });
+            });
+            return awardedMessages;
+        }
+
+        function debounce(func, timeout = 300){
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        // ========== FUNZIONI PER PAGAMENTI PASTI E QUOTE ANNUALI ==========
+
+        // --- INIZIALIZZAZIONE ---
+        function initSeasonFees() {
+            if (!appState.seasonFees) {
+                const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+                appState.seasonFees = { [season]: {} };
+            }
+        }
+
+        // --- PASTI: Registra chi ha mangiato e chi ha pagato ---
+        function recordMealAttendance(trainingId, mealAttendees, mealPaid) {
+            if (!appState.trainings[trainingId]) return;
+            appState.trainings[trainingId].meals = {
+                hadMeal: mealAttendees || [],
+                paid: mealPaid || [],
+                outstanding: (mealAttendees || []).filter(p => !(mealPaid || []).includes(p))
+            };
+            saveData();
+        }
+
+        // --- PASTI: Calcola debito pasti per un giocatore ---
+        function getMealDebt(playerId) {
+            let outstanding = [];
+            let total = 0;
+            Object.entries(appState.trainings).forEach(([trainingId, training]) => {
+                if (training.meals && training.meals.outstanding && training.meals.outstanding.includes(playerId)) {
+                    outstanding.push({ date: training.date, amount: 10, trainingId });
+                    total += 10;
+                }
+            });
+            return { outstanding, total };
+        }
+
+        // --- PASTI: Lista di tutti i debitori ---
+        function getAllMealDebtors() {
+            const debtors = {};
+            Object.entries(appState.trainings).forEach(([trainingId, training]) => {
+                Object.entries(training.players || {}).forEach(([playerId, playerData]) => {
+                    if (playerData.dinnerAttended && !playerData.dinnerPaid) {
+                        if (!debtors[playerId]) debtors[playerId] = [];
+                        debtors[playerId].push({ date: training.date, amount: 10 });
+                    }
+                });
+            });
+            return debtors;
+        }
+
+        // --- QUOTE: Registra pagamento iscrizione ---
+        function setSeasonFeePayment(playerId, data) {
+            const season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            initSeasonFees();
+            if (!appState.seasonFees[season]) appState.seasonFees[season] = {};
+            const player = appState.players[playerId];
+            appState.seasonFees[season][playerId] = {
+                playerId, playerName: player.name + ' ' + player.surname,
+                amount: 100, paid: data.paid || false, paidDate: data.paidDate || null,
+                paymentMethod: data.paymentMethod || null, notes: data.notes || ''
+            };
+            saveData();
+        }
+
+        // --- QUOTE: Ottieni lo stato di pagamento iscrizione ---
+        function getSeasonFeeStatus(season = null) {
+            if (!season) season = new Date().getFullYear() + '-' + (new Date().getFullYear() + 1);
+            initSeasonFees();
+            const paid = [], unpaid = [];
+            Object.entries(appState.players).forEach(([playerId, player]) => {
+                if (player.status === 'guest') return;
+                const feeData = appState.seasonFees[season]?.[playerId];
+                if (feeData && feeData.paid) {
+                    paid.push({ ...player, ...feeData });
+                } else {
+                    unpaid.push({ ...player, amount: 100, paid: false, paidDate: null, paymentMethod: null, notes: '' });
+                }
+            });
+            return { paid, unpaid };
+        }
+
+        // --- PAGAMENTI REMINDERS: Per immagine WhatsApp (SOLO CENE) ---
+        function getPaymentReminders() {
+            let reminders = [];
+            const mealDebtors = getAllMealDebtors();
+            Object.entries(mealDebtors).forEach(([playerId, debts]) => {
+                const player = appState.players[playerId];
+                const total = debts.reduce((sum, d) => sum + d.amount, 0);
+                reminders.push({ playerName: player.name + ' ' + player.surname, amount: total });
+            });
+            return reminders;
+        }
+
+        function formatDateShort(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+        }
+
+        // --- RENDER: Tab Switching ---
+
+
+        // Versione migliorata con squadra vincitrice e ricordini pagamenti
+        async function buildStandingsImageV2() {
+            const W = 1200, H = 1600;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // Sfondo gradiente
+            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+            bgGrad.addColorStop(0, '#0f3460');
+            bgGrad.addColorStop(0.5, '#16213e');
+            bgGrad.addColorStop(1, '#533483');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Titolo
+            ctx.font = 'bold 48px Poppins, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText('📊 CLASSIFICA SCANDOLARA VOLLEY', W / 2, 60);
+
+            // Calcola squadra vincitrice
+            const standings = computeStandings();
+            const topTeam = standings.slice(0, 3);
+            let yPos = 120;
+
+            // SEZIONE 1: Squadra Vincitrice (primo classificato + top 2)
+            if (topTeam.length > 0) {
+                ctx.font = 'bold 32px Poppins, sans-serif';
+                ctx.fillStyle = '#f6d365';
+                ctx.fillText('🏆 PODIO', W / 2, yPos);
+                yPos += 60;
+
+                topTeam.forEach((p, i) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    ctx.font = 'bold 24px Poppins, sans-serif';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(`${medals[i]} ${p.name} ${p.surname} - ${p.points} punti`, W / 2, yPos);
+                    yPos += 50;
+                });
+            }
+
+            yPos += 30;
+
+            // SEZIONE 2: Classifica Completa
+            ctx.font = 'bold 28px Poppins, sans-serif';
+            ctx.fillStyle = '#e94560';
+            ctx.fillText('Classifica Generale', W / 2, yPos);
+            yPos += 50;
+
+            ctx.font = '16px Poppins, sans-serif';
+            ctx.fillStyle = '#dcdcdc';
+            standings.slice(0, 10).forEach((p, i) => {
+                ctx.fillText(`${i + 1}. ${p.name} ${p.surname} - ${p.points} pts`, 80, yPos);
+                yPos += 35;
+                if (yPos > 1100) yPos += 400;
+            });
+
+            yPos = 1150;
+
+            // SEZIONE 3: RICORDINI PAGAMENTI (Cene + Iscrizioni)
+            ctx.font = 'bold 28px Poppins, sans-serif';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('💰 RICORDINI PAGAMENTI', W / 2, yPos);
+            yPos += 50;
+
+            // Conta cene da pagare
+            const season = defaultSeasonName();
+            let mealsUnpaid = 0;
+            Object.values(trainings).forEach(dayTrainings => {
+                Object.values(dayTrainings.players || {}).forEach(playerData => {
+                    if (playerData.dinnerAttended && !playerData.dinnerPaid) {
+                        mealsUnpaid++;
+                    }
+                });
+            });
+            const mealsTotal = mealsUnpaid * 10;
+
+            // Conta iscrizioni da pagare
+            let feesUnpaid = 0;
+            players.forEach(player => {
+                const isPaid = appState.seasonFees[season]?.[player.id]?.paid || false;
+                if (!isPaid) feesUnpaid++;
+            });
+            const feesTotal = feesUnpaid * 100;
+
+            // Mostra dettagli
+            ctx.font = '18px Poppins, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+
+            if (mealsUnpaid > 0) {
+                ctx.fillText(`🍽️ Cene da pagare: ${mealsUnpaid} x 10€ = ${mealsTotal}€`, 80, yPos);
+                yPos += 40;
+            }
+
+            if (feesUnpaid > 0) {
+                ctx.fillText(`🎫 Iscrizioni da pagare: ${feesUnpaid} x 100€ = ${feesTotal}€`, 80, yPos);
+                yPos += 40;
+            }
+
+            // TOTALE DOVUTO (in rosso)
+            const grandTotal = mealsTotal + feesTotal;
+            if (grandTotal > 0) {
+                yPos += 10;
+                ctx.font = 'bold 24px Poppins, sans-serif';
+                ctx.fillStyle = '#e94560';
+                ctx.fillText(`💵 TOTALE DOVUTO: ${grandTotal}€`, 80, yPos);
+            }
+
+            // Footer
+            ctx.font = '12px Poppins, sans-serif';
+            ctx.fillStyle = '#a0a0a0';
+            ctx.textAlign = 'center';
+            const now = new Date().toLocaleDateString('it-IT');
+            ctx.fillText(`Aggiornato: ${now} | Scandolara Volley`, W / 2, H - 20);
+
+            return canvas;
+        }
+
+        window.switchPaymentTab = function(tab) {
+            document.querySelectorAll('.pagamenti-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.pagamenti-tab-btn').forEach(btn => btn.classList.remove('active', 'btn-accent'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active', 'btn-accent');
+            if (tab === 'meals') renderMealsDebtors();
+            if (tab === 'fees') renderSeasonFees();
+            if (tab === 'summary') renderPaymentSummary();
+        };
+
+        // --- RENDER: Debitori Cena ---
+        function renderMealsDebtors() {
+            const container = document.getElementById('meals-debtors-container');
+            const debtors = getAllMealDebtors();
+            if (Object.keys(debtors).length === 0) {
+                container.innerHTML = '<div class="text-center py-10"><p class="text-gray-400">Nessun debito cena.</p></div>';
+                return;
+            }
+            container.innerHTML = Object.entries(debtors).map(([playerId, debts]) => {
+                const player = appState.players[playerId];
+                const total = debts.reduce((sum, d) => sum + d.amount, 0);
+                return `<div class="card rounded-lg p-4 border-l-4 border-orange-500">
+                    <div class="flex justify-between items-start">
+                        <div><p class="font-bold text-white">${player.name} ${player.surname}</p>
+                        <p class="text-xs text-gray-400 mt-1">${debts.map(d => formatDateShort(d.date)).join(', ')}</p></div>
+                        <div class="text-right"><p class="text-2xl font-bold text-orange-500">${total}€</p>
+                        <p class="text-xs text-gray-400">${debts.length} cene</p></div>
+                    </div></div>`;
+            }).join('');
+        }
+
+        // --- RENDER: Iscrizioni Stagione ---
+        function renderSeasonFees() {
+            const { paid, unpaid } = getSeasonFeeStatus();
+            const paidContainer = document.getElementById('season-paid-container');
+            const unpaidContainer = document.getElementById('season-unpaid-container');
+            paidContainer.innerHTML = paid.length === 0
+                ? '<p class="text-gray-400 text-sm">Nessun pagamento ancora registrato.</p>'
+                : paid.map(p => `<div class="flex justify-between items-center py-2 px-3 bg-primary bg-opacity-40 rounded">
+                    <div><p class="text-white font-semibold">${p.name} ${p.surname}</p>
+                    <p class="text-xs text-gray-400">${p.paymentMethod || 'N/A'} • ${formatDateShort(p.paidDate)}</p></div>
+                    <p class="text-green-400 font-bold">✓ 100€</p></div>`).join('');
+            unpaidContainer.innerHTML = unpaid.length === 0
+                ? '<p class="text-gray-400 text-sm">Tutti hanno pagato!</p>'
+                : unpaid.map(p => `<div class="flex justify-between items-center py-2 px-3 bg-red-900 bg-opacity-20 rounded border border-red-700">
+                    <p class="text-white font-semibold">${p.name} ${p.surname}</p>
+                    <p class="text-red-400 font-bold">⚠️ 100€</p></div>`).join('');
+            const playerSelect = document.getElementById('fee-player-select');
+            if (playerSelect) {
+                playerSelect.innerHTML = '<option value="">Seleziona giocatore...</option>' +
+                    unpaid.map(p => `<option value="${p.id}">${p.name} ${p.surname}</option>`).join('');
+            }
+        }
+
+        // --- RENDER: Riepilogo (SOLO CENE) ---
+        function renderPaymentSummary() {
+            const mealDebtors = getAllMealDebtors();
+            let mealTotal = 0, mealCount = 0;
+            Object.entries(mealDebtors).forEach(([_, debts]) => {
+                mealCount += debts.length;
+                mealTotal += debts.reduce((sum, d) => sum + d.amount, 0);
+            });
+            document.getElementById('summary-meals-total').textContent = mealTotal + '€';
+            document.getElementById('summary-meals-count').textContent = Object.keys(mealDebtors).length + ' persone, ' + mealCount + ' cene';
+            document.getElementById('summary-grand-total').textContent = mealTotal + '€';
+
+            const container = document.getElementById('summary-by-player-container');
+            container.innerHTML = Object.entries(mealDebtors).map(([playerId, debts]) => {
+                const player = appState.players[playerId];
+                const total = debts.reduce((sum, d) => sum + d.amount, 0);
+                return `<div class="flex justify-between items-center py-2 px-3 bg-primary rounded">
+                    <div><p class="text-white font-semibold">${player.name} ${player.surname}</p>
+                    <p class="text-xs text-gray-400 mt-1">${debts.length} cene da pagare</p></div>
+                    <p class="text-lg font-bold text-accent">${total}€</p></div>`;
+            }).join('');
+        }
+
+        // --- APP: Registra pagamento iscrizione (Admin) ---
+        window.app_recordSeasonFee = function() {
+            const playerId = document.getElementById('fee-player-select').value;
+            const method = document.getElementById('fee-method-select').value;
+            const date = document.getElementById('fee-date-input').value;
+            if (!playerId || !date) {
+                alert('Seleziona giocatore e data');
+                return;
+            }
+            setSeasonFeePayment(playerId, { paid: true, paidDate: date, paymentMethod: method, notes: '' });
+            document.getElementById('fee-player-select').value = '';
+            document.getElementById('fee-date-input').value = '';
+            renderSeasonFees();
+            renderPaymentSummary();
+        };
+
+        // --- TRAINING DETAIL MODAL ---
+        let currentTrainingId = null;
+        window.openTrainingDetail = function(trainingId) {
+            currentTrainingId = trainingId;
+            const training = appState.trainings[trainingId];
+            document.getElementById('detail-modal-title').textContent = 'Allenamento ' + formatDateShort(training.date);
+
+            const guestsPicker = document.getElementById('detail-guests-picker');
+            guestsPicker.innerHTML = Object.entries(appState.players)
+                .filter(([_, p]) => training.players[_])
+                .map(([playerId, player]) => {
+                    const isGuest = training.players[playerId].role === 'guest';
+                    return `<label class="flex items-center gap-2 p-2 rounded cursor-pointer ${isGuest ? 'bg-secondary bg-opacity-40' : ''}">
+                        <input type="checkbox" value="${playerId}" class="detail-guest-check" ${isGuest ? 'checked' : ''}>
+                        <span class="text-white text-sm">${player.name}</span></label>`;
+                }).join('');
+
+            const mealsPicker = document.getElementById('detail-meals-picker');
+            mealsPicker.innerHTML = Object.entries(appState.players)
+                .filter(([_, p]) => training.players[_])
+                .map(([playerId, player]) => {
+                    const hadMeal = training.meals && training.meals.hadMeal && training.meals.hadMeal.includes(playerId);
+                    return `<label class="flex items-center gap-2 p-2 rounded cursor-pointer ${hadMeal ? 'bg-orange-600 bg-opacity-30' : ''}">
+                        <input type="checkbox" value="${playerId}" class="detail-meal-check" ${hadMeal ? 'checked' : ''}>
+                        <span class="text-white text-sm">${player.name}</span></label>`;
+                }).join('');
+
+            const mealsPaidPicker = document.getElementById('detail-meals-paid-picker');
+            mealsPaidPicker.innerHTML = Object.entries(appState.players)
+                .filter(([_, p]) => training.players[_] && training.meals && training.meals.hadMeal && training.meals.hadMeal.includes(_))
+                .map(([playerId, player]) => {
+                    const paid = training.meals && training.meals.paid && training.meals.paid.includes(playerId);
+                    return `<label class="flex items-center gap-2 p-2 rounded cursor-pointer ${paid ? 'bg-green-600 bg-opacity-30' : ''}">
+                        <input type="checkbox" value="${playerId}" class="detail-paid-check" ${paid ? 'checked' : ''}>
+                        <span class="text-white text-sm">${player.name}</span></label>`;
+                }).join('');
+
+            document.getElementById('training-detail-modal').classList.remove('hidden');
+        };
+
+        window.closeTrainingDetail = function() {
+            document.getElementById('training-detail-modal').classList.add('hidden');
+        };
+
+        window.saveTrainingDetail = function() {
+            const training = appState.trainings[currentTrainingId];
+            const guestChecks = document.querySelectorAll('.detail-guest-check:checked');
+            const guests = Array.from(guestChecks).map(cb => cb.value);
+            guests.forEach(playerId => {
+                training.players[playerId].role = 'guest';
+            });
+            Object.keys(training.players).forEach(playerId => {
+                if (!guests.includes(playerId)) training.players[playerId].role = 'core';
+            });
+
+            const mealChecks = document.querySelectorAll('.detail-meal-check:checked');
+            const hadMeal = Array.from(mealChecks).map(cb => cb.value);
+            const paidChecks = document.querySelectorAll('.detail-paid-check:checked');
+            const paid = Array.from(paidChecks).map(cb => cb.value);
+
+            training.meals = { hadMeal, paid, outstanding: hadMeal.filter(p => !paid.includes(p)) };
+            saveData();
+            closeTrainingDetail();
+        };
+
+        // --- MODIFICA CAPTION IMMAGINE WHATSAPP (SOLO CENE) ---
+        function getStandingsCaption() {
+            const reminders = getPaymentReminders();
+            if (reminders.length === 0) return '📲 Classifica aggiornata';
+            let caption = '📲 Classifica aggiornata\n\n💰 DEBITI CENA:\n';
+            let totalDebt = 0;
+            reminders.forEach(r => {
+                caption += `• ${r.playerName} - ${r.amount}€\n`;
+                totalDebt += r.amount;
+            });
+            caption += `\nTOTALE: ${totalDebt}€`;
+            return caption;
+        }
+
+        // --- EVENT LISTENERS ---
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPage(e.target.dataset.page);
+            });
+        });
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        document.getElementById('player-form').addEventListener('submit', handlePlayerForm);
+        document.getElementById('badge-form').addEventListener('submit', handleBadgeForm);
+        document.getElementById('event-form').addEventListener('submit', handleEventForm);
+        document.getElementById('albo-form').addEventListener('submit', handleAlboForm);
+        document.getElementById('save-data-button').addEventListener('click', saveData);
+        document.getElementById('training-log-container').addEventListener('change', handleTrainingDataChange);
+        document.getElementById('training-notes').addEventListener('input', debounce(handleTrainingNotesChange, 500));
+        
+        document.getElementById('playerPhoto').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) openCropper(file);
+        });
+        
+        document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
+            confirmModalContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            confirmCallback = null;
+        });
+
+        document.getElementById('confirm-modal-confirm').addEventListener('click', () => {
+            if (confirmCallback) { confirmCallback(); }
+            confirmModalContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            confirmCallback = null;
+        });
+
+        // --- ESPORTA FUNZIONI GLOBALI ---
+        window.handleLogin = handleLogin;
+        window.resetForm = resetForm;
+        window.app_showPlayerDetail = app_showPlayerDetail;
+        window.app_closePlayerDetail = app_closePlayerDetail;
+        window.app_editPlayer = app_editPlayer;
+        window.app_deletePlayer = app_deletePlayer;
+        window.app_deleteBadge = app_deleteBadge;
+        window.app_deleteEvent = app_deleteEvent;
+
+    </script>
+</body>
+</html>
