@@ -882,20 +882,53 @@
             }).sort((a, b) => b.totalPoints - a.totalPoints);
         }
 
-        // Podio della stagione in corso: primi 3 posti (a pari punti, stessa posizione)
+        // Podio della stagione in corso: primi 3 posti.
+        // Stesso punteggio => stessa posizione; punteggi diversi => posizioni diverse.
+        // Dopo un pari merito le posizioni "consumate" vengono saltate (1, 2, 2, 4...).
         function computePodium() {
             const standings = computeStandings().filter(p => p.totalPoints > 0);
             const podium = [];
-            standings.forEach((p, i) => {
-                const rank = (i > 0 && p.totalPoints === standings[i - 1].totalPoints) ? podium[podium.length - 1].rank : i + 1;
-                if (rank <= 3) {
-                    podium.push({
-                        playerId: p.id, name: p.name, surname: p.surname || '', alias: p.alias || '',
-                        rank, points: p.totalPoints, attendance: p.attendanceCount, setsWon: p.setsWon
-                    });
+            let rank = 0;
+            let prevPoints = null;
+            for (let i = 0; i < standings.length; i++) {
+                const p = standings[i];
+                // Nuova posizione solo se il punteggio è diverso da quello del giocatore precedente
+                if (prevPoints === null || p.totalPoints !== prevPoints) {
+                    rank = i + 1;
+                    prevPoints = p.totalPoints;
                 }
-            });
+                // La classifica è ordinata in modo decrescente: da qui in poi solo posizioni peggiori
+                if (rank > 3) break;
+                podium.push({
+                    playerId: p.id, name: p.name, surname: p.surname || '', alias: p.alias || '',
+                    rank, points: p.totalPoints, attendance: p.attendanceCount, setsWon: p.setsWon
+                });
+            }
             return podium;
+        }
+
+        // Ricalcola le posizioni di un podio salvato partendo dai punti.
+        // Serve a correggere in visualizzazione gli albi d'oro salvati con il vecchio calcolo errato.
+        // Se i punti non ci sono (stagioni inserite a mano) le posizioni salvate vengono lasciate com'erano.
+        function normalizePodium(podium) {
+            const list = Array.isArray(podium) ? podium : [];
+            if (!list.length) return list;
+            const allHavePoints = list.every(e => typeof e.points === 'number' && !isNaN(e.points));
+            if (!allHavePoints) return list;
+            const sorted = [...list].sort((a, b) => b.points - a.points);
+            const out = [];
+            let rank = 0;
+            let prevPoints = null;
+            for (let i = 0; i < sorted.length; i++) {
+                const e = sorted[i];
+                if (prevPoints === null || e.points !== prevPoints) {
+                    rank = i + 1;
+                    prevPoints = e.points;
+                }
+                if (rank > 3) break;
+                out.push({ ...e, rank });
+            }
+            return out;
         }
 
         function defaultSeasonName() {
@@ -957,9 +990,12 @@
                 return;
             }
 
+            // Posizioni ricalcolate dai punti: corregge eventuali podi salvati con il vecchio calcolo
+            const seasonsFixed = hallOfFame.map(s => ({ ...s, podium: normalizePodium(s.podium) }));
+
             // Bacheca trofei: medaglie totali per giocatore
             const tally = {};
-            hallOfFame.forEach(s => s.podium.forEach(e => {
+            seasonsFixed.forEach(s => s.podium.forEach(e => {
                 const key = e.playerId || e.name;
                 if (!tally[key]) tally[key] = { entry: e, gold: 0, silver: 0, bronze: 0 };
                 if (e.rank === 1) tally[key].gold++;
@@ -983,7 +1019,7 @@
                 </div>`;
 
             // Una card per stagione, dalla più recente
-            const seasons = [...hallOfFame].sort((a, b) => (b.closedAt || '').localeCompare(a.closedAt || ''));
+            const seasons = [...seasonsFixed].sort((a, b) => (b.closedAt || '').localeCompare(a.closedAt || ''));
             container.innerHTML = seasons.map(s => {
                 const byRank = r => s.podium.filter(e => e.rank === r);
                 const closed = (s.closedAt && !s.manual) ? new Date(s.closedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
