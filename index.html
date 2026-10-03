@@ -613,7 +613,7 @@
                 <div class="text-center mb-6">
                     <div class="text-5xl mb-2">🃏</div>
                     <h2 class="text-3xl md:text-4xl font-bold gold-text">Figurine</h2>
-                    <p class="text-gray-400 mt-1">Scegli giocatore, divisa e stile: la figurina è pronta.</p>
+                    <p class="text-gray-400 mt-1">Scegli giocatore, divisa, sfondo e contorno: la figurina si crea da sola dalla foto profilo.</p>
                 </div>
                 <p id="fg-empty" class="hidden text-center text-gray-400 py-10">Nessun giocatore inserito.</p>
 
@@ -626,25 +626,7 @@
                     </div>
 
                     <div class="card rounded-lg p-4 mb-6">
-                        <h3 id="fg-s1-title" class="text-xl font-semibold text-white mb-1">1 · Le tre divise</h3>
-                        <p class="text-sm text-gray-400 mb-3">Ogni giocatore ha tre versioni per collezione, una per divisa. Le divise sono sempre le stesse per tutti.</p>
-                        <details class="mb-4 rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary">
-                            <summary class="cursor-pointer font-semibold text-white">Come si creano (gratis)</summary>
-                            <ol class="list-decimal list-inside text-sm text-gray-300 space-y-1 mt-3">
-                                <li>Il giocatore deve avere la <strong>foto profilo</strong> (va bene anche in abiti normali).</li>
-                                <li>Sotto una divisa premi <strong>Crea con Gemini</strong>: l'app copia il testo, scarica la foto e apre Gemini.</li>
-                                <li>In Gemini allega la foto, incolla il testo e invia. Poi scarica l'immagine creata.</li>
-                                <li>Torna qui e <strong>trascina, carica o incolla</strong> l'immagine nella stessa divisa (solo amministratore).</li>
-                                <li>Per correggere un dettaglio scrivi la richiesta e premi <strong>Ritocca con Gemini</strong>: stessa procedura, con la divisa attuale.</li>
-                            </ol>
-                            <p class="text-xs text-gray-400 mt-2">Si usa il tuo account Gemini gratuito, senza costi. Le istruzioni sono identiche per tutti; nome, logo e dati li disegna l'app.</p>
-                        </details>
-                        <div id="fg-quota" class="mb-3"></div>
-                        <div id="fg-uniforms" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
-                    </div>
-
-                    <div class="card rounded-lg p-4 mb-6">
-                        <h3 class="text-xl font-semibold text-white mb-4">2 · Componi la figurina</h3>
+                        <h3 class="text-xl font-semibold text-white mb-4">Componi la figurina</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                             <div>
                                 <canvas id="fg-canvas" width="600" height="840" class="w-full max-w-xs mx-auto rounded-2xl shadow-2xl block"></canvas>
@@ -654,9 +636,14 @@
                                 <div>
                                     <p class="text-sm text-gray-400 mb-2">Divisa</p>
                                     <div id="fg-variants" class="grid grid-cols-3 gap-2"></div>
+                                    <div id="fg-gen" class="mt-3"></div>
                                 </div>
                                 <div>
-                                    <p class="text-sm text-gray-400 mb-2">Stile</p>
+                                    <p class="text-sm text-gray-400 mb-2">Sfondo</p>
+                                    <div id="fg-bgs" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-2">Contorno (stile)</p>
                                     <div id="fg-styles" class="grid grid-cols-5 gap-2"></div>
                                     <p id="fg-style-name" class="text-xs text-gray-400 mt-2"></p>
                                 </div>
@@ -688,7 +675,7 @@
 
                     <details class="admin-content hidden card rounded-lg p-4 mb-6">
                         <summary class="cursor-pointer text-lg font-semibold text-white">Collezioni a tema (di stagione, eventi)</summary>
-                        <p class="text-xs text-gray-400 my-3">Natale, Halloween ed Estate sono già pronte. Qui puoi crearne altre, per esempio per un torneo: le tre divise valgono per tutti i giocatori.</p>
+                        <p class="text-xs text-gray-400 my-3">Natale, Halloween ed Estate sono già pronte. Qui puoi crearne altre, per esempio per un torneo, scegliendo i colori delle tre divise: valgono per tutti i giocatori.</p>
                         <div id="fg-cc-list" class="space-y-2 mb-4"></div>
                         <div id="fg-cc-form"></div>
                     </details>
@@ -810,9 +797,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD7duEL7HRu-KAYU345AfUHkHGxCbMSPZw",
@@ -2598,8 +2585,8 @@
         const FG_BASE_PROMPT = `Trasforma la foto allegata in un ritratto ufficiale da figurina sportiva, stile fotografia di squadra professionale.
 
 - Mantieni ESATTAMENTE la stessa persona: stesso viso, lineamenti, capelli, età ed espressione. Non abbellire e non cambiare i tratti.
-- Inquadratura a mezzo busto, frontale, spalle dritte, viso al centro nella parte alta dell'immagine, sguardo in camera.
-- Sfondo in studio grigio neutro uniforme (#8a8f98), senza oggetti, con una leggerissima sfumatura più chiara dietro la testa.
+- Inquadratura a mezzo busto, frontale, spalle dritte, viso al centro nella parte alta dell'immagine, sguardo in camera; la divisa deve vedersi bene fino al petto.
+- Sfondo in studio grigio neutro uniforme (#8a8f98), senza oggetti, senza ombre sullo sfondo.
 - Luce da studio morbida e frontale, colori naturali, buon contrasto, pelle realistica, nitidezza alta.
 - Nessun numero, nessuna scritta, nessun logo sulla maglia o nell'immagine.
 - Formato verticale 4:5, fotografico e realistico, niente effetto cartone animato.`;
@@ -2610,9 +2597,9 @@
         // months: mesi (0 = gennaio) in cui la collezione viene proposta come "di stagione"
         const FG_COLLECTIONS = [
             { id: 'classica', name: 'Classica', emoji: '🏐', uniforms: [
-                { name: 'Blu Notte', swatch: ['#16213e', '#e94560', '#533483'], text: fgJersey('blu notte (#16213e)', 'rosso corallo (#e94560)', 'viola (#533483)') },
-                { name: 'Bianca', swatch: ['#ffffff', '#16213e', '#e94560'], text: fgJersey('bianca (#ffffff)', 'blu notte (#16213e)', 'rosso corallo (#e94560)') },
-                { name: 'Corallo', swatch: ['#e94560', '#ffffff', '#16213e'], text: fgJersey('rosso corallo (#e94560)', 'bianchi (#ffffff)', 'blu notte (#16213e)') }
+                { name: 'Azzurra', swatch: ['#3fa9f5', '#0b3d91', '#1565c0'], text: fgJersey('azzurra (#3fa9f5)', 'blu (#0b3d91)', 'blu (#1565c0)') },
+                { name: 'Blu', swatch: ['#0b3d91', '#3fa9f5', '#ffffff'], text: fgJersey('blu (#0b3d91)', 'azzurri (#3fa9f5)', 'bianca (#ffffff)') },
+                { name: 'Bianca', swatch: ['#ffffff', '#0b3d91', '#111111'], text: fgJersey('bianca (#ffffff)', 'blu (#0b3d91)', 'nera (#111111)') }
             ] },
             { id: 'natale', name: 'Natale', emoji: '🎄', months: [11, 0], uniforms: [
                 { name: 'Babbo Natale', swatch: ['#c8102e', '#ffffff', '#165b33'], text: fgJersey('rosso natalizio (#c8102e)', 'bianchi (#ffffff)', 'verde abete (#165b33)', 'e un cappello da Babbo Natale rosso con bordo e pon pon bianchi') },
@@ -2657,11 +2644,14 @@
         const fg = { id: null, coll: 'classica', variant: 0, style: 0, urls: ['', '', ''], imgs: [null, null, null],
                      photoImg: null, config: { logos: [], defaultLogo: '', collections: [] },
                      logoImg: null, logoImgs: {}, logoId: '', cache: {},
-                     configLoaded: false, fontsReady: false, fields: fgLoadFields() };
+                     configLoaded: false, fontsReady: false, fields: fgLoadFields(),
+                     cuts: {}, cut: null, token: 0, status: '', gen: ['', '', ''], pcuts: [null, null, null], genCache: {}, pcCache: {}, gtok: 0, genBusy: '', bg: (() => { try { return localStorage.getItem('fgBg') || 'studio'; } catch (e) { return 'studio'; } })() };
 
-        const fgPrompt = u => FG_BASE_PROMPT + `\n- Indossa ESATTAMENTE questa divisa, identica in tutte le versioni: ${u.text}.`;
         const fgRef = (id, coll) => doc(db, 'scandoVolleyData', 'fig_' + id + (coll && coll !== 'classica' ? '__' + coll : ''));
         const fgCfgRef = () => doc(db, 'scandoVolleyData', 'figConfig');
+        // Descrizione fissa della divisa: uguale per tutti i giocatori (per le collezioni create a mano si ricava dai colori)
+        const fgUniformText = u => u.text || fgJersey('del colore ' + u.swatch[0], 'del colore ' + u.swatch[1], 'del colore ' + u.swatch[2]);
+        const fgPrompt = u => FG_BASE_PROMPT + `\n- Indossa ESATTAMENTE questa divisa, identica per tutti i giocatori: ${fgUniformText(u)}.`;
         const fgPlayer = () => players.find(p => p.id === fg.id);
         const fgCollections = () => [...FG_COLLECTIONS, ...(fg.config.collections || [])];
         const fgColl = () => fgCollections().find(c => c.id === fg.coll) || FG_COLLECTIONS[0];
@@ -2989,28 +2979,27 @@
         const fgLogoExists = id => !!id && fg.config.logos.some(l => l.id === id);
         function fgApplyLogo() { fg.logoImg = fg.logoId ? (fg.logoImgs[fg.logoId] || null) : null; }
 
-        async function fgLoadVariants() {
-            const id = fg.id, coll = fg.coll, key = id + '|' + coll;
-            let urls = fg.cache[key];
-            if (!urls) {
-                try {
-                    const snap = await getDoc(fgRef(id, coll));
-                    const saved = snap.exists() ? (snap.data().variants || []) : [];
-                    urls = [0, 1, 2].map(i => saved[i] || '');
-                    fg.cache[key] = urls;
-                } catch (e) {
-                    console.error(e);
-                    showToast('Non riesco a leggere le divise salvate (controlla le regole di Firestore).');
-                    urls = ['', '', ''];
-                }
-            }
-            if (fg.id !== id || fg.coll !== coll) return;
-            fg.urls = urls;
-            fg.imgs = await Promise.all(urls.map(loadImage));
-            if (fg.id !== id || fg.coll !== coll) return;
-            const first = fg.imgs.findIndex(i => i);
-            fg.variant = first >= 0 ? first : 0;
+        // Ricompone le tre divise con il ritaglio già pronto (istantaneo)
+        function fgRebuild() {
+            fg.imgs = fgUniforms().map((u, i) => fg.pcuts[i] ? fgComposePerson(fg.pcuts[i], u, fg.bg) : fgCompose(fg.cut, u, fg.bg));
             fgRenderAll();
+        }
+        // Prepara il ritaglio del giocatore (la prima volta richiede qualche secondo), poi ricompone
+        async function fgLoadVariants() {
+            const id = fg.id, tok = ++fg.token, p = fgPlayer();
+            const sig = p && p.photo ? id + '|' + p.photo.length + p.photo.slice(-24) : '';
+            fg.cut = fg.cuts[sig] || null;
+            fgLoadStored();
+            if (fg.cut) { fg.status = fg.cut.auto ? 'ok' : 'simple'; fgRebuild(); return; }
+            fg.status = fg.photoImg ? 'loading' : 'nophoto';
+            fgRebuild();
+            if (!fg.photoImg) return;
+            let cut = null;
+            try { cut = await fgBuildCut(fg.photoImg); } catch (e) { console.error(e); }
+            if (tok !== fg.token) return;
+            if (cut) { fg.cuts[sig] = cut; fg.cut = cut; fg.status = cut.auto ? 'ok' : 'simple'; }
+            else fg.status = 'error';
+            fgRebuild();
         }
 
         async function fgSelectPlayer(id) {
@@ -3050,8 +3039,6 @@
                 <button type="button" class="figurine-model-btn ${c.id === fg.coll ? 'active' : ''} border-2 border-secondary rounded-lg py-1 px-3 text-sm text-white" onclick="app_fgColl('${esc(c.id)}')">
                     ${esc(c.emoji || '🎽')} ${esc(c.name)}${sug && sug.id === c.id ? ' <span class="text-xs text-yellow-300">· di stagione</span>' : ''}
                 </button>`).join('');
-            const coll = fgColl();
-            document.getElementById('fg-s1-title').textContent = `1 · Le tre divise · ${coll.emoji || ''} ${coll.name}`;
             // elenco collezioni create dall'amministratore (con cestino)
             const custom = fg.config.collections || [];
             document.getElementById('fg-cc-list').innerHTML = custom.length ? custom.map(c => `
@@ -3059,33 +3046,6 @@
                     <span class="text-white text-sm">${esc(c.emoji || '🎽')} ${esc(c.name)} <span class="text-gray-400">· ${c.uniforms.map(u => esc(u.name)).join(', ')}</span></span>
                     <button type="button" class="text-red-400 hover:text-red-300 text-sm" onclick="app_fgDelColl('${esc(c.id)}')">🗑️ Elimina</button>
                 </div>`).join('') : '<p class="text-xs text-gray-500">Nessuna collezione creata: sono disponibili solo quelle già pronte.</p>';
-        }
-
-        function fgRenderUniforms() {
-            fgRenderQuota();
-            document.getElementById('fg-uniforms').innerHTML = fgUniforms().map((u, i) => `
-                <div class="rounded-lg p-3 border border-secondary bg-primary bg-opacity-40 text-center">
-                    <div class="flex justify-center gap-1 mb-2">${fgSwatches(u)}</div>
-                    <p class="font-semibold text-white mb-2">${esc(u.name)}</p>
-                    <div class="mx-auto mb-3 rounded-lg overflow-hidden bg-black bg-opacity-30 flex items-center justify-center" style="width:120px;aspect-ratio:4/5">
-                        ${fg.urls[i] ? `<img src="${fg.urls[i]}" alt="" class="w-full h-full object-cover">` : '<span class="text-xs text-gray-500 px-2">Non ancora caricata</span>'}
-                    </div>
-                    ${isAdmin ? `
-                    <div class="flex flex-col gap-2">
-                        <button type="button" class="btn-accent text-white text-xs font-bold py-2 px-3 rounded" onclick="app_fgPrep(${i}, 'new')">✨ ${fg.urls[i] ? 'Rigenera' : 'Crea'} con Gemini</button>
-                        <div class="rounded border border-dashed border-secondary p-2 text-xs text-gray-400" ondragover="app_fgDragOver(event)" ondragleave="app_fgDragLeave(event)" ondrop="app_fgDrop(event, ${i})">
-                            Trascina qui il risultato
-                            <div class="flex flex-wrap justify-center gap-2 mt-2">
-                                <label class="btn-primary text-white text-xs font-bold py-1 px-3 rounded cursor-pointer">📤 Carica<input type="file" accept="image/*" class="hidden" onchange="app_fgUpload(${i}, this)"></label>
-                                <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgPaste(${i})">📋 Incolla</button>
-                            </div>
-                        </div>
-                        ${fg.urls[i] ? `
-                        <input id="fg-edit-${i}" type="text" maxlength="160" placeholder="Ritocco: es. più sorridente" class="w-full rounded bg-primary border border-secondary text-white text-xs px-2 py-1">
-                        <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgPrep(${i}, 'edit')">🪄 Ritocca con Gemini</button>` : ''}
-                    </div>` : ''}
-                    <button type="button" class="mt-2 text-xs text-gray-400 underline" onclick="app_fgCopy(${i})">Copia solo il testo</button>
-                </div>`).join('');
         }
 
         async function fgRenderPreview() {
@@ -3098,10 +3058,23 @@
             const d = { img, nome: (p.name || '').trim(), cognome: (p.surname || '').trim().toUpperCase(), stats: fgStatItems(p) };
 
             document.getElementById('fg-variants').innerHTML = fgUniforms().map((u, i) => `
-                <button type="button" class="figurine-model-btn ${i === fg.variant ? 'active' : ''} border-2 border-secondary rounded-lg p-2 text-center ${fg.imgs[i] ? '' : 'opacity-50'}" onclick="app_fgVariant(${i})">
-                    <div class="flex justify-center gap-1 mb-1">${fgSwatches(u)}</div>
-                    <span class="text-xs text-white">${esc(u.name)}</span>
+                <button type="button" class="figurine-model-btn ${i === fg.variant ? 'active' : ''} border-2 border-secondary rounded-lg p-1 text-center" onclick="app_fgVariant(${i})">
+                    <canvas data-fg-var="${i}" width="90" height="112" class="w-full h-auto rounded"></canvas>
+                    <span class="text-xs text-white block mt-1">${esc(u.name)}</span>
                 </button>`).join('');
+            document.querySelectorAll('#fg-variants canvas').forEach(cv => {
+                const im = fg.imgs[+cv.dataset.fgVar];
+                if (im) cv.getContext('2d').drawImage(im, 0, 0, 90, 112);
+            });
+            const curU = fgUniforms()[fg.variant] || fgUniforms()[0];
+            document.getElementById('fg-bgs').innerHTML = FG_BGS.map(b => `
+                <button type="button" class="figurine-model-btn ${b.id === fg.bg ? 'active' : ''} border-2 border-secondary rounded-lg p-1 text-center" onclick="app_fgBg('${b.id}')">
+                    <canvas data-fg-bg="${b.id}" width="60" height="75" class="w-full h-auto rounded"></canvas>
+                    <span class="text-xs text-white block mt-1">${b.name}</span>
+                </button>`).join('');
+            document.querySelectorAll('#fg-bgs canvas').forEach(cv => {
+                cv.getContext('2d').drawImage(fgCompose(fg.cut, curU, cv.dataset.fgBg), 0, 0, 60, 75);
+            });
 
             document.getElementById('fg-styles').innerHTML = FG_STYLES.map((n, i) => `
                 <button type="button" class="figurine-model-btn ${i === fg.style ? 'active' : ''} border-2 border-secondary rounded-lg p-1" onclick="app_fgStyle(${i})" title="${n}">
@@ -3126,17 +3099,19 @@
             fgDrawRound(document.getElementById('fg-round').getContext('2d'), 240, fg.style, img);
 
             const note = document.getElementById('fg-note');
-            note.classList.toggle('hidden', !!fg.imgs[fg.variant]);
-            note.textContent = fg.imgs.some(i => i)
-                ? 'Questa divisa non è ancora stata caricata: anteprima con la foto attuale.'
-                : 'Anteprima con la foto attuale: carica le tre divise per avere la divisa ufficiale.';
+            const msg = { loading: 'Preparo la figurina… la prima volta può richiedere qualche secondo.',
+                          nophoto: 'Questo giocatore non ha ancora una foto profilo: l\'amministratore deve caricarla.',
+                          simple: 'Ritaglio automatico non disponibile (serve connessione): uso un ritaglio semplice.',
+                          error: 'Non sono riuscito a preparare la foto. Riprova più tardi.' }[fg.status] || '';
+            note.classList.toggle('hidden', !msg);
+            note.textContent = msg;
         }
 
         function fgRenderAll() {
             if (!fgPlayer()) return;
             fgRenderColls();
             fgRenderLogos();
-            fgRenderUniforms();
+            fgRenderGen();
             fgRenderPreview();
         }
 
@@ -3156,8 +3131,7 @@
                 <div class="rounded-lg border border-secondary p-3 mb-3">
                     <p class="text-xs text-gray-400 mb-2">Divisa ${i + 1}</p>
                     <input type="text" id="fg-cc-u${i}-name" placeholder="Nome divisa (es. Verde Prato)" class="form-input p-2 rounded w-full mb-2">
-                    <textarea id="fg-cc-u${i}-desc" rows="2" placeholder="Descrizione per l'AI (es. maglia da pallavolo a maniche corte verde (#2e7d32), colletto a V e bordi delle maniche bianchi, sottile banda gialla sulle spalle)" class="form-input p-2 rounded w-full mb-2 text-sm"></textarea>
-                    <div class="flex items-center gap-2 text-xs text-gray-400">Colori per il riconoscimento:
+                    <div class="flex items-center gap-2 text-xs text-gray-400">Colori della divisa (maglia, bordi, banda):
                         ${[0, 1, 2].map(k => `<input type="color" id="fg-cc-u${i}-c${k}" value="${defaults[i][k]}" style="width:34px;height:26px;padding:0;border:0;background:none">`).join('')}
                     </div>
                 </div>`).join('')}
@@ -3170,10 +3144,10 @@
             const name = v('fg-cc-name');
             if (!name) { showToast('Dai un nome alla collezione.'); return; }
             const uniforms = [0, 1, 2].map(i => ({
-                name: v(`fg-cc-u${i}-name`), text: v(`fg-cc-u${i}-desc`),
+                name: v(`fg-cc-u${i}-name`),
                 swatch: [0, 1, 2].map(k => document.getElementById(`fg-cc-u${i}-c${k}`).value)
             }));
-            if (uniforms.some(u => !u.name || !u.text)) { showToast('Compila nome e descrizione di tutte e tre le divise.'); return; }
+            if (uniforms.some(u => !u.name)) { showToast('Dai un nome a tutte e tre le divise.'); return; }
             const coll = { id: 'c_' + Date.now().toString(36), name, emoji: v('fg-cc-emoji') || '🎽', uniforms };
             try {
                 const list = [...(fg.config.collections || []), coll];
@@ -3182,25 +3156,27 @@
                 fg.coll = coll.id;
                 const box = document.getElementById('fg-cc-form'); delete box.dataset.ready; box.innerHTML = ''; fgRenderCCForm();
                 showToast('Collezione creata!');
-                fgLoadVariants();
+                fgRebuild();
             } catch (e) { console.error(e); showToast('Non sono riuscito a salvare la collezione (controlla le regole di Firestore).'); }
         };
         window.app_fgDelColl = id => {
             if (!isAdmin) return;
             const c = (fg.config.collections || []).find(x => x.id === id);
             if (!c) return;
-            showConfirmModal('Eliminare la collezione?', `"${c.name}" sparirà dall'elenco. Le immagini già caricate restano salvate ma non saranno più visibili.`, async () => {
+            showConfirmModal('Eliminare la collezione?', `"${c.name}" sparirà dall'elenco. `, async () => {
                 try {
                     const list = fg.config.collections.filter(x => x.id !== id);
                     await setDoc(fgCfgRef(), { collections: list }, { merge: true });
                     fg.config.collections = list;
-                    if (fg.coll === id) { fg.coll = 'classica'; fgLoadVariants(); } else fgRenderAll();
+                    if (fg.coll === id) fg.coll = 'classica';
+                    fgRebuild();
                 } catch (e) { console.error(e); showToast('Operazione non riuscita.'); }
             });
         };
 
         // ---------- azioni ----------
-        window.app_fgColl = id => { fg.coll = id; fgLoadVariants(); fgRenderColls(); };
+        window.app_fgColl = id => { fg.coll = id; fg.pcuts = [null, null, null]; fg.gen = ['', '', '']; fgRebuild(); fgLoadStored(); };
+        window.app_fgBg = id => { fg.bg = id; try { localStorage.setItem('fgBg', id); } catch (e) { /* preferenza non salvata */ } fgRebuild(); };
         window.app_fgVariant = i => { fg.variant = i; fgRenderPreview(); };
         window.app_fgStyle = i => { fg.style = i; fgRenderPreview(); };
         window.app_fgField = (id, on) => {
@@ -3210,19 +3186,6 @@
             fgRenderPreview();
         };
 
-        async function fgCopyText(text) {
-            try { await navigator.clipboard.writeText(text); }
-            catch (e) {
-                const ta = document.createElement('textarea');
-                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-                document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-            }
-        }
-        window.app_fgCopy = async i => {
-            await fgCopyText(fgPrompt(fgUniforms()[i]));
-            showToast('Testo copiato! Incollalo in Gemini insieme alla foto.');
-        };
-
         function fgFileToImage(file) {
             return new Promise((res, rej) => {
                 const r = new FileReader();
@@ -3230,9 +3193,171 @@
                 r.onerror = rej; r.readAsDataURL(file);
             });
         }
+
+        // =====================================================================
+        // FIGURINE AUTOMATICHE: ritaglio del volto (nel browser, gratis) + divisa e sfondo disegnati
+        // La foto profilo viene ritagliata (testa e collo), poi composta su una maglia
+        // disegnata con i colori della divisa scelta e su uno sfondo a scelta.
+        // =====================================================================
+        const FG_MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/';
+        const FG_SEG = 'selfie_segmentation@0.1.1675465747/', FG_FACE = 'face_detection@0.4.1646425229/';
+        let fgAIp = null;
+        function fgScript(src) {
+            return new Promise((res, rej) => {
+                const s = document.createElement('script');
+                s.src = src; s.crossOrigin = 'anonymous';
+                s.onload = res; s.onerror = () => rej(new Error('Caricamento non riuscito: ' + src));
+                document.head.appendChild(s);
+            });
+        }
+        function fgGetAI() {
+            if (!fgAIp) fgAIp = (async () => {
+                await Promise.all([fgScript(FG_MP + FG_SEG + 'selfie_segmentation.js'), fgScript(FG_MP + FG_FACE + 'face_detection.js')]);
+                const seg = new window.SelfieSegmentation({ locateFile: f => FG_MP + FG_SEG + f });
+                seg.setOptions({ modelSelection: 0 });
+                const fd = new window.FaceDetection({ locateFile: f => FG_MP + FG_FACE + f });
+                fd.setOptions({ model: 'short', minDetectionConfidence: 0.4 });
+                await seg.initialize();
+                await fd.initialize();
+                return { seg, fd };
+            })().catch(e => { fgAIp = null; throw e; });
+            return fgAIp;
+        }
+        const fgRun = (sol, image) => new Promise((res, rej) => { sol.onResults(res); sol.send({ image }).catch(rej); });
+        const fgCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+        const fgSmooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+        function fgBlur(a, W, H, r) {
+            const tmp = new Float32Array(W * H), out = new Float32Array(W * H);
+            for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+                let s = 0, n = 0;
+                for (let d = -r; d <= r; d++) { const xx = x + d; if (xx >= 0 && xx < W) { s += a[y * W + xx]; n++; } }
+                tmp[y * W + x] = s / n;
+            }
+            for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+                let s = 0, n = 0;
+                for (let d = -r; d <= r; d++) { const yy = y + d; if (yy >= 0 && yy < H) { s += tmp[yy * W + x]; n++; } }
+                out[y * W + x] = s / n;
+            }
+            return out;
+        }
+
+        // Ritaglia testa e collo dalla foto: restituisce { head, cx, chin, fw, skin, auto }
+        async function fgBuildCut(photoImg) {
+            const k = Math.min(1, 720 / Math.max(photoImg.width, photoImg.height));
+            const W = Math.round(photoImg.width * k), H = Math.round(photoImg.height * k);
+            const src = fgCanvas(W, H);
+            src.getContext('2d').drawImage(photoImg, 0, 0, W, H);
+
+            let face = null, mask = null, auto = false;
+            try {
+                const ai = await fgGetAI();
+                const fr = await fgRun(ai.fd, src);
+                const dets = (fr.detections || []).filter(d => d && d.boundingBox);
+                if (dets.length) {
+                    const d = dets.sort((a, b) => b.boundingBox.width * b.boundingBox.height - a.boundingBox.width * a.boundingBox.height)[0].boundingBox;
+                    face = { cx: d.xCenter * W, cy: d.yCenter * H, w: d.width * W, h: d.height * H };
+                }
+                const sr = await fgRun(ai.seg, src);
+                const m = fgCanvas(W, H);
+                m.getContext('2d').drawImage(sr.segmentationMask, 0, 0, W, H);
+                mask = m.getContext('2d').getImageData(0, 0, W, H).data;
+                auto = true;
+            } catch (e) { console.warn('Ritaglio automatico non disponibile, uso quello semplice:', e); }
+
+            // probabilità "persona" per ogni pixel, ammorbidita e leggermente ristretta per togliere l'alone dello sfondo
+            let person = new Float32Array(W * H);
+            if (mask) {
+                for (let i = 0; i < W * H; i++) person[i] = mask[i * 4] / 255;
+                person = fgBlur(fgBlur(person, W, H, 3), W, H, 2);
+                for (let i = 0; i < W * H; i++) person[i] = fgSmooth(0.55, 0.85, person[i]);
+            } else person.fill(1);
+
+            if (!face) {
+                // nessun volto trovato: stima prudente al centro-alto della foto
+                const fw = Math.min(W, H) * 0.42;
+                face = { cx: W / 2, cy: H * 0.40, w: fw, h: fw * 1.1 };
+            }
+            const fw = face.w * 1.12;                      // il riquadro del volto è un po' stretto
+            const chinY = face.cy + face.h * 0.52;
+            // cima dei capelli: prima riga con persona sopra il volto
+            let top = Math.max(0, face.cy - fw * 1.25);
+            if (mask) {
+                const x0 = Math.max(0, Math.floor(face.cx - fw * 0.6)), x1 = Math.min(W, Math.ceil(face.cx + fw * 0.6));
+                let found = -1;
+                for (let y = 0; y < face.cy && found < 0; y++) {
+                    let s = 0;
+                    for (let x = x0; x < x1; x++) s += person[y * W + x];
+                    if (s > (x1 - x0) * 0.15) found = y;
+                }
+                top = found >= 0 ? Math.max(0, found - 4) : top;
+            }
+            // colore della pelle: due riquadri sulle guance
+            const sd = src.getContext('2d', { willReadFrequently: true });
+            const patch = (cx, cy) => { const d = sd.getImageData(Math.max(0, Math.round(cx - 5)), Math.max(0, Math.round(cy - 5)), 10, 10).data; let r = 0, g = 0, b = 0, n = d.length / 4; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; } return [r / n, g / n, b / n]; };
+            const p1 = patch(face.cx - fw * 0.22, face.cy + face.h * 0.12), p2 = patch(face.cx + fw * 0.22, face.cy + face.h * 0.12);
+            const skin = p1.map((v, i) => Math.round((v + p2[i]) / 2));
+            const rx0 = Math.round(face.cx - fw * 1.35), rx1 = Math.round(face.cx + fw * 1.35);
+            const ry0 = Math.round(top), ry1 = Math.round(chinY + fw * 0.36);
+            const cw = rx1 - rx0, ch = ry1 - ry0;
+            const head = fgCanvas(cw, ch);
+            const hx = head.getContext('2d');
+            hx.drawImage(src, -rx0, -ry0);
+            const id = hx.getImageData(0, 0, cw, ch), px = id.data;
+            for (let y = 0; y < ch; y++) {
+                const sy = y + ry0, t = (sy - chinY) / fw;      // t = distanza sotto il mento in larghezze di volto
+                for (let x = 0; x < cw; x++) {
+                    const sx = x + rx0;
+                    let a = (sx >= 0 && sx < W && sy >= 0 && sy < H) ? person[sy * W + sx] : 0;
+                    if (a > 0 && t > -0.4) {
+                        const hw = (t < 0 ? 0.85 - 0.31 * Math.min(1, (t + 0.4) / 0.4) : 0.52 - 0.12 * Math.min(1, t / 0.25)) * fw;
+                        a *= 1 - fgSmooth(hw, hw + fw * 0.10, Math.abs(sx - face.cx));
+                        a *= 1 - fgSmooth(0.05, 0.30, t);
+                        if (t > 0) { // sotto il mento resta solo ciò che somiglia alla pelle (via colletti e vestiti)
+                            const o = (y * cw + x) * 4;
+                            const dr = px[o] - skin[0], dg = px[o + 1] - skin[1], db = px[o + 2] - skin[2];
+                            const sim = 1 - fgSmooth(55, 105, Math.sqrt(dr * dr + dg * dg + db * db));
+                            a *= 1 - fgSmooth(0, 0.08, t) * (1 - sim);
+                        }
+                    }
+                    px[(y * cw + x) * 4 + 3] = Math.round(px[(y * cw + x) * 4 + 3] * a);
+                }
+            }
+            hx.putImageData(id, 0, 0);
+
+            return { head, cx: face.cx - rx0, chin: chinY - ry0, fw, skin, auto };
+        }
+
+        // ---------- ritaglio dell'intera persona (per cambiare lo sfondo alle divise create da Gemini) ----------
+        async function fgPersonCut(img) {
+            try {
+                const ai = await fgGetAI();
+                const W = img.width, H = img.height;
+                const src = fgCanvas(W, H); src.getContext('2d').drawImage(img, 0, 0, W, H);
+                const sr = await fgRun(ai.seg, src);
+                const m = fgCanvas(W, H); const mx = m.getContext('2d', { willReadFrequently: true });
+                mx.drawImage(sr.segmentationMask, 0, 0, W, H);
+                const md = mx.getImageData(0, 0, W, H).data;
+                let a = new Float32Array(W * H);
+                for (let i = 0; i < W * H; i++) a[i] = md[i * 4] / 255;
+                a = fgBlur(fgBlur(a, W, H, 3), W, H, 2);
+                for (let i = 0; i < W * H; i++) a[i] = fgSmooth(0.5, 0.82, a[i]);
+                const out = fgCanvas(W, H), ox = out.getContext('2d');
+                ox.drawImage(src, 0, 0);
+                const id = ox.getImageData(0, 0, W, H), px = id.data;
+                for (let i = 0; i < W * H; i++) px[i * 4 + 3] = Math.round(255 * a[i]);
+                ox.putImageData(id, 0, 0);
+                return { cv: out, alpha: true };
+            } catch (e) { console.warn('Ritaglio della persona non disponibile:', e); return null; }
+        }
+        function fgComposePerson(pc, u, bgId) {
+            const cv = fgCanvas(600, 750), c = cv.getContext('2d');
+            if (pc.alpha) (FG_BGS.find(b => b.id === bgId) || FG_BGS[0]).draw(c, u);
+            c.drawImage(pc.cv, 0, 0, 600, 750);
+            return cv;
+        }
         function fgNormalizePortrait(img) {
-            const c = document.createElement('canvas'); c.width = 600; c.height = 750;
-            const x = c.getContext('2d');
+            const c = fgCanvas(600, 750), x = c.getContext('2d');
             const k = Math.max(600 / img.width, 750 / img.height);
             const w = img.width * k, h = img.height * k;
             x.drawImage(img, (600 - w) / 2, (750 - h) * 0.2, w, h);
@@ -3241,145 +3366,316 @@
             return data;
         }
 
-        // ---------- Gemini gratuito (gemini.google.com), guidato ----------
-        // Nessuna API a pagamento: l'app prepara foto e istruzioni, tu usi Gemini con il tuo account
-        // gratuito e riporti qui il risultato (carica, trascina o incolla).
-        const FG_QUOTA_KEY = 'fgGeminiLimitUntil';
-        const FG_QUOTA_HOURS = 24;
-        function fgQuotaUntil() {
-            try { const t = +localStorage.getItem(FG_QUOTA_KEY) || 0; return t > Date.now() ? t : 0; } catch (e) { return 0; }
+        // ---------- Gemini dentro l'app (Firebase AI Logic) ----------
+        const FG_GEMINI_MODEL = 'gemini-2.5-flash-image';
+        let fgModelP = null;
+        function fgGetModel() {
+            if (!fgModelP) fgModelP = (async () => {
+                const [{ getApp }, ai] = await Promise.all([
+                    import("https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js"),
+                    import("https://www.gstatic.com/firebasejs/12.4.0/firebase-ai.js")
+                ]);
+                const service = ai.getAI(getApp(), { backend: new ai.GoogleAIBackend() });
+                return ai.getGenerativeModel(service, {
+                    model: FG_GEMINI_MODEL,
+                    generationConfig: { responseModalities: [ai.ResponseModality.TEXT, ai.ResponseModality.IMAGE] }
+                });
+            })().catch(e => { fgModelP = null; throw e; });
+            return fgModelP;
         }
-        function fgQuotaText(t) {
-            const d = new Date(t);
-            const oggi = new Date().toDateString() === d.toDateString();
+        async function fgAskGemini(prompt, photoDataUrl) {
+            const m = /^data:([^;]+);base64,(.+)$/.exec(photoDataUrl || '');
+            if (!m) throw new Error('NO_PHOTO');
+            const model = await fgGetModel();
+            const result = await model.generateContent([prompt, { inlineData: { mimeType: m[1], data: m[2] } }]);
+            const parts = result.response.inlineDataParts() || [];
+            if (!parts.length) throw new Error('NO_IMAGE');
+            const im = await loadImage('data:' + parts[0].inlineData.mimeType + ';base64,' + parts[0].inlineData.data);
+            if (!im) throw new Error('NO_IMAGE');
+            return fgNormalizePortrait(im);
+        }
+
+        // Limiti di Gemini: se si superano, l'app avvisa e blocca il pulsante fino all'ora giusta
+        const FG_LOCK_KEY = 'fgGeminiLockUntil';
+        function fgLockUntil() { try { const t = +localStorage.getItem(FG_LOCK_KEY) || 0; return t > Date.now() ? t : 0; } catch (e) { return 0; } }
+        function fgSetLock(t) { try { localStorage.setItem(FG_LOCK_KEY, String(t)); } catch (e) { /* solo promemoria */ } }
+        // I limiti giornalieri di Google si azzerano a mezzanotte del Pacifico
+        function fgNextDailyReset() {
+            const now = new Date();
+            const pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+            const next = new Date(pt); next.setHours(24, 0, 0, 0);
+            return now.getTime() + (next - pt);
+        }
+        function fgWhen(t) {
+            const d = new Date(t), now = new Date();
             const ora = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-            return (oggi ? 'oggi' : 'il ' + d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })) + ' dopo le ' + ora;
+            if (t - Date.now() < 3600000) { const n = Math.max(1, Math.ceil((t - Date.now()) / 60000)); return 'tra ' + n + (n === 1 ? ' minuto' : ' minuti') + ' (alle ' + ora + ')'; }
+            return (d.toDateString() === now.toDateString() ? 'oggi' : 'domani') + ' dopo le ' + ora;
         }
-        function fgRenderQuota() {
-            const box = document.getElementById('fg-quota'); if (!box) return;
-            const t = fgQuotaUntil();
-            box.innerHTML = t
-                ? `<div class="rounded-lg p-3 bg-yellow-900 bg-opacity-40 border border-yellow-600 text-sm text-yellow-100 flex flex-wrap items-center justify-between gap-2">
-                       <span>⏳ Hai raggiunto il limite gratuito di Gemini. Aspetta e riprova <strong>${fgQuotaText(t)}</strong>.</span>
-                       <button type="button" class="text-xs underline" onclick="app_fgQuotaClear()">Ho già ripreso a generare</button>
-                   </div>`
-                : `<div class="rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary text-xs text-gray-300 flex flex-wrap items-center justify-between gap-2">
-                       <span>Gemini gratuito ha un limite giornaliero di immagini deciso da Google. Se te lo comunica, segnalalo qui e l'app ti ricorda quando riprovare.</span>
-                       <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgQuotaHit()">⏳ Gemini mi ha dato il limite</button>
-                   </div>`;
-        }
-        window.app_fgQuotaHit = () => {
-            const t = Date.now() + FG_QUOTA_HOURS * 3600 * 1000;
-            try { localStorage.setItem(FG_QUOTA_KEY, String(t)); } catch (e) { /* solo promemoria */ }
-            fgRenderQuota();
-            showToast('Limite segnato: riprova ' + fgQuotaText(t) + '.');
-        };
-        window.app_fgQuotaClear = () => {
-            try { localStorage.removeItem(FG_QUOTA_KEY); } catch (e) { /* niente */ }
-            fgRenderQuota();
-        };
-
-        function fgDownloadDataUrl(dataUrl, name) {
-            const a = document.createElement('a');
-            a.href = dataUrl; a.download = name;
-            document.body.appendChild(a); a.click(); a.remove();
-        }
-        // mode 'new': foto profilo + istruzioni della divisa. mode 'edit': divisa attuale + richiesta di ritocco.
-        window.app_fgPrep = async (i, mode) => {
-            const p = fgPlayer(); if (!p) return;
-            const u = fgUniforms()[i];
-            const t = fgQuotaUntil();
-            if (t && !confirm('Hai segnato il limite di Gemini: riprova ' + fgQuotaText(t) + '. Vuoi provare lo stesso?')) return;
-            let prompt, photo, fname;
-            if (mode === 'edit') {
-                const box = document.getElementById('fg-edit-' + i);
-                const req = (box && box.value || '').trim();
-                if (!req) { showToast('Scrivi cosa vuoi cambiare.'); return; }
-                if (!fg.urls[i]) { showToast('Carica prima la divisa, poi potrai ritoccarla.'); return; }
-                prompt = 'Modifica il ritratto allegato applicando SOLO questa richiesta: ' + req + '.\n' +
-                    'Mantieni ESATTAMENTE la stessa persona (viso, lineamenti, età), la stessa divisa (' + u.text + '), la stessa inquadratura e il formato verticale 4:5. ' +
-                    'Nessuna scritta e nessun logo nell\'immagine. Resta fotografico e realistico.';
-                photo = fg.urls[i]; fname = fgSlug(p) + '-divisa-' + (i + 1) + '.jpg';
-            } else {
-                if (!p.photo || !p.photo.startsWith('data:')) { showToast('Manca la foto del giocatore: caricala prima come foto profilo.'); return; }
-                prompt = fgPrompt(u);
-                photo = p.photo; fname = fgSlug(p) + '-foto.jpg';
+        // Restituisce { msg, lock } dove lock è l'istante prima del quale non riprovare
+        function fgGeminiProblem(e) {
+            const t = String((e && (e.message || e.code)) || e);
+            if (/NO_PHOTO/.test(t)) return { msg: 'Manca la foto profilo del giocatore: deve caricarla l\'amministratore.' };
+            if (/limit:\s*0|free.?tier|billing|FAILED_PRECONDITION/i.test(t)) return { msg: 'Con l\'accesso gratuito Gemini non crea immagini per questo progetto. Resta la figurina base; per le divise realistiche serve attivare il piano Blaze della console Firebase.', permanent: true };
+            if (/quota|429|RESOURCE_EXHAUSTED|rate.?limit|too many/i.test(t)) {
+                const sec = /retry in ([\d.]+)\s*s/i.exec(t);
+                const lock = sec && +sec[1] < 600 ? Date.now() + Math.ceil(+sec[1]) * 1000 + 2000 : fgNextDailyReset();
+                return { msg: 'Gemini ha raggiunto il limite gratuito. Riprova ' + fgWhen(lock) + '.', lock };
             }
-            await fgCopyText(prompt);
-            fgDownloadDataUrl(photo, fname);
-            window.open('https://gemini.google.com/app', '_blank', 'noopener');
-            showToast('Testo copiato e foto scaricata. In Gemini allega la foto e incolla il testo.');
-        };
-
-        async function fgIngestBlob(idx, blob) {
-            if (!isAdmin) { showToast('Solo l\'amministratore può caricare le divise.'); return; }
-            if (!blob || !/^image\//.test(blob.type || '')) { showToast('Questo non sembra un\'immagine.'); return; }
-            const id = fg.id, coll = fg.coll;
-            try {
-                const data = fgNormalizePortrait(await fgFileToImage(blob));
-                await fgSaveVariant(id, coll, idx, data);
-                showToast('Divisa salvata!');
-            } catch (e) {
-                console.error(e);
-                showToast('Non sono riuscito a salvare l\'immagine (controlla le regole di Firestore).');
-            }
+            if (/403|PERMISSION|not been used|disabled|API key|not found|404/i.test(t)) return { msg: 'Gemini non è ancora attivo per questa app: l\'amministratore deve attivare Firebase AI Logic nella console.', permanent: true };
+            if (/SAFETY|blocked|PROHIBITED/i.test(t)) return { msg: 'Gemini ha rifiutato questa foto: prova con un\'altra foto profilo.' };
+            if (/NO_IMAGE/.test(t)) return { msg: 'Gemini non ha restituito un\'immagine: riprova.' };
+            return { msg: 'Errore Gemini: ' + t.slice(0, 120) };
         }
-        async function fgSaveVariant(id, coll, idx, data) {
-            const key = id + '|' + coll;
-            const urls = [...(fg.cache[key] || ['', '', ''])];
+
+        // Carica le divise già create e salvate (uguali per tutti) e ne ricava il ritaglio per cambiare sfondo
+        async function fgLoadStored() {
+            const id = fg.id, coll = fg.coll, tok = ++fg.gtok, ck = id + '|' + coll;
+            fg.gen = ['', '', '']; fg.pcuts = [null, null, null];
+            let urls = fg.genCache[ck];
+            if (!urls) {
+                try {
+                    const snap = await getDoc(fgRef(id, coll));
+                    const saved = snap.exists() ? (snap.data().variants || []) : [];
+                    urls = [0, 1, 2].map(i => saved[i] || '');
+                    fg.genCache[ck] = urls;
+                } catch (e) { console.warn('Divise salvate non lette:', e); return; }
+            }
+            if (tok !== fg.gtok) return;
+            fg.gen = urls;
+            for (let i = 0; i < 3; i++) {
+                if (!urls[i]) continue;
+                const key = ck + '|' + i + '|' + urls[i].length + urls[i].slice(-16);
+                let pc = fg.pcCache[key];
+                if (!pc) {
+                    const im = await loadImage(urls[i]);
+                    if (!im) continue;
+                    pc = (await fgPersonCut(im)) || { cv: im, alpha: false };
+                    fg.pcCache[key] = pc;
+                }
+                if (tok !== fg.gtok) return;
+                fg.pcuts[i] = pc;
+                fgRebuild();
+            }
+            fgRenderGen();
+        }
+        async function fgSaveGen(id, coll, idx, data) {
+            const ck = id + '|' + coll;
+            const urls = [...(fg.genCache[ck] || ['', '', ''])];
             urls[idx] = data;
             await setDoc(fgRef(id, coll), { variants: urls, updated: Date.now() });
-            fg.cache[key] = urls;
-            if (fg.id === id && fg.coll === coll) {
-                fg.urls = urls;
-                fg.imgs = await Promise.all(urls.map(loadImage));
-                fg.variant = idx;
-                fgRenderAll();
-            }
+            fg.genCache[ck] = urls;
         }
-        window.app_fgPaste = async i => {
+        // Crea con Gemini le divise (tutte quelle mancanti, oppure una sola se `only` è indicato)
+        async function fgGenerate(only) {
+            const lock = fgLockUntil();
+            if (lock) { showToast('Gemini è al limite: riprova ' + fgWhen(lock) + '.'); return; }
+            const p = fgPlayer(); if (!p || fg.genBusy) return;
+            const id = fg.id, coll = fg.coll;
+            const list = only != null ? [only] : [0, 1, 2].filter(i => !fg.gen[i]);
+            if (!list.length) return;
             try {
-                const items = await navigator.clipboard.read();
-                for (const it of items) {
-                    const type = it.types.find(t => t.startsWith('image/'));
-                    if (type) return fgIngestBlob(i, await it.getType(type));
+                for (let n = 0; n < list.length; n++) {
+                    const i = list[n], u = fgUniforms()[i];
+                    fg.genBusy = 'Divisa ' + (n + 1) + ' di ' + list.length + ': Gemini sta lavorando…';
+                    fgRenderGen();
+                    const data = await fgAskGemini(fgPrompt(u), p.photo);
+                    await fgSaveGen(id, coll, i, data);
+                    if (fg.id === id && fg.coll === coll) {
+                        fg.gen[i] = data;
+                        const im = await loadImage(data);
+                        fg.pcuts[i] = (await fgPersonCut(im)) || { cv: im, alpha: false };
+                        fg.variant = i;
+                        fgRebuild();
+                    }
                 }
-                showToast('Negli appunti non c\'è nessuna immagine.');
-            } catch (e) { showToast('Non posso leggere gli appunti: usa Carica o trascina l\'immagine.'); }
-        };
-        window.app_fgDrop = (ev, i) => {
-            ev.preventDefault();
-            ev.currentTarget.classList.remove('ring-2');
-            const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
-            if (f) fgIngestBlob(i, f);
-        };
-        window.app_fgDragOver = ev => { ev.preventDefault(); ev.currentTarget.classList.add('ring-2'); };
-        window.app_fgDragLeave = ev => ev.currentTarget.classList.remove('ring-2');
-
-        window.app_fgUpload = async (idx, input) => {
-            const file = input.files && input.files[0];
-            input.value = '';
-            if (!file) return;
-            if (!isAdmin) { showToast('Solo l\'amministratore può caricare le divise.'); return; }
-            const id = fg.id, coll = fg.coll, key = id + '|' + coll;
-            try {
-                const data = fgNormalizePortrait(await fgFileToImage(file));
-                const urls = [...(fg.cache[key] || ['', '', ''])];
-                urls[idx] = data;
-                await setDoc(fgRef(id, coll), { variants: urls, updated: Date.now() });
-                fg.cache[key] = urls;
-                if (fg.id === id && fg.coll === coll) {
-                    fg.urls = urls;
-                    fg.imgs = await Promise.all(urls.map(loadImage));
-                    fg.variant = idx;
-                    fgRenderAll();
-                }
-                showToast('Divisa salvata!');
+                showToast('Divise create!');
             } catch (e) {
                 console.error(e);
-                showToast('Non sono riuscito a salvare l\'immagine (controlla le regole di Firestore).');
+                const pr = fgGeminiProblem(e);
+                if (pr.lock) fgSetLock(pr.lock);
+                else if (pr.permanent) fgSetLock(Date.now() + 3600000); // niente tentativi a raffica
+                showToast(pr.msg);
+                fg.genNote = pr.msg;
+            } finally {
+                fg.genBusy = '';
+                fgRenderGen();
             }
+        }
+        window.app_fgGen = () => fgGenerate(null);
+        window.app_fgRegen = i => {
+            if (!isAdmin) return;
+            fgGenerate(i);
         };
+        function fgRenderGen() {
+            const box = document.getElementById('fg-gen'); if (!box) return;
+            const lock = fgLockUntil(), missing = [0, 1, 2].filter(i => !fg.gen[i]).length;
+            let html = '';
+            if (fg.genBusy) {
+                html = `<div class="text-sm text-yellow-200">⏳ ${esc(fg.genBusy)}</div>`;
+            } else if (lock) {
+                html = `<div class="text-sm text-yellow-100">⏳ ${esc(fg.genNote || 'Gemini ha raggiunto il limite.')} <span class="text-yellow-300">Puoi riprovare ${fgWhen(lock)}.</span></div>`;
+            } else if (missing) {
+                html = `<div class="flex flex-wrap items-center gap-3">
+                    <button type="button" class="btn-accent text-white text-sm font-bold py-2 px-4 rounded" onclick="app_fgGen()">✨ Crea la divisa con Gemini</button>
+                    <span class="text-xs text-gray-400">${missing === 3 ? 'Ora vedi la versione base: Gemini la rende realistica, con la stessa divisa per tutti.' : 'Mancano ' + missing + ' divise.'} Una sola volta: poi resta salvata.</span>
+                </div>`;
+            } else {
+                html = `<div class="text-xs text-gray-400">✅ Divise create con Gemini.${isAdmin ? ' <button type="button" class="underline" onclick="app_fgRegen(fg.variant)">Rigenera questa divisa</button>' : ''}</div>`;
+            }
+            box.innerHTML = html;
+        }
+
+        // ---------- sfondi ----------
+        function fgRng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+        const FG_BGS = [
+            { id: 'studio', name: 'Studio', draw: (c) => {
+                const g = c.createRadialGradient(300, 300, 40, 300, 380, 520);
+                g.addColorStop(0, '#c4c9d2'); g.addColorStop(1, '#5d626d');
+                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
+            } },
+            { id: 'palestra', name: 'Palestra', draw: (c) => {
+                const w = c.createLinearGradient(0, 0, 0, 470);
+                w.addColorStop(0, '#efe3c7'); w.addColorStop(1, '#d2bd90');
+                c.fillStyle = w; c.fillRect(0, 0, 600, 470);
+                c.fillStyle = 'rgba(255,255,255,0.55)';
+                [[40, 70], [250, 70], [460, 70]].forEach(([x, y]) => { c.fillRect(x, y, 100, 110); });
+                c.strokeStyle = 'rgba(120,95,50,0.55)'; c.lineWidth = 4;
+                [[40, 70], [250, 70], [460, 70]].forEach(([x, y]) => { c.strokeRect(x, y, 100, 110); c.beginPath(); c.moveTo(x + 50, y); c.lineTo(x + 50, y + 110); c.moveTo(x, y + 55); c.lineTo(x + 100, y + 55); c.stroke(); });
+                c.fillStyle = 'rgba(0,0,0,0.08)'; for (let x = 0; x < 600; x += 60) c.fillRect(x, 220, 2, 250);
+                const f = c.createLinearGradient(0, 470, 0, 750);
+                f.addColorStop(0, '#c58a45'); f.addColorStop(1, '#8d5a24');
+                c.fillStyle = f; c.fillRect(0, 470, 600, 280);
+                c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 3;
+                for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(300 + i * 40, 470); c.lineTo(300 + i * 150, 750); c.stroke(); }
+                c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 6;
+                c.beginPath(); c.moveTo(0, 560); c.lineTo(600, 560); c.stroke();
+            } },
+            { id: 'spiaggia', name: 'Spiaggia', draw: (c) => {
+                const s = c.createLinearGradient(0, 0, 0, 450);
+                s.addColorStop(0, '#ff8a4c'); s.addColorStop(0.55, '#ffc36b'); s.addColorStop(1, '#ffe7a8');
+                c.fillStyle = s; c.fillRect(0, 0, 600, 450);
+                c.fillStyle = 'rgba(255,248,214,0.95)'; c.beginPath(); c.arc(450, 330, 62, 0, Math.PI * 2); c.fill();
+                const m = c.createLinearGradient(0, 440, 0, 520);
+                m.addColorStop(0, '#2aa7d6'); m.addColorStop(1, '#1479a8');
+                c.fillStyle = m; c.fillRect(0, 440, 600, 80);
+                c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 3;
+                [[60, 465, 140], [260, 485, 110], [420, 460, 120], [180, 505, 90]].forEach(([x, y, l]) => { c.beginPath(); c.moveTo(x, y); c.lineTo(x + l, y); c.stroke(); });
+                const d = c.createLinearGradient(0, 515, 0, 750);
+                d.addColorStop(0, '#f6dba2'); d.addColorStop(1, '#dcb673');
+                c.fillStyle = d; c.fillRect(0, 515, 600, 235);
+            } },
+            { id: 'notte', name: 'Notte', draw: (c) => {
+                const g = c.createLinearGradient(0, 0, 0, 750);
+                g.addColorStop(0, '#080c22'); g.addColorStop(1, '#33205f');
+                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
+                const r = fgRng(42);
+                for (let i = 0; i < 90; i++) {
+                    c.fillStyle = 'rgba(255,255,255,' + (0.35 + r() * 0.6).toFixed(2) + ')';
+                    c.beginPath(); c.arc(r() * 600, r() * 520, 0.8 + r() * 1.8, 0, Math.PI * 2); c.fill();
+                }
+                c.fillStyle = '#f4efd0'; c.beginPath(); c.arc(500, 120, 40, 0, Math.PI * 2); c.fill();
+                c.fillStyle = '#12173a'; c.beginPath(); c.arc(516, 110, 36, 0, Math.PI * 2); c.fill();
+            } },
+            { id: 'squadra', name: 'Colori squadra', draw: (c, u) => {
+                const g = c.createLinearGradient(0, 0, 600, 750);
+                g.addColorStop(0, u.swatch[0]); g.addColorStop(1, u.swatch[2]);
+                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
+                c.fillStyle = 'rgba(255,255,255,0.10)';
+                for (let i = -2; i < 9; i++) { c.beginPath(); c.moveTo(i * 110, 750); c.lineTo(i * 110 + 60, 750); c.lineTo(i * 110 + 360, 0); c.lineTo(i * 110 + 300, 0); c.closePath(); c.fill(); }
+            } },
+            { id: 'arena', name: 'Arena', draw: (c) => {
+                const g = c.createRadialGradient(300, 250, 20, 300, 300, 520);
+                g.addColorStop(0, '#2d4fa8'); g.addColorStop(1, '#0a1230');
+                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
+                c.fillStyle = 'rgba(255,255,255,0.07)';
+                for (let i = 0; i < 12; i++) {
+                    const a = i * Math.PI / 6;
+                    c.beginPath(); c.moveTo(300, 250);
+                    c.lineTo(300 + Math.cos(a) * 900, 250 + Math.sin(a) * 900);
+                    c.lineTo(300 + Math.cos(a + 0.13) * 900, 250 + Math.sin(a + 0.13) * 900);
+                    c.closePath(); c.fill();
+                }
+            } }
+        ];
+
+        // ---------- divisa disegnata + composizione ----------
+        const fgShade = (rgb, f) => 'rgb(' + rgb.map(v => Math.max(0, Math.min(255, Math.round(v * f)))).join(',') + ')';
+        function fgHexToRgb(h) {
+            const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || '');
+            return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [60, 60, 90];
+        }
+        function fgJerseyBody(c, u, skin) {
+            const main = u.swatch[0], trim = u.swatch[1], band = u.swatch[2];
+            const mr = fgHexToRgb(main);
+            // braccia (pelle) sotto le maniche
+            const arm = c.createLinearGradient(0, 690, 0, 750);
+            arm.addColorStop(0, fgShade(skin, 0.92)); arm.addColorStop(1, fgShade(skin, 0.8));
+            c.fillStyle = arm;
+            [[8, 96], [504, 592]].forEach(([x0, x1]) => { c.beginPath(); c.moveTo(x0, 700); c.lineTo(x1, 700); c.lineTo(x1 - 6, 750); c.lineTo(x0 + 6, 750); c.closePath(); c.fill(); });
+            // maglia: spalle, maniche corte e busto
+            c.beginPath();
+            c.moveTo(0, 706); c.lineTo(0, 640); c.quadraticCurveTo(4, 574, 112, 556);
+            c.lineTo(236, 516); c.lineTo(364, 516); c.lineTo(488, 556);
+            c.quadraticCurveTo(596, 574, 600, 640); c.lineTo(600, 706);
+            c.lineTo(506, 706); c.lineTo(506, 750); c.lineTo(94, 750); c.lineTo(94, 706); c.closePath();
+            const g = c.createLinearGradient(0, 520, 0, 750);
+            g.addColorStop(0, fgShade(mr, 1.06)); g.addColorStop(1, fgShade(mr, 0.82));
+            c.fillStyle = g; c.fill();
+            // ombra laterale del busto e pieghe
+            c.save(); c.clip();
+            const sh = c.createLinearGradient(94, 0, 506, 0);
+            sh.addColorStop(0, 'rgba(0,0,0,0.20)'); sh.addColorStop(0.12, 'rgba(0,0,0,0)'); sh.addColorStop(0.88, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.20)');
+            c.fillStyle = sh; c.fillRect(94, 520, 412, 230);
+            c.strokeStyle = 'rgba(0,0,0,0.10)'; c.lineWidth = 3;
+            [[170, 640, 150, 750], [430, 640, 450, 750]].forEach(([x0, y0, x1, y1]) => { c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2 + 10, (y0 + y1) / 2, x1, y1); c.stroke(); });
+            c.restore();
+            // bordo delle maniche
+            c.fillStyle = trim;
+            c.fillRect(0, 690, 94, 16); c.fillRect(506, 690, 94, 16);
+            // banda sulle spalle
+            c.strokeStyle = band; c.lineWidth = 10; c.lineCap = 'round';
+            c.beginPath(); c.moveTo(250, 526); c.lineTo(120, 566); c.stroke();
+            c.beginPath(); c.moveTo(350, 526); c.lineTo(480, 566); c.stroke();
+            c.lineCap = 'butt';
+        }
+        function fgNeckAndCollar(c, u, skin, chinY, before) {
+            const trim = u.swatch[1];
+            if (before) {
+                // collo
+                const g = c.createLinearGradient(0, chinY - 10, 0, 560);
+                g.addColorStop(0, fgShade(skin, 0.74)); g.addColorStop(0.25, fgShade(skin, 0.86)); g.addColorStop(1, fgShade(skin, 0.95));
+                c.fillStyle = g;
+                c.beginPath();
+                c.moveTo(300 - 66, chinY - 20); c.lineTo(300 + 66, chinY - 20);
+                c.lineTo(300 + 74, 536); c.lineTo(300 - 74, 536); c.closePath(); c.fill();
+                return;
+            }
+            // scollo a V: petto e bordo
+            c.fillStyle = fgShade(skin, 0.9);
+            c.beginPath(); c.moveTo(246, 514); c.lineTo(300, 596); c.lineTo(354, 514); c.closePath(); c.fill();
+            c.strokeStyle = trim; c.lineWidth = 15; c.lineJoin = 'round'; c.lineCap = 'round';
+            c.beginPath(); c.moveTo(238, 512); c.lineTo(300, 606); c.lineTo(362, 512); c.stroke();
+            c.lineJoin = 'miter'; c.lineCap = 'butt';
+        }
+        // Compone il ritratto 4:5 (600x750) con testa, divisa e sfondo
+        function fgCompose(cut, u, bgId) {
+            const cv = fgCanvas(600, 750), c = cv.getContext('2d');
+            const bg = FG_BGS.find(b => b.id === bgId) || FG_BGS[0];
+            bg.draw(c, u);
+            const skin = cut ? cut.skin : [214, 170, 140];
+            const CHIN = 452, FACE = 214;
+            fgJerseyBody(c, u, skin);
+            if (cut) {
+                fgNeckAndCollar(c, u, skin, CHIN, true);
+                const s = FACE / cut.fw;
+                c.drawImage(cut.head, 300 - cut.cx * s, CHIN - cut.chin * s, cut.head.width * s, cut.head.height * s);
+            } else {
+                fgSilhouette(c, 150, 120, 300, 340);
+            }
+            fgNeckAndCollar(c, u, skin, CHIN, false);
+            return cv;
+        }
 
         // ---------- loghi (libreria di PNG tra cui scegliere) ----------
         const FG_MAX_LOGOS = 6;
