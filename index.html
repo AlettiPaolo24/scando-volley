@@ -3388,7 +3388,7 @@
                     import("https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js"),
                     import("https://www.gstatic.com/firebasejs/12.4.0/firebase-ai.js")
                 ]);
-                const service = ai.getAI(getApp(), { backend: new ai.GoogleAIBackend() });
+                const service = ai.getAI(getApp(), { backend: new ai.GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
                 return ai.getGenerativeModel(service, {
                     model: FG_GEMINI_MODEL,
                     generationConfig: { responseModalities: [ai.ResponseModality.TEXT, ai.ResponseModality.IMAGE] }
