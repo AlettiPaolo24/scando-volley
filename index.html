@@ -800,7 +800,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-        import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-check.js";
+        import { initializeAppCheck, getToken as getAppCheckToken, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-check.js";
 
         // App Check: ID PUBBLICO della chiave reCAPTCHA Enterprise (Google Cloud → Fraud Defense).
         // Incollalo tra gli apici dopo averlo registrato in Firebase → App Check.
@@ -815,14 +815,14 @@
             appId: "1:525150795987:web:02efdc0ff8b4e3a30dfc26"
         };
         
-        let db, auth;
+        let db, auth, appCheckInst = null;
         try {
             const app = initializeApp(firebaseConfig);
             if (APP_CHECK_SITE_KEY) {
                 try {
                     // in locale serve un "debug token" (lo stampa la console del browser)
                     if (['localhost', '127.0.0.1'].includes(location.hostname)) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-                    initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+                    appCheckInst = initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
                 } catch (e) { console.warn('App Check non attivato:', e); }
             }
             auth = getAuth(app);
@@ -3396,7 +3396,18 @@
             })().catch(e => { fgModelP = null; throw e; });
             return fgModelP;
         }
+        // Prima di chiamare Gemini controlla che App Check riesca a produrre un token e, se no, mostra il motivo vero
+        async function fgCheckAppCheck() {
+            if (!appCheckInst) throw new Error('APPCHECK: non attivo nel sito (manca la chiave o l\'inizializzazione è fallita, vedi console del browser).');
+            try {
+                const t = await getAppCheckToken(appCheckInst, false);
+                if (!t || !t.token) throw new Error('token vuoto');
+            } catch (e) {
+                throw new Error('APPCHECK: il token non viene creato → ' + (e && (e.code || e.message) || e) + ' | ' + (e && e.message || ''));
+            }
+        }
         async function fgAskGemini(prompt, photoDataUrl) {
+            await fgCheckAppCheck();
             const parts = [prompt];
             if (photoDataUrl) {
                 const m = /^data:([^;]+);base64,(.+)$/.exec(photoDataUrl);
@@ -3433,6 +3444,7 @@
         function fgGeminiProblem(e) {
             const t = String((e && (e.message || e.code)) || e);
             fg.genRaw = t;
+            if (/APPCHECK/.test(t)) return { msg: 'App Check non riesce a creare il token di verifica (vedi i dettagli qui sotto).' };
             if (/NO_PHOTO/.test(t)) return { msg: 'Manca la foto profilo del giocatore: deve caricarla l\'amministratore.' };
             if (/limit:\s*0|free.?tier|billing|FAILED_PRECONDITION/i.test(t)) return { msg: 'Con l\'accesso gratuito Gemini non crea immagini per questo progetto. Resta la figurina base; per le divise realistiche serve attivare il piano Blaze della console Firebase.', permanent: true };
             if (/quota|429|RESOURCE_EXHAUSTED|rate.?limit|too many/i.test(t)) {
