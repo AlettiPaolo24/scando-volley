@@ -629,15 +629,17 @@
                         <h3 id="fg-s1-title" class="text-xl font-semibold text-white mb-1">1 · Le tre divise</h3>
                         <p class="text-sm text-gray-400 mb-3">Ogni giocatore ha tre versioni per collezione, una per divisa. Le divise sono sempre le stesse per tutti.</p>
                         <details class="mb-4 rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary">
-                            <summary class="cursor-pointer font-semibold text-white">Come si creano</summary>
+                            <summary class="cursor-pointer font-semibold text-white">Come si creano (gratis)</summary>
                             <ol class="list-decimal list-inside text-sm text-gray-300 space-y-1 mt-3">
-                                <li>Sotto una divisa premi <strong>Copia testo</strong>.</li>
-                                <li>Apri <a href="https://gemini.google.com" target="_blank" rel="noopener" class="text-accent underline">Gemini</a>, allega la foto del giocatore (va bene anche in abiti normali) e incolla il testo.</li>
-                                <li>Scarica l'immagine e caricala con <strong>Carica</strong> sotto la stessa divisa (solo amministratore).</li>
-                                <li>Ripeti per le altre due divise.</li>
+                                <li>Il giocatore deve avere la <strong>foto profilo</strong> (va bene anche in abiti normali).</li>
+                                <li>Sotto una divisa premi <strong>Crea con Gemini</strong>: l'app copia il testo, scarica la foto e apre Gemini.</li>
+                                <li>In Gemini allega la foto, incolla il testo e invia. Poi scarica l'immagine creata.</li>
+                                <li>Torna qui e <strong>trascina, carica o incolla</strong> l'immagine nella stessa divisa (solo amministratore).</li>
+                                <li>Per correggere un dettaglio scrivi la richiesta e premi <strong>Ritocca con Gemini</strong>: stessa procedura, con la divisa attuale.</li>
                             </ol>
-                            <p class="text-xs text-gray-400 mt-2">I testi sono identici per tutti: stessi colori, stesso sfondo, stessa luce.</p>
+                            <p class="text-xs text-gray-400 mt-2">Si usa il tuo account Gemini gratuito, senza costi. Le istruzioni sono identiche per tutti; nome, logo e dati li disegna l'app.</p>
                         </details>
+                        <div id="fg-quota" class="mb-3"></div>
                         <div id="fg-uniforms" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
                     </div>
 
@@ -3060,6 +3062,7 @@
         }
 
         function fgRenderUniforms() {
+            fgRenderQuota();
             document.getElementById('fg-uniforms').innerHTML = fgUniforms().map((u, i) => `
                 <div class="rounded-lg p-3 border border-secondary bg-primary bg-opacity-40 text-center">
                     <div class="flex justify-center gap-1 mb-2">${fgSwatches(u)}</div>
@@ -3067,10 +3070,21 @@
                     <div class="mx-auto mb-3 rounded-lg overflow-hidden bg-black bg-opacity-30 flex items-center justify-center" style="width:120px;aspect-ratio:4/5">
                         ${fg.urls[i] ? `<img src="${fg.urls[i]}" alt="" class="w-full h-full object-cover">` : '<span class="text-xs text-gray-500 px-2">Non ancora caricata</span>'}
                     </div>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgCopy(${i})">📋 Copia testo</button>
-                        ${isAdmin ? `<label class="btn-accent text-white text-xs font-bold py-1 px-3 rounded cursor-pointer">📤 Carica<input type="file" accept="image/*" class="hidden" onchange="app_fgUpload(${i}, this)"></label>` : ''}
-                    </div>
+                    ${isAdmin ? `
+                    <div class="flex flex-col gap-2">
+                        <button type="button" class="btn-accent text-white text-xs font-bold py-2 px-3 rounded" onclick="app_fgPrep(${i}, 'new')">✨ ${fg.urls[i] ? 'Rigenera' : 'Crea'} con Gemini</button>
+                        <div class="rounded border border-dashed border-secondary p-2 text-xs text-gray-400" ondragover="app_fgDragOver(event)" ondragleave="app_fgDragLeave(event)" ondrop="app_fgDrop(event, ${i})">
+                            Trascina qui il risultato
+                            <div class="flex flex-wrap justify-center gap-2 mt-2">
+                                <label class="btn-primary text-white text-xs font-bold py-1 px-3 rounded cursor-pointer">📤 Carica<input type="file" accept="image/*" class="hidden" onchange="app_fgUpload(${i}, this)"></label>
+                                <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgPaste(${i})">📋 Incolla</button>
+                            </div>
+                        </div>
+                        ${fg.urls[i] ? `
+                        <input id="fg-edit-${i}" type="text" maxlength="160" placeholder="Ritocco: es. più sorridente" class="w-full rounded bg-primary border border-secondary text-white text-xs px-2 py-1">
+                        <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgPrep(${i}, 'edit')">🪄 Ritocca con Gemini</button>` : ''}
+                    </div>` : ''}
+                    <button type="button" class="mt-2 text-xs text-gray-400 underline" onclick="app_fgCopy(${i})">Copia solo il testo</button>
                 </div>`).join('');
         }
 
@@ -3226,6 +3240,121 @@
             if (data.length > 330000) data = c.toDataURL('image/jpeg', 0.7);
             return data;
         }
+
+        // ---------- Gemini gratuito (gemini.google.com), guidato ----------
+        // Nessuna API a pagamento: l'app prepara foto e istruzioni, tu usi Gemini con il tuo account
+        // gratuito e riporti qui il risultato (carica, trascina o incolla).
+        const FG_QUOTA_KEY = 'fgGeminiLimitUntil';
+        const FG_QUOTA_HOURS = 24;
+        function fgQuotaUntil() {
+            try { const t = +localStorage.getItem(FG_QUOTA_KEY) || 0; return t > Date.now() ? t : 0; } catch (e) { return 0; }
+        }
+        function fgQuotaText(t) {
+            const d = new Date(t);
+            const oggi = new Date().toDateString() === d.toDateString();
+            const ora = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            return (oggi ? 'oggi' : 'il ' + d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })) + ' dopo le ' + ora;
+        }
+        function fgRenderQuota() {
+            const box = document.getElementById('fg-quota'); if (!box) return;
+            const t = fgQuotaUntil();
+            box.innerHTML = t
+                ? `<div class="rounded-lg p-3 bg-yellow-900 bg-opacity-40 border border-yellow-600 text-sm text-yellow-100 flex flex-wrap items-center justify-between gap-2">
+                       <span>⏳ Hai raggiunto il limite gratuito di Gemini. Aspetta e riprova <strong>${fgQuotaText(t)}</strong>.</span>
+                       <button type="button" class="text-xs underline" onclick="app_fgQuotaClear()">Ho già ripreso a generare</button>
+                   </div>`
+                : `<div class="rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary text-xs text-gray-300 flex flex-wrap items-center justify-between gap-2">
+                       <span>Gemini gratuito ha un limite giornaliero di immagini deciso da Google. Se te lo comunica, segnalalo qui e l'app ti ricorda quando riprovare.</span>
+                       <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgQuotaHit()">⏳ Gemini mi ha dato il limite</button>
+                   </div>`;
+        }
+        window.app_fgQuotaHit = () => {
+            const t = Date.now() + FG_QUOTA_HOURS * 3600 * 1000;
+            try { localStorage.setItem(FG_QUOTA_KEY, String(t)); } catch (e) { /* solo promemoria */ }
+            fgRenderQuota();
+            showToast('Limite segnato: riprova ' + fgQuotaText(t) + '.');
+        };
+        window.app_fgQuotaClear = () => {
+            try { localStorage.removeItem(FG_QUOTA_KEY); } catch (e) { /* niente */ }
+            fgRenderQuota();
+        };
+
+        function fgDownloadDataUrl(dataUrl, name) {
+            const a = document.createElement('a');
+            a.href = dataUrl; a.download = name;
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+        // mode 'new': foto profilo + istruzioni della divisa. mode 'edit': divisa attuale + richiesta di ritocco.
+        window.app_fgPrep = async (i, mode) => {
+            const p = fgPlayer(); if (!p) return;
+            const u = fgUniforms()[i];
+            const t = fgQuotaUntil();
+            if (t && !confirm('Hai segnato il limite di Gemini: riprova ' + fgQuotaText(t) + '. Vuoi provare lo stesso?')) return;
+            let prompt, photo, fname;
+            if (mode === 'edit') {
+                const box = document.getElementById('fg-edit-' + i);
+                const req = (box && box.value || '').trim();
+                if (!req) { showToast('Scrivi cosa vuoi cambiare.'); return; }
+                if (!fg.urls[i]) { showToast('Carica prima la divisa, poi potrai ritoccarla.'); return; }
+                prompt = 'Modifica il ritratto allegato applicando SOLO questa richiesta: ' + req + '.\n' +
+                    'Mantieni ESATTAMENTE la stessa persona (viso, lineamenti, età), la stessa divisa (' + u.text + '), la stessa inquadratura e il formato verticale 4:5. ' +
+                    'Nessuna scritta e nessun logo nell\'immagine. Resta fotografico e realistico.';
+                photo = fg.urls[i]; fname = fgSlug(p) + '-divisa-' + (i + 1) + '.jpg';
+            } else {
+                if (!p.photo || !p.photo.startsWith('data:')) { showToast('Manca la foto del giocatore: caricala prima come foto profilo.'); return; }
+                prompt = fgPrompt(u);
+                photo = p.photo; fname = fgSlug(p) + '-foto.jpg';
+            }
+            await fgCopyText(prompt);
+            fgDownloadDataUrl(photo, fname);
+            window.open('https://gemini.google.com/app', '_blank', 'noopener');
+            showToast('Testo copiato e foto scaricata. In Gemini allega la foto e incolla il testo.');
+        };
+
+        async function fgIngestBlob(idx, blob) {
+            if (!isAdmin) { showToast('Solo l\'amministratore può caricare le divise.'); return; }
+            if (!blob || !/^image\//.test(blob.type || '')) { showToast('Questo non sembra un\'immagine.'); return; }
+            const id = fg.id, coll = fg.coll;
+            try {
+                const data = fgNormalizePortrait(await fgFileToImage(blob));
+                await fgSaveVariant(id, coll, idx, data);
+                showToast('Divisa salvata!');
+            } catch (e) {
+                console.error(e);
+                showToast('Non sono riuscito a salvare l\'immagine (controlla le regole di Firestore).');
+            }
+        }
+        async function fgSaveVariant(id, coll, idx, data) {
+            const key = id + '|' + coll;
+            const urls = [...(fg.cache[key] || ['', '', ''])];
+            urls[idx] = data;
+            await setDoc(fgRef(id, coll), { variants: urls, updated: Date.now() });
+            fg.cache[key] = urls;
+            if (fg.id === id && fg.coll === coll) {
+                fg.urls = urls;
+                fg.imgs = await Promise.all(urls.map(loadImage));
+                fg.variant = idx;
+                fgRenderAll();
+            }
+        }
+        window.app_fgPaste = async i => {
+            try {
+                const items = await navigator.clipboard.read();
+                for (const it of items) {
+                    const type = it.types.find(t => t.startsWith('image/'));
+                    if (type) return fgIngestBlob(i, await it.getType(type));
+                }
+                showToast('Negli appunti non c\'è nessuna immagine.');
+            } catch (e) { showToast('Non posso leggere gli appunti: usa Carica o trascina l\'immagine.'); }
+        };
+        window.app_fgDrop = (ev, i) => {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('ring-2');
+            const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+            if (f) fgIngestBlob(i, f);
+        };
+        window.app_fgDragOver = ev => { ev.preventDefault(); ev.currentTarget.classList.add('ring-2'); };
+        window.app_fgDragLeave = ev => ev.currentTarget.classList.remove('ring-2');
 
         window.app_fgUpload = async (idx, input) => {
             const file = input.files && input.files[0];
