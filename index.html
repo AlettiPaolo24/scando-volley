@@ -2645,7 +2645,7 @@
                      photoImg: null, config: { logos: [], defaultLogo: '', collections: [] },
                      logoImg: null, logoImgs: {}, logoId: '', cache: {},
                      configLoaded: false, fontsReady: false, fields: fgLoadFields(),
-                     cuts: {}, cut: null, token: 0, status: '', gen: ['', '', ''], pcuts: [null, null, null], genCache: {}, pcCache: {}, gtok: 0, genBusy: '', bg: (() => { try { return localStorage.getItem('fgBg') || 'studio'; } catch (e) { return 'studio'; } })() };
+                     cuts: {}, cut: null, token: 0, status: '', bgImgs: {}, genRaw: '', genNote: '', gen: ['', '', ''], pcuts: [null, null, null], genCache: {}, pcCache: {}, gtok: 0, genBusy: '', bg: (() => { try { return localStorage.getItem('fgBg') || 'palestra'; } catch (e) { return 'studio'; } })() };
 
         const fgRef = (id, coll) => doc(db, 'scandoVolleyData', 'fig_' + id + (coll && coll !== 'classica' ? '__' + coll : ''));
         const fgCfgRef = () => doc(db, 'scandoVolleyData', 'figConfig');
@@ -3021,6 +3021,7 @@
             if (!fg.id || !players.some(p => p.id === fg.id)) fg.id = sorted[0].id;
             sel.value = fg.id;
             fgRenderCCForm();
+            fgLoadBgs();
             fgLoadConfig().then(() => {
                 if (!fgCollections().some(c => c.id === fg.coll)) fg.coll = 'classica';
                 if (currentPage === 'figurine') fgRenderAll();
@@ -3352,7 +3353,7 @@
         }
         function fgComposePerson(pc, u, bgId) {
             const cv = fgCanvas(600, 750), c = cv.getContext('2d');
-            if (pc.alpha) (FG_BGS.find(b => b.id === bgId) || FG_BGS[0]).draw(c, u);
+            if (pc.alpha) fgBgDraw(c, bgId);
             c.drawImage(pc.cv, 0, 0, 600, 750);
             return cv;
         }
@@ -3384,13 +3385,17 @@
             return fgModelP;
         }
         async function fgAskGemini(prompt, photoDataUrl) {
-            const m = /^data:([^;]+);base64,(.+)$/.exec(photoDataUrl || '');
-            if (!m) throw new Error('NO_PHOTO');
+            const parts = [prompt];
+            if (photoDataUrl) {
+                const m = /^data:([^;]+);base64,(.+)$/.exec(photoDataUrl);
+                if (!m) throw new Error('NO_PHOTO');
+                parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
+            }
             const model = await fgGetModel();
-            const result = await model.generateContent([prompt, { inlineData: { mimeType: m[1], data: m[2] } }]);
-            const parts = result.response.inlineDataParts() || [];
-            if (!parts.length) throw new Error('NO_IMAGE');
-            const im = await loadImage('data:' + parts[0].inlineData.mimeType + ';base64,' + parts[0].inlineData.data);
+            const result = await model.generateContent(parts);
+            const out = result.response.inlineDataParts() || [];
+            if (!out.length) throw new Error('NO_IMAGE');
+            const im = await loadImage('data:' + out[0].inlineData.mimeType + ';base64,' + out[0].inlineData.data);
             if (!im) throw new Error('NO_IMAGE');
             return fgNormalizePortrait(im);
         }
@@ -3415,6 +3420,7 @@
         // Restituisce { msg, lock } dove lock è l'istante prima del quale non riprovare
         function fgGeminiProblem(e) {
             const t = String((e && (e.message || e.code)) || e);
+            fg.genRaw = t;
             if (/NO_PHOTO/.test(t)) return { msg: 'Manca la foto profilo del giocatore: deve caricarla l\'amministratore.' };
             if (/limit:\s*0|free.?tier|billing|FAILED_PRECONDITION/i.test(t)) return { msg: 'Con l\'accesso gratuito Gemini non crea immagini per questo progetto. Resta la figurina base; per le divise realistiche serve attivare il piano Blaze della console Firebase.', permanent: true };
             if (/quota|429|RESOURCE_EXHAUSTED|rate.?limit|too many/i.test(t)) {
@@ -3425,8 +3431,49 @@
             if (/403|PERMISSION|not been used|disabled|API key|not found|404/i.test(t)) return { msg: 'Gemini non è ancora attivo per questa app: l\'amministratore deve attivare Firebase AI Logic nella console.', permanent: true };
             if (/SAFETY|blocked|PROHIBITED/i.test(t)) return { msg: 'Gemini ha rifiutato questa foto: prova con un\'altra foto profilo.' };
             if (/NO_IMAGE/.test(t)) return { msg: 'Gemini non ha restituito un\'immagine: riprova.' };
-            return { msg: 'Errore Gemini: ' + t.slice(0, 120) };
+            return { msg: 'Gemini ha risposto con un errore (vedi i dettagli qui sotto).' };
         }
+
+        // ---------- sfondi creati da Gemini (una volta sola, uguali per tutti) ----------
+        const fgBgRef = id => doc(db, 'scandoVolleyData', 'fgbg_' + id);
+        async function fgLoadBgs() {
+            await Promise.all(FG_BGS.map(async b => {
+                if (fg.bgImgs[b.id]) return;
+                try {
+                    const snap = await getDoc(fgBgRef(b.id));
+                    const data = snap.exists() ? snap.data().data : '';
+                    if (data) fg.bgImgs[b.id] = await loadImage(data);
+                } catch (e) { console.warn('Sfondo non letto:', b.id, e); }
+            }));
+            fgRebuild();
+        }
+        async function fgGenerateBgs() {
+            if (!isAdmin) return;
+            const lock = fgLockUntil();
+            if (lock) { showToast('Gemini è al limite: riprova ' + fgWhen(lock) + '.'); return; }
+            if (fg.genBusy) return;
+            const todo = FG_BGS.filter(b => !fg.bgImgs[b.id]);
+            if (!todo.length) { showToast('Gli sfondi sono già stati creati.'); return; }
+            try {
+                for (let n = 0; n < todo.length; n++) {
+                    const b = todo[n];
+                    fg.genBusy = 'Sfondo ' + (n + 1) + ' di ' + todo.length + ' (' + b.name + '): Gemini sta lavorando…';
+                    fgRenderGen();
+                    const data = await fgAskGemini(b.prompt, null);
+                    await setDoc(fgBgRef(b.id), { data, updated: Date.now() });
+                    fg.bgImgs[b.id] = await loadImage(data);
+                    fgRebuild();
+                }
+                showToast('Sfondi creati!');
+            } catch (e) {
+                console.error(e);
+                const pr = fgGeminiProblem(e);
+                if (pr.lock) fgSetLock(pr.lock); else if (pr.permanent) fgSetLock(Date.now() + 3600000);
+                fg.genNote = pr.msg;
+                showToast(pr.msg);
+            } finally { fg.genBusy = ''; fgRenderGen(); }
+        }
+        window.app_fgGenBgs = () => fgGenerateBgs();
 
         // Carica le divise già create e salvate (uguali per tutti) e ne ricava il ritaglio per cambiare sfondo
         async function fgLoadStored() {
@@ -3489,6 +3536,7 @@
                         fgRebuild();
                     }
                 }
+                fg.genRaw = ''; fg.genNote = '';
                 showToast('Divise create!');
             } catch (e) {
                 console.error(e);
@@ -3510,94 +3558,59 @@
         function fgRenderGen() {
             const box = document.getElementById('fg-gen'); if (!box) return;
             const lock = fgLockUntil(), missing = [0, 1, 2].filter(i => !fg.gen[i]).length;
+            const bgMissing = FG_BGS.filter(b => !fg.bgImgs[b.id]).length;
             let html = '';
             if (fg.genBusy) {
                 html = `<div class="text-sm text-yellow-200">⏳ ${esc(fg.genBusy)}</div>`;
             } else if (lock) {
                 html = `<div class="text-sm text-yellow-100">⏳ ${esc(fg.genNote || 'Gemini ha raggiunto il limite.')} <span class="text-yellow-300">Puoi riprovare ${fgWhen(lock)}.</span></div>`;
-            } else if (missing) {
-                html = `<div class="flex flex-wrap items-center gap-3">
-                    <button type="button" class="btn-accent text-white text-sm font-bold py-2 px-4 rounded" onclick="app_fgGen()">✨ Crea la divisa con Gemini</button>
-                    <span class="text-xs text-gray-400">${missing === 3 ? 'Ora vedi la versione base: Gemini la rende realistica, con la stessa divisa per tutti.' : 'Mancano ' + missing + ' divise.'} Una sola volta: poi resta salvata.</span>
-                </div>`;
             } else {
-                html = `<div class="text-xs text-gray-400">✅ Divise create con Gemini.${isAdmin ? ' <button type="button" class="underline" onclick="app_fgRegen(fg.variant)">Rigenera questa divisa</button>' : ''}</div>`;
+                if (missing) {
+                    html += `<div class="flex flex-wrap items-center gap-3 mb-2">
+                        <button type="button" class="btn-accent text-white text-sm font-bold py-2 px-4 rounded" onclick="app_fgGen()">✨ Crea la divisa con Gemini</button>
+                        <span class="text-xs text-gray-400">${missing === 3 ? 'Ora vedi la versione base: Gemini la rende realistica, con la stessa divisa per tutti.' : 'Mancano ' + missing + ' divise.'} Una sola volta: poi resta salvata.</span>
+                    </div>`;
+                } else {
+                    html += `<div class="text-xs text-gray-400 mb-2">✅ Divise create con Gemini.${isAdmin ? ' <button type="button" class="underline" onclick="app_fgRegen(fg.variant)">Rigenera questa divisa</button>' : ''}</div>`;
+                }
+                if (isAdmin && bgMissing) {
+                    html += `<div class="flex flex-wrap items-center gap-3">
+                        <button type="button" class="btn-primary text-white text-sm font-bold py-2 px-4 rounded" onclick="app_fgGenBgs()">🖼️ Crea gli sfondi con Gemini (${bgMissing})</button>
+                        <span class="text-xs text-gray-400">Una sola volta per tutti: poi gli sfondi restano salvati.</span>
+                    </div>`;
+                }
+            }
+            if (fg.genRaw && !fg.genBusy) {
+                html += `<details class="mt-2 text-xs text-gray-400"><summary class="cursor-pointer">Dettagli dell'errore</summary><p class="mt-1 break-words select-all">${esc(fg.genRaw.slice(0, 600))}</p></details>`;
             }
             box.innerHTML = html;
         }
 
         // ---------- sfondi ----------
         function fgRng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+        const FG_BG_BASE = 'Sfondo fotografico per una figurina sportiva, formato verticale 4:5, SENZA persone, senza scritte, senza loghi, senza numeri. Zona centrale libera e sfocata (profondità di campo) perché ci verrà sovrapposto un ritratto. Qualità alta, realistico. Scena: ';
         const FG_BGS = [
-            { id: 'studio', name: 'Studio', draw: (c) => {
-                const g = c.createRadialGradient(300, 300, 40, 300, 380, 520);
-                g.addColorStop(0, '#c4c9d2'); g.addColorStop(1, '#5d626d');
-                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
-            } },
-            { id: 'palestra', name: 'Palestra', draw: (c) => {
-                const w = c.createLinearGradient(0, 0, 0, 470);
-                w.addColorStop(0, '#efe3c7'); w.addColorStop(1, '#d2bd90');
-                c.fillStyle = w; c.fillRect(0, 0, 600, 470);
-                c.fillStyle = 'rgba(255,255,255,0.55)';
-                [[40, 70], [250, 70], [460, 70]].forEach(([x, y]) => { c.fillRect(x, y, 100, 110); });
-                c.strokeStyle = 'rgba(120,95,50,0.55)'; c.lineWidth = 4;
-                [[40, 70], [250, 70], [460, 70]].forEach(([x, y]) => { c.strokeRect(x, y, 100, 110); c.beginPath(); c.moveTo(x + 50, y); c.lineTo(x + 50, y + 110); c.moveTo(x, y + 55); c.lineTo(x + 100, y + 55); c.stroke(); });
-                c.fillStyle = 'rgba(0,0,0,0.08)'; for (let x = 0; x < 600; x += 60) c.fillRect(x, 220, 2, 250);
-                const f = c.createLinearGradient(0, 470, 0, 750);
-                f.addColorStop(0, '#c58a45'); f.addColorStop(1, '#8d5a24');
-                c.fillStyle = f; c.fillRect(0, 470, 600, 280);
-                c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 3;
-                for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(300 + i * 40, 470); c.lineTo(300 + i * 150, 750); c.stroke(); }
-                c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 6;
-                c.beginPath(); c.moveTo(0, 560); c.lineTo(600, 560); c.stroke();
-            } },
-            { id: 'spiaggia', name: 'Spiaggia', draw: (c) => {
-                const s = c.createLinearGradient(0, 0, 0, 450);
-                s.addColorStop(0, '#ff8a4c'); s.addColorStop(0.55, '#ffc36b'); s.addColorStop(1, '#ffe7a8');
-                c.fillStyle = s; c.fillRect(0, 0, 600, 450);
-                c.fillStyle = 'rgba(255,248,214,0.95)'; c.beginPath(); c.arc(450, 330, 62, 0, Math.PI * 2); c.fill();
-                const m = c.createLinearGradient(0, 440, 0, 520);
-                m.addColorStop(0, '#2aa7d6'); m.addColorStop(1, '#1479a8');
-                c.fillStyle = m; c.fillRect(0, 440, 600, 80);
-                c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 3;
-                [[60, 465, 140], [260, 485, 110], [420, 460, 120], [180, 505, 90]].forEach(([x, y, l]) => { c.beginPath(); c.moveTo(x, y); c.lineTo(x + l, y); c.stroke(); });
-                const d = c.createLinearGradient(0, 515, 0, 750);
-                d.addColorStop(0, '#f6dba2'); d.addColorStop(1, '#dcb673');
-                c.fillStyle = d; c.fillRect(0, 515, 600, 235);
-            } },
-            { id: 'notte', name: 'Notte', draw: (c) => {
-                const g = c.createLinearGradient(0, 0, 0, 750);
-                g.addColorStop(0, '#080c22'); g.addColorStop(1, '#33205f');
-                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
-                const r = fgRng(42);
-                for (let i = 0; i < 90; i++) {
-                    c.fillStyle = 'rgba(255,255,255,' + (0.35 + r() * 0.6).toFixed(2) + ')';
-                    c.beginPath(); c.arc(r() * 600, r() * 520, 0.8 + r() * 1.8, 0, Math.PI * 2); c.fill();
-                }
-                c.fillStyle = '#f4efd0'; c.beginPath(); c.arc(500, 120, 40, 0, Math.PI * 2); c.fill();
-                c.fillStyle = '#12173a'; c.beginPath(); c.arc(516, 110, 36, 0, Math.PI * 2); c.fill();
-            } },
-            { id: 'squadra', name: 'Colori squadra', draw: (c, u) => {
-                const g = c.createLinearGradient(0, 0, 600, 750);
-                g.addColorStop(0, u.swatch[0]); g.addColorStop(1, u.swatch[2]);
-                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
-                c.fillStyle = 'rgba(255,255,255,0.10)';
-                for (let i = -2; i < 9; i++) { c.beginPath(); c.moveTo(i * 110, 750); c.lineTo(i * 110 + 60, 750); c.lineTo(i * 110 + 360, 0); c.lineTo(i * 110 + 300, 0); c.closePath(); c.fill(); }
-            } },
-            { id: 'arena', name: 'Arena', draw: (c) => {
-                const g = c.createRadialGradient(300, 250, 20, 300, 300, 520);
-                g.addColorStop(0, '#2d4fa8'); g.addColorStop(1, '#0a1230');
-                c.fillStyle = g; c.fillRect(0, 0, 600, 750);
-                c.fillStyle = 'rgba(255,255,255,0.07)';
-                for (let i = 0; i < 12; i++) {
-                    const a = i * Math.PI / 6;
-                    c.beginPath(); c.moveTo(300, 250);
-                    c.lineTo(300 + Math.cos(a) * 900, 250 + Math.sin(a) * 900);
-                    c.lineTo(300 + Math.cos(a + 0.13) * 900, 250 + Math.sin(a + 0.13) * 900);
-                    c.closePath(); c.fill();
-                }
-            } }
+            { id: 'palestra', name: 'Palestra con rete', fb: ['#d9c39a', '#8d5a24'], prompt: FG_BG_BASE + 'interno di una palestra di pallavolo ben illuminata, rete da pallavolo bianca ben visibile alle spalle, parquet lucido con righe del campo, pareti chiare e tribune sfocate.' },
+            { id: 'nero', name: 'Nero', fb: ['#2a2a2e', '#050505'], prompt: FG_BG_BASE + 'fondale nero da studio fotografico con una leggerissima sfumatura grigio scuro e un faro morbido dietro al soggetto, elegante e minimale.' },
+            { id: 'neon', name: 'Neon', fb: ['#2b0f5c', '#06182e'], prompt: FG_BG_BASE + 'ambiente scuro con luci al neon azzurre e magenta, riflessi lucidi, atmosfera urbana e sportiva notturna.' },
+            { id: 'arena', name: 'Arena', fb: ['#2d4fa8', '#0a1230'], prompt: FG_BG_BASE + 'grande arena sportiva piena di pubblico sfocato, riflettori potenti e fasci di luce, atmosfera da finale.' },
+            { id: 'spiaggia', name: 'Spiaggia', fb: ['#ffc36b', '#2aa7d6'], prompt: FG_BG_BASE + 'campo di beach volley sulla sabbia al tramonto, rete da pallavolo alle spalle, mare e cielo arancione sfocati.' },
+            { id: 'studio', name: 'Studio grigio', fb: ['#c4c9d2', '#5d626d'], prompt: FG_BG_BASE + 'fondale grigio da studio fotografico con una morbida luce centrale, pulito e uniforme.' }
         ];
+        // Sfondi creati da Gemini (uguali per tutti); finché non esistono si vede una sfumatura semplice
+        function fgBgDraw(c, id) {
+            const bg = FG_BGS.find(b => b.id === id) || FG_BGS[0];
+            const im = fg.bgImgs[bg.id];
+            if (im) {
+                const k = Math.max(600 / im.width, 750 / im.height);
+                const w = im.width * k, h = im.height * k;
+                c.drawImage(im, (600 - w) / 2, (750 - h) / 2, w, h);
+                return;
+            }
+            const g = c.createLinearGradient(0, 0, 0, 750);
+            g.addColorStop(0, bg.fb[0]); g.addColorStop(1, bg.fb[1]);
+            c.fillStyle = g; c.fillRect(0, 0, 600, 750);
+        }
 
         // ---------- divisa disegnata + composizione ----------
         const fgShade = (rgb, f) => 'rgb(' + rgb.map(v => Math.max(0, Math.min(255, Math.round(v * f)))).join(',') + ')';
@@ -3661,8 +3674,7 @@
         // Compone il ritratto 4:5 (600x750) con testa, divisa e sfondo
         function fgCompose(cut, u, bgId) {
             const cv = fgCanvas(600, 750), c = cv.getContext('2d');
-            const bg = FG_BGS.find(b => b.id === bgId) || FG_BGS[0];
-            bg.draw(c, u);
+            fgBgDraw(c, bgId);
             const skin = cut ? cut.skin : [214, 170, 140];
             const CHIN = 452, FACE = 214;
             fgJerseyBody(c, u, skin);
