@@ -3413,7 +3413,7 @@
         }
 
         // Limiti di Gemini: se si superano, l'app avvisa e blocca il pulsante fino all'ora giusta
-        const FG_LOCK_KEY = 'fgGeminiLockUntil';
+        const FG_LOCK_KEY = 'fgGeminiLock2';
         function fgLockUntil() { try { const t = +localStorage.getItem(FG_LOCK_KEY) || 0; return t > Date.now() ? t : 0; } catch (e) { return 0; } }
         function fgSetLock(t) { try { localStorage.setItem(FG_LOCK_KEY, String(t)); } catch (e) { /* solo promemoria */ } }
         // I limiti giornalieri di Google si azzerano a mezzanotte del Pacifico
@@ -3480,7 +3480,7 @@
             } catch (e) {
                 console.error(e);
                 const pr = fgGeminiProblem(e);
-                if (pr.lock) fgSetLock(pr.lock); else if (pr.permanent) fgSetLock(Date.now() + 3600000);
+                if (pr.lock) fgSetLock(pr.lock);
                 fg.genNote = pr.msg;
                 showToast(pr.msg);
             } finally { fg.genBusy = ''; fgRenderGen(); }
@@ -3554,7 +3554,6 @@
                 console.error(e);
                 const pr = fgGeminiProblem(e);
                 if (pr.lock) fgSetLock(pr.lock);
-                else if (pr.permanent) fgSetLock(Date.now() + 3600000); // niente tentativi a raffica
                 showToast(pr.msg);
                 fg.genNote = pr.msg;
             } finally {
@@ -3562,6 +3561,7 @@
                 fgRenderGen();
             }
         }
+        window.app_fgUnlock = () => { try { localStorage.removeItem(FG_LOCK_KEY); } catch (e) { /* niente */ } fg.genNote = ''; fgRenderGen(); };
         window.app_fgGen = () => fgGenerate(null);
         window.app_fgRegen = i => {
             if (!isAdmin) return;
@@ -3575,7 +3575,7 @@
             if (fg.genBusy) {
                 html = `<div class="text-sm text-yellow-200">⏳ ${esc(fg.genBusy)}</div>`;
             } else if (lock) {
-                html = `<div class="text-sm text-yellow-100">⏳ ${esc(fg.genNote || 'Gemini ha raggiunto il limite.')} <span class="text-yellow-300">Puoi riprovare ${fgWhen(lock)}.</span></div>`;
+                html = `<div class="text-sm text-yellow-100">⏳ ${esc(fg.genNote || 'Gemini ha raggiunto il limite.')} <span class="text-yellow-300">Puoi riprovare ${fgWhen(lock)}.</span> <button type="button" class="underline text-xs" onclick="app_fgUnlock()">Riprova ora</button></div>`;
             } else {
                 if (missing) {
                     html += `<div class="flex flex-wrap items-center gap-3 mb-2">
