@@ -3498,6 +3498,33 @@
             } finally { fg.genBusy = ''; fgRenderGen(); }
         }
         window.app_fgGenBgs = () => fgGenerateBgs();
+        // Diagnosi: prova App Check + un modello di solo testo (gratuito) e poi il modello immagini
+        window.app_fgTestGemini = async () => {
+            const lines = [];
+            const show = () => { fg.testMsg = lines.join(' | '); fgRenderGen(); };
+            fg.testMsg = 'Prova in corso…'; fgRenderGen();
+            try { await fgCheckAppCheck(); lines.push('App Check: token OK'); }
+            catch (e) { lines.push('App Check: ERRORE → ' + (e.message || e)); show(); return; }
+            show();
+            const [{ getApp }, ai] = await Promise.all([
+                import("https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js"),
+                import("https://www.gstatic.com/firebasejs/12.4.0/firebase-ai.js")
+            ]);
+            const service = ai.getAI(getApp(), { backend: new ai.GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
+            for (const m of ['gemini-2.5-flash', FG_GEMINI_MODEL]) {
+                try {
+                    const model = ai.getGenerativeModel(service, m === FG_GEMINI_MODEL
+                        ? { model: m, generationConfig: { responseModalities: [ai.ResponseModality.TEXT, ai.ResponseModality.IMAGE] } }
+                        : { model: m });
+                    const r = await model.generateContent(m === FG_GEMINI_MODEL ? 'Disegna un piccolo pallone da pallavolo su sfondo bianco.' : 'Rispondi solo con la parola OK.');
+                    const imgs = (r.response.inlineDataParts && r.response.inlineDataParts()) || [];
+                    lines.push(m + ': OK' + (imgs.length ? ' (immagine ricevuta)' : ' → "' + String(r.response.text()).slice(0, 40) + '"'));
+                } catch (e) {
+                    lines.push(m + ': ERRORE → ' + String(e && e.message || e).slice(0, 260));
+                }
+                show();
+            }
+        };
 
         // Carica le divise già create e salvate (uguali per tutti) e ne ricava il ritaglio per cambiare sfondo
         async function fgLoadStored() {
@@ -3603,6 +3630,9 @@
                         <span class="text-xs text-gray-400">Una sola volta per tutti: poi gli sfondi restano salvati.</span>
                     </div>`;
                 }
+            }
+            if (isAdmin && !fg.genBusy) {
+                html += `<div class="mt-2 text-xs text-gray-400"><button type="button" class="underline" onclick="app_fgTestGemini()">🔧 Prova connessione Gemini</button>${fg.testMsg ? '<p class="mt-1 break-words select-all">' + esc(fg.testMsg) + '</p>' : ''}</div>`;
             }
             if (fg.genRaw && !fg.genBusy) {
                 html += `<details class="mt-2 text-xs text-gray-400"><summary class="cursor-pointer">Dettagli dell'errore</summary><p class="mt-1 break-words select-all">${esc(fg.genRaw.slice(0, 600))}</p></details>`;
