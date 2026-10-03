@@ -279,6 +279,8 @@
         .viz-key { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
         .viz-empty { color: var(--text-dark); font-size: .875rem; text-align: center; padding: 1.5rem 0; }
         .figurine-model-btn.active, .logo-variant-btn.active { border-color: var(--accent) !important; background: rgba(233,69,96,0.2) !important; }
+        .fg-pill { cursor: pointer; border: 1px solid var(--secondary); border-radius: 999px; padding: .2rem .7rem; font-size: .75rem; color: #dcdcdc; user-select: none; }
+        .fg-pill.on { background: rgba(233,69,96,0.25); border-color: var(--accent); color: #fff; }
     </style>
 </head>
 <body class="antialiased">
@@ -326,6 +328,7 @@
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
                     <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
+                    <a href="#" class="nav-link" data-page="figurine">Figurine</a>
                 </div>
                 <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -340,6 +343,7 @@
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
                 <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
+                <a href="#" class="block nav-link py-2" data-page="figurine">Figurine</a>
             </div>
         </header>
 
@@ -604,6 +608,98 @@
 
             </div>
 
+            <!-- Pagina Figurine -->
+            <div id="page-figurine" class="page hidden">
+                <div class="text-center mb-6">
+                    <div class="text-5xl mb-2">🃏</div>
+                    <h2 class="text-3xl md:text-4xl font-bold gold-text">Figurine</h2>
+                    <p class="text-gray-400 mt-1">Scegli giocatore, divisa e stile: la figurina è pronta.</p>
+                </div>
+                <p id="fg-empty" class="hidden text-center text-gray-400 py-10">Nessun giocatore inserito.</p>
+
+                <div id="fg-main">
+                    <div class="card rounded-lg p-4 mb-6">
+                        <label for="fg-player" class="block text-sm text-gray-400 mb-1">Giocatore</label>
+                        <select id="fg-player" class="form-select p-2 rounded w-full md:w-72 mb-4"></select>
+                        <p class="text-sm text-gray-400 mb-2">Collezione di divise</p>
+                        <div id="fg-colls" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <div class="card rounded-lg p-4 mb-6">
+                        <h3 id="fg-s1-title" class="text-xl font-semibold text-white mb-1">1 · Le tre divise</h3>
+                        <p class="text-sm text-gray-400 mb-3">Ogni giocatore ha tre versioni per collezione, una per divisa. Le divise sono sempre le stesse per tutti.</p>
+                        <details class="mb-4 rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary">
+                            <summary class="cursor-pointer font-semibold text-white">Come si creano</summary>
+                            <ol class="list-decimal list-inside text-sm text-gray-300 space-y-1 mt-3">
+                                <li>Sotto una divisa premi <strong>Copia testo</strong>.</li>
+                                <li>Apri <a href="https://gemini.google.com" target="_blank" rel="noopener" class="text-accent underline">Gemini</a>, allega la foto del giocatore (va bene anche in abiti normali) e incolla il testo.</li>
+                                <li>Scarica l'immagine e caricala con <strong>Carica</strong> sotto la stessa divisa (solo amministratore).</li>
+                                <li>Ripeti per le altre due divise.</li>
+                            </ol>
+                            <p class="text-xs text-gray-400 mt-2">I testi sono identici per tutti: stessi colori, stesso sfondo, stessa luce.</p>
+                        </details>
+                        <div id="fg-uniforms" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                    </div>
+
+                    <div class="card rounded-lg p-4 mb-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">2 · Componi la figurina</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                            <div>
+                                <canvas id="fg-canvas" width="600" height="840" class="w-full max-w-xs mx-auto rounded-2xl shadow-2xl block"></canvas>
+                                <p id="fg-note" class="hidden text-xs text-yellow-300 text-center mt-2"></p>
+                            </div>
+                            <div class="space-y-5">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-2">Divisa</p>
+                                    <div id="fg-variants" class="grid grid-cols-3 gap-2"></div>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-2">Stile</p>
+                                    <div id="fg-styles" class="grid grid-cols-5 gap-2"></div>
+                                    <p id="fg-style-name" class="text-xs text-gray-400 mt-2"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Dati sulla figurina <span id="fg-fields-count" class="text-xs text-gray-500"></span></p>
+                                    <p class="text-xs text-gray-500 mb-2">Scegline fino a 6: la foto si rimpicciolisce per fare spazio.</p>
+                                    <div id="fg-fields" class="flex flex-wrap gap-2"></div>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-2">Logo</p>
+                                    <div id="fg-logos" class="flex flex-wrap gap-2"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="btn-accent text-white font-bold py-2 px-4 rounded" onclick="app_fgDownload()">⬇️ Scarica</button>
+                                    <button type="button" class="share-btn" onclick="app_fgShare(event)">📲 Condividi</button>
+                                    <button type="button" class="btn-primary text-white font-bold py-2 px-4 rounded" onclick="app_fgPrint()">🖨️ Stampa</button>
+                                </div>
+                                <div class="rounded-lg p-3 bg-primary bg-opacity-40 border border-secondary flex items-center gap-4">
+                                    <canvas id="fg-round" width="240" height="240" class="rounded-full flex-shrink-0" style="width:88px;height:88px;"></canvas>
+                                    <div class="min-w-0">
+                                        <p class="text-sm text-white font-semibold">Foto profilo rotonda</p>
+                                        <p class="text-xs text-gray-400 mb-2">Con la divisa e lo stile scelti. Sostituisce la foto attuale nell'app.</p>
+                                        <button type="button" class="btn-primary text-white text-sm font-bold py-1 px-3 rounded" onclick="app_fgUseAsProfile()">👤 Usa come foto profilo</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <details class="admin-content hidden card rounded-lg p-4 mb-6">
+                        <summary class="cursor-pointer text-lg font-semibold text-white">Collezioni a tema (di stagione, eventi)</summary>
+                        <p class="text-xs text-gray-400 my-3">Natale, Halloween ed Estate sono già pronte. Qui puoi crearne altre, per esempio per un torneo: le tre divise valgono per tutti i giocatori.</p>
+                        <div id="fg-cc-list" class="space-y-2 mb-4"></div>
+                        <div id="fg-cc-form"></div>
+                    </details>
+
+                    <div class="admin-content hidden card rounded-lg p-4 mb-6">
+                        <h3 class="text-lg font-semibold text-white mb-1">Loghi per le figurine</h3>
+                        <p class="text-xs text-gray-400 mb-3">Carica uno o più PNG (meglio con sfondo trasparente, fino a 6). Chi usa l'app sceglie quale mettere sulla figurina; con "Per tutti" decidi quale è già selezionato. Senza loghi c'è il pallone con la scritta "Scandolara Volley".</p>
+                        <div id="fg-logo-admin" class="space-y-2 mb-3"></div>
+                        <label class="btn-primary text-white text-sm font-bold py-1 px-3 rounded cursor-pointer inline-block">📤 Carica loghi (PNG)<input type="file" accept="image/png,image/*" multiple class="hidden" onchange="app_fgLogoUpload(this)"></label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Gestione Stagione (admin, bottone collassabile in fondo) -->
             <section id="season-management-section" class="admin-content hidden mt-8 container mx-auto px-4 pb-8">
                 <button onclick="toggleSeasonManagement()" class="flex items-center gap-2 text-gray-400 hover:text-white text-sm py-2 px-3 rounded">
@@ -714,7 +810,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD7duEL7HRu-KAYU345AfUHkHGxCbMSPZw",
@@ -991,6 +1087,7 @@
             renderCharts();
             renderPagamenti();
             if (currentPage === 'album') renderAlbum();
+            if (currentPage === 'figurine') fgRenderAll();
         }
 
         function initializeDatePicker() {
@@ -2121,6 +2218,7 @@
             mobileMenu.classList.add('hidden');
             currentPage = pageId;
             if (pageId === 'album') renderAlbum();
+            if (pageId === 'figurine') renderFigurine();
             if (pushState) {
                 history.pushState({ page: pageId }, '', '#' + pageId);
             }
@@ -2488,6 +2586,809 @@
             }
             showToast('Testo copiato! Incollalo in Gemini insieme alla foto.');
         });
+
+        // =====================================================================
+        // FIGURINE: COLLEZIONI (divise a tema) x 5 STILI x DATI SULLA CARTA
+        // Ogni collezione ha 3 divise. Le 3 immagini di ogni giocatore e collezione stanno
+        // in un documento a parte (scandoVolleyData/fig_<id> per la Classica,
+        // fig_<id>__<collezione> per le altre) per non appesantire quello principale.
+        // =====================================================================
+        const FG_BASE_PROMPT = `Trasforma la foto allegata in un ritratto ufficiale da figurina sportiva, stile fotografia di squadra professionale.
+
+- Mantieni ESATTAMENTE la stessa persona: stesso viso, lineamenti, capelli, età ed espressione. Non abbellire e non cambiare i tratti.
+- Inquadratura a mezzo busto, frontale, spalle dritte, viso al centro nella parte alta dell'immagine, sguardo in camera.
+- Sfondo in studio grigio neutro uniforme (#8a8f98), senza oggetti, con una leggerissima sfumatura più chiara dietro la testa.
+- Luce da studio morbida e frontale, colori naturali, buon contrasto, pelle realistica, nitidezza alta.
+- Nessun numero, nessuna scritta, nessun logo sulla maglia o nell'immagine.
+- Formato verticale 4:5, fotografico e realistico, niente effetto cartone animato.`;
+
+        const fgJersey = (main, collar, band, extra) =>
+            `maglia da pallavolo a maniche corte ${main}, colletto a V e bordi delle maniche ${collar}, sottile banda ${band} sulle spalle` + (extra ? `, ${extra}` : '');
+
+        // months: mesi (0 = gennaio) in cui la collezione viene proposta come "di stagione"
+        const FG_COLLECTIONS = [
+            { id: 'classica', name: 'Classica', emoji: '🏐', uniforms: [
+                { name: 'Blu Notte', swatch: ['#16213e', '#e94560', '#533483'], text: fgJersey('blu notte (#16213e)', 'rosso corallo (#e94560)', 'viola (#533483)') },
+                { name: 'Bianca', swatch: ['#ffffff', '#16213e', '#e94560'], text: fgJersey('bianca (#ffffff)', 'blu notte (#16213e)', 'rosso corallo (#e94560)') },
+                { name: 'Corallo', swatch: ['#e94560', '#ffffff', '#16213e'], text: fgJersey('rosso corallo (#e94560)', 'bianchi (#ffffff)', 'blu notte (#16213e)') }
+            ] },
+            { id: 'natale', name: 'Natale', emoji: '🎄', months: [11, 0], uniforms: [
+                { name: 'Babbo Natale', swatch: ['#c8102e', '#ffffff', '#165b33'], text: fgJersey('rosso natalizio (#c8102e)', 'bianchi (#ffffff)', 'verde abete (#165b33)', 'e un cappello da Babbo Natale rosso con bordo e pon pon bianchi') },
+                { name: 'Verde Abete', swatch: ['#165b33', '#ffffff', '#c8102e'], text: fgJersey('verde abete (#165b33)', 'bianchi (#ffffff)', 'rosso natalizio (#c8102e)') },
+                { name: 'Bianco Neve', swatch: ['#ffffff', '#c8102e', '#165b33'], text: fgJersey('bianca (#ffffff)', 'rosso natalizio (#c8102e)', 'verde abete (#165b33)') }
+            ] },
+            { id: 'halloween', name: 'Halloween', emoji: '🎃', months: [9], uniforms: [
+                { name: 'Zucca', swatch: ['#f77f00', '#111111', '#6a1b9a'], text: fgJersey('arancione zucca (#f77f00)', 'neri (#111111)', 'viola (#6a1b9a)') },
+                { name: 'Notte Nera', swatch: ['#111111', '#f77f00', '#6a1b9a'], text: fgJersey('nera (#111111)', 'arancioni (#f77f00)', 'viola (#6a1b9a)') },
+                { name: 'Fantasma', swatch: ['#f4f4f4', '#6a1b9a', '#f77f00'], text: fgJersey('bianca (#f4f4f4)', 'viola (#6a1b9a)', 'arancione (#f77f00)') }
+            ] },
+            { id: 'estate', name: 'Estate', emoji: '☀️', months: [5, 6, 7], uniforms: [
+                { name: 'Sole', swatch: ['#ffd23f', '#1ea5d8', '#ff6b6b'], text: fgJersey('gialla (#ffd23f)', 'azzurri (#1ea5d8)', 'corallo (#ff6b6b)') },
+                { name: 'Oceano', swatch: ['#1ea5d8', '#ffffff', '#ffd23f'], text: fgJersey('azzurra (#1ea5d8)', 'bianchi (#ffffff)', 'gialla (#ffd23f)') },
+                { name: 'Tramonto', swatch: ['#ff7a45', '#ff4d8d', '#533483'], text: fgJersey('arancione corallo (#ff7a45)', 'rosa (#ff4d8d)', 'viola (#533483)') }
+            ] }
+        ];
+        const FG_STYLES = ['Classico', 'Oro', 'Neon', 'Retrò', 'Olografica'];
+
+        // Dati che si possono mettere sulla carta (massimo 6)
+        const FG_FIELDS = [
+            { id: 'ruolo', label: 'Ruolo' }, { id: 'numero', label: 'Numero maglia' },
+            { id: 'eta', label: 'Età' }, { id: 'nascita', label: 'Data di nascita' },
+            { id: 'altezza', label: 'Altezza' }, { id: 'peso', label: 'Peso' },
+            { id: 'punti', label: 'Punti' }, { id: 'posizione', label: 'Posizione' },
+            { id: 'presenze', label: 'Presenze' }, { id: 'serie', label: 'Serie presenze' },
+            { id: 'set', label: 'Set vinti' }, { id: 'media', label: 'Media set' },
+            { id: 'badge', label: 'Badge' }
+        ];
+        const FG_MAX_FIELDS = 6;
+
+        function fgLoadFields() {
+            try {
+                const a = JSON.parse(localStorage.getItem('fgFields') || '[]');
+                return new Set(a.filter(x => FG_FIELDS.some(f => f.id === x)).slice(0, FG_MAX_FIELDS));
+            } catch (e) { return new Set(); }
+        }
+        function fgSaveFields() {
+            try { localStorage.setItem('fgFields', JSON.stringify([...fg.fields])); } catch (e) { /* preferenza non salvata */ }
+        }
+
+        const fg = { id: null, coll: 'classica', variant: 0, style: 0, urls: ['', '', ''], imgs: [null, null, null],
+                     photoImg: null, config: { logos: [], defaultLogo: '', collections: [] },
+                     logoImg: null, logoImgs: {}, logoId: '', cache: {},
+                     configLoaded: false, fontsReady: false, fields: fgLoadFields() };
+
+        const fgPrompt = u => FG_BASE_PROMPT + `\n- Indossa ESATTAMENTE questa divisa, identica in tutte le versioni: ${u.text}.`;
+        const fgRef = (id, coll) => doc(db, 'scandoVolleyData', 'fig_' + id + (coll && coll !== 'classica' ? '__' + coll : ''));
+        const fgCfgRef = () => doc(db, 'scandoVolleyData', 'figConfig');
+        const fgPlayer = () => players.find(p => p.id === fg.id);
+        const fgCollections = () => [...FG_COLLECTIONS, ...(fg.config.collections || [])];
+        const fgColl = () => fgCollections().find(c => c.id === fg.coll) || FG_COLLECTIONS[0];
+        const fgUniforms = () => fgColl().uniforms;
+        const fgSeasonal = () => FG_COLLECTIONS.find(c => c.months && c.months.includes(new Date().getMonth())) || null;
+        const fgSlug = p => ((p.name || '') + '-' + (p.surname || '')).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'giocatore';
+
+        // ---------- dati sulla carta ----------
+        function fgStatItems(p) {
+            if (!fg.fields.size) return [];
+            const st = computeStandings().find(x => x.id === p.id) || {};
+            const rk = rankedStandings().find(x => x.id === p.id);
+            const streak = (computeStreaks()[p.id] || {}).current || 0;
+            const dash = '—';
+            const has = v => v !== undefined && v !== null && v !== '';
+            const birth = (() => {
+                const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(p.birthDate || '');
+                return m ? `${m[3]}/${m[2]}/${m[1]}` : dash;
+            })();
+            const age = calculateAge(p.birthDate);
+            const val = {
+                ruolo: ['RUOLO', (p.role || '').trim() || dash],
+                numero: ['MAGLIA', has(p.number) ? '#' + p.number : dash],
+                eta: ['ETÀ', age != null ? String(age) : dash],
+                nascita: ['NATO IL', birth],
+                altezza: ['ALTEZZA', has(p.height) ? p.height + ' cm' : dash],
+                peso: ['PESO', has(p.weight) ? p.weight + ' kg' : dash],
+                punti: ['PUNTI', String(st.totalPoints || 0)],
+                posizione: ['CLASSIFICA', rk ? rk.rank + '°' : dash],
+                presenze: ['PRESENZE', String(st.attendanceCount || 0)],
+                serie: ['SERIE', String(streak)],
+                set: ['SET VINTI', String(st.setsWon || 0)],
+                // stessa media mostrata in Classifica: set vinti per presenza
+                media: ['MEDIA SET', Number(st.pointAverage || 0).toFixed(2)],
+                badge: ['BADGE', String((p.assignedBadges || []).length)]
+            };
+            return FG_FIELDS.filter(f => fg.fields.has(f.id)).map(f => ({ label: val[f.id][0], value: val[f.id][1] }));
+        }
+
+        // ---------- disegno ----------
+        // Due impaginazioni: con i dati la foto si rimpicciolisce e sotto compaiono i riquadri.
+        const FG_LAYOUTS = {
+            plain: { photo: { x: 80, y: 60, w: 440, h: 550 }, nomeY: 670, nomeS: 34, cognY: 728, cognS: 56, logoY: 782 },
+            stats: { photo: { x: 140, y: 52, w: 320, h: 400 }, nomeY: 516, nomeS: 28, cognY: 566, cognS: 46, logoY: 782, statsTop: 598, statsBottom: 738 }
+        };
+        const FG_THEME = [
+            { bg: 'rgba(83,52,131,0.55)', stroke: 'rgba(255,255,255,0.2)', value: '#ffffff', label: '#e94560', family: 'Poppins, sans-serif', weight: '700' },
+            { bg: 'rgba(201,151,43,0.12)', stroke: '#c9972b', value: '#f9e27d', label: '#c9a95a', family: 'Georgia, serif', weight: '700' },
+            { bg: 'rgba(0,229,255,0.08)', stroke: '#00e5ff', value: '#ffffff', label: '#00e5ff', family: '"Courier New", monospace', weight: '700', glow: true },
+            { bg: '#ffffff', stroke: '#2a2a2a', sw: 3, value: '#e0482f', label: '#2a2a2a', family: '"Arial Black", Impact, sans-serif', weight: '400' },
+            { bg: 'rgba(255,255,255,0.6)', stroke: 'rgba(255,255,255,0.95)', value: '#2b2250', label: '#5a4f8a', family: 'Poppins, sans-serif', weight: '700' }
+        ];
+
+        function fgSilhouette(ctx, x, y, w, h) {
+            ctx.fillStyle = '#2a3550'; ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = '#4a5878';
+            ctx.beginPath(); ctx.arc(x + w / 2, y + h * 0.38, w * 0.17, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(x + w / 2, y + h * 0.88, w * 0.34, h * 0.24, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        function fgPhoto(ctx, img, r, L) {
+            const P = L.photo;
+            ctx.save();
+            rrPath(ctx, P.x, P.y, P.w, P.h, r); ctx.clip();
+            if (img) {
+                const k = Math.max(P.w / img.width, P.h / img.height);
+                const dw = img.width * k, dh = img.height * k;
+                ctx.drawImage(img, P.x + (P.w - dw) / 2, P.y + (P.h - dh) * 0.2, dw, dh);
+            } else fgSilhouette(ctx, P.x, P.y, P.w, P.h);
+            ctx.restore();
+        }
+        function fgFit(ctx, text, maxW, size, family, weight, style) {
+            let s = size;
+            do { ctx.font = `${style || ''} ${weight} ${s}px ${family}`.trim(); s -= 1; }
+            while (ctx.measureText(text).width > maxW && s > 14);
+        }
+        function fgName(ctx, text, y, size, o) {
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            fgFit(ctx, text, 500, size, o.family, o.weight, o.style);
+            if (o.shadow) { ctx.shadowColor = o.shadow; ctx.shadowBlur = 14; }
+            ctx.fillStyle = o.fill;
+            ctx.fillText(text, 300, y);
+            ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+        }
+        function fgLogo(ctx, cx, cy, color) {
+            if (fg.logoImg) {
+                const k = Math.min(300 / fg.logoImg.width, 46 / fg.logoImg.height);
+                const w = fg.logoImg.width * k, h = fg.logoImg.height * k;
+                // targhetta di contrasto: chiara dietro ai loghi scuri, scura dietro a quelli chiari
+                ctx.save();
+                rrPath(ctx, cx - w / 2 - 14, cy - h / 2 - 7, w + 28, h + 14, 14);
+                ctx.fillStyle = (fg.logoImg._luma || 128) < 128 ? 'rgba(255,255,255,0.9)' : 'rgba(22,33,62,0.88)';
+                ctx.fill();
+                ctx.restore();
+                ctx.drawImage(fg.logoImg, cx - w / 2, cy - h / 2, w, h);
+                return;
+            }
+            const r = 26, label = 'SCANDOLARA VOLLEY';
+            ctx.font = '700 22px Poppins, sans-serif';
+            const total = r * 2 + 14 + ctx.measureText(label).width, x0 = cx - total / 2;
+            drawBallCrest(ctx, x0 + r, cy, r);
+            ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(label, x0 + r * 2 + 14, cy + 1);
+            ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
+        }
+
+        // Riquadri dei dati: fino a 3 per riga, centrati
+        function fgStats(ctx, items, L, t) {
+            const cols = Math.min(3, items.length), rows = Math.ceil(items.length / cols);
+            const cw = 150, ch = 62, gx = 12, gy = 10;
+            const totalH = rows * ch + (rows - 1) * gy;
+            const y0 = L.statsTop + (L.statsBottom - L.statsTop - totalH) / 2;
+            items.forEach((it, i) => {
+                const r = Math.floor(i / cols), c = i % cols;
+                const inRow = r === rows - 1 ? items.length - r * cols : cols;
+                const x = 300 - (inRow * cw + (inRow - 1) * gx) / 2 + c * (cw + gx);
+                const y = y0 + r * (ch + gy);
+                ctx.save();
+                rrPath(ctx, x, y, cw, ch, 12);
+                ctx.fillStyle = t.bg; ctx.fill();
+                ctx.lineWidth = t.sw || 2; ctx.strokeStyle = t.stroke;
+                if (t.glow) { ctx.shadowColor = t.stroke; ctx.shadowBlur = 10; }
+                ctx.stroke();
+                ctx.restore();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+                fgFit(ctx, it.value, cw - 18, 26, t.family, t.weight);
+                ctx.fillStyle = t.value; ctx.fillText(it.value, x + cw / 2, y + 36);
+                ctx.font = `600 12px ${t.labelFamily || 'Poppins, sans-serif'}`;
+                ctx.fillStyle = t.label; ctx.fillText(it.label, x + cw / 2, y + 54);
+            });
+        }
+
+        const FG_DRAW = [
+            // 0 · Classico: blu notte con barre corallo
+            (ctx, d, L) => {
+                const g = ctx.createLinearGradient(0, 0, 600, 840);
+                g.addColorStop(0, '#0f3460'); g.addColorStop(1, '#16213e');
+                ctx.fillStyle = g; ctx.fillRect(0, 0, 600, 840);
+                ctx.fillStyle = '#e94560'; ctx.fillRect(0, 0, 600, 22); ctx.fillRect(0, 818, 600, 22);
+                const P = L.photo;
+                rrPath(ctx, P.x - 10, P.y - 10, P.w + 20, P.h + 20, 24); ctx.fillStyle = '#533483'; ctx.fill();
+                fgPhoto(ctx, d.img, 16, L);
+                fgName(ctx, d.nome, L.nomeY, L.nomeS, { family: 'Poppins, sans-serif', weight: '600', fill: '#dcdcdc' });
+                fgName(ctx, d.cognome, L.cognY, L.cognS, { family: 'Poppins, sans-serif', weight: '700', fill: '#ffffff' });
+                fgLogo(ctx, 300, L.logoY, '#dcdcdc');
+            },
+            // 1 · Oro: nero e oro con cornice doppia
+            (ctx, d, L) => {
+                const bg = ctx.createLinearGradient(0, 0, 0, 840);
+                bg.addColorStop(0, '#241a06'); bg.addColorStop(1, '#050403');
+                ctx.fillStyle = bg; ctx.fillRect(0, 0, 600, 840);
+                const gold = ctx.createLinearGradient(0, 0, 600, 840);
+                [[0, '#f9e27d'], [0.35, '#c9972b'], [0.65, '#7a5412'], [1, '#e8c766']].forEach(([o, c]) => gold.addColorStop(o, c));
+                ctx.strokeStyle = gold;
+                rrPath(ctx, 14, 14, 572, 812, 26); ctx.lineWidth = 8; ctx.stroke();
+                rrPath(ctx, 30, 30, 540, 780, 18); ctx.lineWidth = 2; ctx.stroke();
+                [[30, 30], [570, 30], [30, 810], [570, 810]].forEach(([x, y]) => {
+                    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4);
+                    ctx.fillStyle = gold; ctx.fillRect(-9, -9, 18, 18); ctx.restore();
+                });
+                const P = L.photo;
+                rrPath(ctx, P.x - 9, P.y - 9, P.w + 18, P.h + 18, 12); ctx.fillStyle = gold; ctx.fill();
+                fgPhoto(ctx, d.img, 6, L);
+                ctx.fillStyle = gold; ctx.fillRect(160, L.nomeY - 34, 280, 2);
+                fgName(ctx, d.nome, L.nomeY + 4, L.nomeS + 2, { family: 'Georgia, serif', weight: '400', style: 'italic', fill: '#f3e2a4' });
+                fgName(ctx, d.cognome, L.cognY + 4, L.cognS, { family: 'Georgia, serif', weight: '700', fill: gold });
+                fgLogo(ctx, 300, L.logoY - 2, '#c9972b');
+            },
+            // 2 · Neon: notte, griglia e luci al neon
+            (ctx, d, L) => {
+                const bg = ctx.createLinearGradient(0, 0, 0, 840);
+                bg.addColorStop(0, '#0a0a1f'); bg.addColorStop(1, '#1d0a3a');
+                ctx.fillStyle = bg; ctx.fillRect(0, 0, 600, 840);
+                ctx.strokeStyle = 'rgba(0,229,255,0.07)'; ctx.lineWidth = 1;
+                for (let x = 0; x <= 600; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 840); ctx.stroke(); }
+                for (let y = 0; y <= 840; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(600, y); ctx.stroke(); }
+                const glow = ctx.createRadialGradient(300, 840, 0, 300, 840, 420);
+                glow.addColorStop(0, 'rgba(255,43,214,0.45)'); glow.addColorStop(1, 'rgba(255,43,214,0)');
+                ctx.fillStyle = glow; ctx.fillRect(0, 0, 600, 840);
+                ctx.save();
+                ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 22; ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 4;
+                rrPath(ctx, 16, 16, 568, 808, 24); ctx.stroke();
+                ctx.shadowColor = '#ff2bd6'; ctx.strokeStyle = '#ff2bd6'; ctx.lineWidth = 2;
+                rrPath(ctx, 28, 28, 544, 784, 18); ctx.stroke();
+                ctx.restore();
+                const P = L.photo;
+                ctx.save();
+                ctx.shadowColor = '#ff2bd6'; ctx.shadowBlur = 26; ctx.strokeStyle = '#ff2bd6'; ctx.lineWidth = 5;
+                rrPath(ctx, P.x - 4, P.y - 4, P.w + 8, P.h + 8, 16); ctx.stroke();
+                ctx.restore();
+                fgPhoto(ctx, d.img, 12, L);
+                const f = '"Courier New", monospace';
+                fgName(ctx, d.nome, L.nomeY, L.nomeS, { family: f, weight: '700', style: 'italic', fill: '#00e5ff', shadow: '#00e5ff' });
+                fgName(ctx, d.cognome, L.cognY, L.cognS, { family: f, weight: '700', style: 'italic', fill: '#ffffff', shadow: '#ff2bd6' });
+                fgLogo(ctx, 300, L.logoY, '#00e5ff');
+            },
+            // 3 · Retrò: carta crema, raggi e strisce anni '80
+            (ctx, d, L) => {
+                const P = L.photo, cy = P.y + P.h / 2;
+                ctx.fillStyle = '#f2e4c4'; ctx.fillRect(0, 0, 600, 840);
+                ctx.fillStyle = '#e9d5a1';
+                for (let i = 0; i < 24; i++) {
+                    const a = i * Math.PI / 12;
+                    ctx.beginPath(); ctx.moveTo(300, cy);
+                    ctx.arc(300, cy, 900, a, a + Math.PI / 24); ctx.closePath(); ctx.fill();
+                }
+                ['#e0482f', '#f29b30', '#2a7ba0'].forEach((c, i) => {
+                    ctx.fillStyle = c;
+                    ctx.fillRect(0, 18 + i * 12, 600, 8);
+                    ctx.fillRect(0, 804 + i * 12, 600, 8);
+                });
+                ctx.save();
+                ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
+                rrPath(ctx, P.x - 14, P.y - 14, P.w + 28, P.h + 28, 6); ctx.fillStyle = '#ffffff'; ctx.fill();
+                ctx.restore();
+                fgPhoto(ctx, d.img, 2, L);
+                const f = '"Arial Black", Impact, sans-serif';
+                fgName(ctx, d.nome, L.nomeY, L.nomeS - 4, { family: f, weight: '400', fill: '#2a2a2a' });
+                ctx.textAlign = 'center'; fgFit(ctx, d.cognome, 500, L.cognS, f, '400');
+                ctx.fillStyle = '#2a7ba0'; ctx.fillText(d.cognome, 304, L.cognY + 2);
+                ctx.fillStyle = '#e0482f'; ctx.fillText(d.cognome, 300, L.cognY - 2);
+                fgLogo(ctx, 300, L.logoY - 8, '#2a2a2a');
+            },
+            // 4 · Olografica: riflessi iridescenti e targhetta vetro
+            (ctx, d, L) => {
+                const g = ctx.createLinearGradient(0, 0, 600, 840);
+                [[0, '#7ee8fa'], [0.25, '#c9a7ff'], [0.5, '#ff9ad5'], [0.75, '#ffe29a'], [1, '#9affc9']].forEach(([o, c]) => g.addColorStop(o, c));
+                ctx.fillStyle = g; ctx.fillRect(0, 0, 600, 840);
+                ctx.save(); ctx.translate(300, 420); ctx.rotate(-Math.PI / 6);
+                for (let i = -4; i <= 4; i++) {
+                    const sh = ctx.createLinearGradient(i * 110 - 40, 0, i * 110 + 40, 0);
+                    sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(0.5, 'rgba(255,255,255,0.28)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.fillStyle = sh; ctx.fillRect(i * 110 - 40, -900, 80, 1800);
+                }
+                ctx.restore();
+                rrPath(ctx, 12, 12, 576, 816, 28); ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.stroke();
+                const P = L.photo;
+                ctx.save();
+                ctx.shadowColor = 'rgba(43,34,80,0.35)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+                rrPath(ctx, P.x - 9, P.y - 9, P.w + 18, P.h + 18, 26); ctx.fillStyle = '#ffffff'; ctx.fill();
+                ctx.restore();
+                fgPhoto(ctx, d.img, 18, L);
+                rrPath(ctx, 60, L.nomeY - 38, 480, L.cognY - L.nomeY + 54, 22); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
+                fgName(ctx, d.nome, L.nomeY, L.nomeS - 2, { family: 'Poppins, sans-serif', weight: '600', fill: '#2b2250' });
+                fgName(ctx, d.cognome, L.cognY, L.cognS - 4, { family: 'Poppins, sans-serif', weight: '700', fill: '#2b2250' });
+                fgLogo(ctx, 300, L.logoY, '#2b2250');
+            }
+        ];
+
+        function fgDrawCard(ctx, styleIdx, d, scale) {
+            const L = d.stats && d.stats.length ? FG_LAYOUTS.stats : FG_LAYOUTS.plain;
+            ctx.save();
+            ctx.setTransform(scale || 1, 0, 0, scale || 1, 0, 0);
+            ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
+            FG_DRAW[styleIdx](ctx, d, L);
+            if (L.statsTop) fgStats(ctx, d.stats, L, FG_THEME[styleIdx]);
+            ctx.restore();
+        }
+
+        // Versione rotonda (foto profilo): stessi colori dello stile scelto
+        const FG_ROUND = [
+            { bg: ['#0f3460', '#16213e'], ring: '#e94560', ring2: '#533483' },
+            { bg: ['#241a06', '#050403'], ring: '#d4a537', ring2: '#f3e2a4' },
+            { bg: ['#0a0a1f', '#1d0a3a'], ring: '#00e5ff', ring2: '#ff2bd6' },
+            { bg: ['#f2e4c4', '#e9d5a1'], ring: '#e0482f', ring2: '#2a7ba0' },
+            { bg: ['#7ee8fa', '#ff9ad5'], ring: '#ffffff', ring2: '#c9a7ff' }
+        ];
+        function fgDrawRound(ctx, size, styleIdx, img) {
+            const s = size, c = s / 2, cfg = FG_ROUND[styleIdx], R = s * 0.45;
+            const g = ctx.createLinearGradient(0, 0, s, s);
+            g.addColorStop(0, cfg.bg[0]); g.addColorStop(1, cfg.bg[1]);
+            ctx.fillStyle = g; ctx.fillRect(0, 0, s, s);
+            ctx.save();
+            ctx.beginPath(); ctx.arc(c, c, R, 0, Math.PI * 2); ctx.clip();
+            if (img) {
+                const side = Math.min(img.width, img.height);
+                const sy = Math.max(0, (img.height - side) * 0.1);
+                ctx.drawImage(img, (img.width - side) / 2, sy, side, side, c - R, c - R, R * 2, R * 2);
+            } else fgSilhouette(ctx, c - R, c - R, R * 2, R * 2);
+            ctx.restore();
+            ctx.beginPath(); ctx.arc(c, c, R, 0, Math.PI * 2);
+            ctx.lineWidth = s * 0.04; ctx.strokeStyle = cfg.ring; ctx.stroke();
+            ctx.beginPath(); ctx.arc(c, c, R + s * 0.035, 0, Math.PI * 2);
+            ctx.lineWidth = s * 0.012; ctx.strokeStyle = cfg.ring2; ctx.stroke();
+        }
+
+        // ---------- dati ----------
+        async function fgLoadConfig() {
+            if (fg.configLoaded) return;
+            fg.configLoaded = true;
+            try {
+                const snap = await getDoc(fgCfgRef());
+                if (snap.exists()) {
+                    const c = snap.data();
+                    fg.config.collections = Array.isArray(c.collections) ? c.collections : [];
+                    let logos = Array.isArray(c.logos) ? c.logos : [];
+                    // logo unico salvato dalla versione precedente
+                    if (!logos.length && c.logo) logos = [{ id: 'l_unico', name: 'Logo', data: c.logo }];
+                    fg.config.logos = logos;
+                    fg.config.defaultLogo = c.defaultLogo || (logos.length === 1 && !Array.isArray(c.logos) ? logos[0].id : '');
+                    await Promise.all(logos.map(fgLoadLogoImg));
+                }
+                let saved = '';
+                try { saved = localStorage.getItem('fgLogoId'); } catch (e) { /* nessuna preferenza */ }
+                fg.logoId = fgLogoExists(saved) ? saved : (fgLogoExists(fg.config.defaultLogo) ? fg.config.defaultLogo : '');
+                fgApplyLogo();
+            } catch (e) { console.warn('Configurazione figurine non letta:', e); fg.configLoaded = false; }
+        }
+        // Luminosità media della parte visibile del logo (0 scuro, 255 chiaro)
+        function fgLogoLuma(img) {
+            const c = document.createElement('canvas'); c.width = 60; c.height = 30;
+            const x = c.getContext('2d'); x.drawImage(img, 0, 0, 60, 30);
+            const d = x.getImageData(0, 0, 60, 30).data;
+            let sum = 0, n = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] < 40) continue;
+                sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++;
+            }
+            return n ? sum / n : 128;
+        }
+        async function fgLoadLogoImg(l) {
+            const img = await loadImage(l.data);
+            if (img) { try { img._luma = fgLogoLuma(img); } catch (e) { img._luma = 128; } }
+            fg.logoImgs[l.id] = img;
+        }
+        const fgLogoExists = id => !!id && fg.config.logos.some(l => l.id === id);
+        function fgApplyLogo() { fg.logoImg = fg.logoId ? (fg.logoImgs[fg.logoId] || null) : null; }
+
+        async function fgLoadVariants() {
+            const id = fg.id, coll = fg.coll, key = id + '|' + coll;
+            let urls = fg.cache[key];
+            if (!urls) {
+                try {
+                    const snap = await getDoc(fgRef(id, coll));
+                    const saved = snap.exists() ? (snap.data().variants || []) : [];
+                    urls = [0, 1, 2].map(i => saved[i] || '');
+                    fg.cache[key] = urls;
+                } catch (e) {
+                    console.error(e);
+                    showToast('Non riesco a leggere le divise salvate (controlla le regole di Firestore).');
+                    urls = ['', '', ''];
+                }
+            }
+            if (fg.id !== id || fg.coll !== coll) return;
+            fg.urls = urls;
+            fg.imgs = await Promise.all(urls.map(loadImage));
+            if (fg.id !== id || fg.coll !== coll) return;
+            const first = fg.imgs.findIndex(i => i);
+            fg.variant = first >= 0 ? first : 0;
+            fgRenderAll();
+        }
+
+        async function fgSelectPlayer(id) {
+            fg.id = id;
+            const p = fgPlayer();
+            fg.photoImg = p ? await loadImage(p.photo) : null;
+            await fgLoadVariants();
+        }
+
+        function renderFigurine() {
+            const has = players.length > 0;
+            document.getElementById('fg-empty').classList.toggle('hidden', has);
+            document.getElementById('fg-main').classList.toggle('hidden', !has);
+            if (!has) return;
+            const sorted = [...players].sort((a, b) =>
+                ((a.surname || '') + (a.name || '')).localeCompare((b.surname || '') + (b.name || ''), 'it'));
+            const sel = document.getElementById('fg-player');
+            sel.innerHTML = sorted.map(p => `<option value="${esc(p.id)}">${esc(p.name || '')} ${esc(p.surname || '')}</option>`).join('');
+            if (!fg.id || !players.some(p => p.id === fg.id)) fg.id = sorted[0].id;
+            sel.value = fg.id;
+            fgRenderCCForm();
+            fgLoadConfig().then(() => {
+                if (!fgCollections().some(c => c.id === fg.coll)) fg.coll = 'classica';
+                if (currentPage === 'figurine') fgRenderAll();
+            });
+            fgSelectPlayer(fg.id);
+        }
+        document.getElementById('fg-player').addEventListener('change', e => fgSelectPlayer(e.target.value));
+
+        // ---------- interfaccia ----------
+        const fgSwatches = u => u.swatch.map(c =>
+            `<span style="background:${esc(c)};width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.45);display:inline-block"></span>`).join('');
+
+        function fgRenderColls() {
+            const sug = fgSeasonal();
+            document.getElementById('fg-colls').innerHTML = fgCollections().map(c => `
+                <button type="button" class="figurine-model-btn ${c.id === fg.coll ? 'active' : ''} border-2 border-secondary rounded-lg py-1 px-3 text-sm text-white" onclick="app_fgColl('${esc(c.id)}')">
+                    ${esc(c.emoji || '🎽')} ${esc(c.name)}${sug && sug.id === c.id ? ' <span class="text-xs text-yellow-300">· di stagione</span>' : ''}
+                </button>`).join('');
+            const coll = fgColl();
+            document.getElementById('fg-s1-title').textContent = `1 · Le tre divise · ${coll.emoji || ''} ${coll.name}`;
+            // elenco collezioni create dall'amministratore (con cestino)
+            const custom = fg.config.collections || [];
+            document.getElementById('fg-cc-list').innerHTML = custom.length ? custom.map(c => `
+                <div class="flex items-center justify-between rounded-lg border border-secondary px-3 py-2">
+                    <span class="text-white text-sm">${esc(c.emoji || '🎽')} ${esc(c.name)} <span class="text-gray-400">· ${c.uniforms.map(u => esc(u.name)).join(', ')}</span></span>
+                    <button type="button" class="text-red-400 hover:text-red-300 text-sm" onclick="app_fgDelColl('${esc(c.id)}')">🗑️ Elimina</button>
+                </div>`).join('') : '<p class="text-xs text-gray-500">Nessuna collezione creata: sono disponibili solo quelle già pronte.</p>';
+        }
+
+        function fgRenderUniforms() {
+            document.getElementById('fg-uniforms').innerHTML = fgUniforms().map((u, i) => `
+                <div class="rounded-lg p-3 border border-secondary bg-primary bg-opacity-40 text-center">
+                    <div class="flex justify-center gap-1 mb-2">${fgSwatches(u)}</div>
+                    <p class="font-semibold text-white mb-2">${esc(u.name)}</p>
+                    <div class="mx-auto mb-3 rounded-lg overflow-hidden bg-black bg-opacity-30 flex items-center justify-center" style="width:120px;aspect-ratio:4/5">
+                        ${fg.urls[i] ? `<img src="${fg.urls[i]}" alt="" class="w-full h-full object-cover">` : '<span class="text-xs text-gray-500 px-2">Non ancora caricata</span>'}
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button type="button" class="btn-primary text-white text-xs font-bold py-1 px-3 rounded" onclick="app_fgCopy(${i})">📋 Copia testo</button>
+                        ${isAdmin ? `<label class="btn-accent text-white text-xs font-bold py-1 px-3 rounded cursor-pointer">📤 Carica<input type="file" accept="image/*" class="hidden" onchange="app_fgUpload(${i}, this)"></label>` : ''}
+                    </div>
+                </div>`).join('');
+        }
+
+        async function fgRenderPreview() {
+            const p = fgPlayer(); if (!p) return;
+            if (!fg.fontsReady) {
+                try { await Promise.all(['600', '700'].map(w => document.fonts.load(`${w} 30px Poppins`))); } catch (e) { /* si procede comunque */ }
+                fg.fontsReady = true;
+            }
+            const img = fg.imgs[fg.variant] || fg.photoImg;
+            const d = { img, nome: (p.name || '').trim(), cognome: (p.surname || '').trim().toUpperCase(), stats: fgStatItems(p) };
+
+            document.getElementById('fg-variants').innerHTML = fgUniforms().map((u, i) => `
+                <button type="button" class="figurine-model-btn ${i === fg.variant ? 'active' : ''} border-2 border-secondary rounded-lg p-2 text-center ${fg.imgs[i] ? '' : 'opacity-50'}" onclick="app_fgVariant(${i})">
+                    <div class="flex justify-center gap-1 mb-1">${fgSwatches(u)}</div>
+                    <span class="text-xs text-white">${esc(u.name)}</span>
+                </button>`).join('');
+
+            document.getElementById('fg-styles').innerHTML = FG_STYLES.map((n, i) => `
+                <button type="button" class="figurine-model-btn ${i === fg.style ? 'active' : ''} border-2 border-secondary rounded-lg p-1" onclick="app_fgStyle(${i})" title="${n}">
+                    <canvas data-fg-style="${i}" width="90" height="126" class="w-full h-auto rounded"></canvas>
+                </button>`).join('');
+            document.querySelectorAll('#fg-styles canvas').forEach(cv => {
+                fgDrawCard(cv.getContext('2d'), +cv.dataset.fgStyle, d, 0.15);
+            });
+            document.getElementById('fg-style-name').textContent = 'Stile: ' + FG_STYLES[fg.style];
+
+            document.getElementById('fg-fields').innerHTML = FG_FIELDS.map(f => `
+                <label class="fg-pill ${fg.fields.has(f.id) ? 'on' : ''}">
+                    <input type="checkbox" class="hidden" ${fg.fields.has(f.id) ? 'checked' : ''} onchange="app_fgField('${f.id}', this.checked)">${f.label}
+                </label>`).join('');
+            document.getElementById('fg-fields-count').textContent = `${fg.fields.size}/${FG_MAX_FIELDS}`;
+
+            const main = document.getElementById('fg-canvas');
+            const mctx = main.getContext('2d');
+            mctx.clearRect(0, 0, 600, 840);
+            fgDrawCard(mctx, fg.style, d, 1);
+
+            fgDrawRound(document.getElementById('fg-round').getContext('2d'), 240, fg.style, img);
+
+            const note = document.getElementById('fg-note');
+            note.classList.toggle('hidden', !!fg.imgs[fg.variant]);
+            note.textContent = fg.imgs.some(i => i)
+                ? 'Questa divisa non è ancora stata caricata: anteprima con la foto attuale.'
+                : 'Anteprima con la foto attuale: carica le tre divise per avere la divisa ufficiale.';
+        }
+
+        function fgRenderAll() {
+            if (!fgPlayer()) return;
+            fgRenderColls();
+            fgRenderLogos();
+            fgRenderUniforms();
+            fgRenderPreview();
+        }
+
+        // ---------- creazione collezioni a tema (amministratore) ----------
+        function fgRenderCCForm() {
+            const box = document.getElementById('fg-cc-form');
+            if (!box || box.dataset.ready) return;
+            box.dataset.ready = '1';
+            const defaults = [['#16213e', '#e94560', '#533483'], ['#ffffff', '#16213e', '#e94560'], ['#e94560', '#ffffff', '#16213e']];
+            box.innerHTML = `
+                <p class="text-sm text-white font-semibold mb-2">Nuova collezione</p>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+                    <input type="text" id="fg-cc-name" placeholder="Nome (es. Torneo di maggio)" class="form-input p-2 rounded md:col-span-3">
+                    <input type="text" id="fg-cc-emoji" placeholder="Emoji (es. 🏆)" maxlength="4" class="form-input p-2 rounded">
+                </div>
+                ${[0, 1, 2].map(i => `
+                <div class="rounded-lg border border-secondary p-3 mb-3">
+                    <p class="text-xs text-gray-400 mb-2">Divisa ${i + 1}</p>
+                    <input type="text" id="fg-cc-u${i}-name" placeholder="Nome divisa (es. Verde Prato)" class="form-input p-2 rounded w-full mb-2">
+                    <textarea id="fg-cc-u${i}-desc" rows="2" placeholder="Descrizione per l'AI (es. maglia da pallavolo a maniche corte verde (#2e7d32), colletto a V e bordi delle maniche bianchi, sottile banda gialla sulle spalle)" class="form-input p-2 rounded w-full mb-2 text-sm"></textarea>
+                    <div class="flex items-center gap-2 text-xs text-gray-400">Colori per il riconoscimento:
+                        ${[0, 1, 2].map(k => `<input type="color" id="fg-cc-u${i}-c${k}" value="${defaults[i][k]}" style="width:34px;height:26px;padding:0;border:0;background:none">`).join('')}
+                    </div>
+                </div>`).join('')}
+                <button type="button" class="btn-accent text-white font-bold py-2 px-4 rounded" onclick="app_fgAddColl()">➕ Crea collezione</button>`;
+        }
+
+        window.app_fgAddColl = async () => {
+            if (!isAdmin) return;
+            const v = id => (document.getElementById(id).value || '').trim();
+            const name = v('fg-cc-name');
+            if (!name) { showToast('Dai un nome alla collezione.'); return; }
+            const uniforms = [0, 1, 2].map(i => ({
+                name: v(`fg-cc-u${i}-name`), text: v(`fg-cc-u${i}-desc`),
+                swatch: [0, 1, 2].map(k => document.getElementById(`fg-cc-u${i}-c${k}`).value)
+            }));
+            if (uniforms.some(u => !u.name || !u.text)) { showToast('Compila nome e descrizione di tutte e tre le divise.'); return; }
+            const coll = { id: 'c_' + Date.now().toString(36), name, emoji: v('fg-cc-emoji') || '🎽', uniforms };
+            try {
+                const list = [...(fg.config.collections || []), coll];
+                await setDoc(fgCfgRef(), { collections: list }, { merge: true });
+                fg.config.collections = list;
+                fg.coll = coll.id;
+                const box = document.getElementById('fg-cc-form'); delete box.dataset.ready; box.innerHTML = ''; fgRenderCCForm();
+                showToast('Collezione creata!');
+                fgLoadVariants();
+            } catch (e) { console.error(e); showToast('Non sono riuscito a salvare la collezione (controlla le regole di Firestore).'); }
+        };
+        window.app_fgDelColl = id => {
+            if (!isAdmin) return;
+            const c = (fg.config.collections || []).find(x => x.id === id);
+            if (!c) return;
+            showConfirmModal('Eliminare la collezione?', `"${c.name}" sparirà dall'elenco. Le immagini già caricate restano salvate ma non saranno più visibili.`, async () => {
+                try {
+                    const list = fg.config.collections.filter(x => x.id !== id);
+                    await setDoc(fgCfgRef(), { collections: list }, { merge: true });
+                    fg.config.collections = list;
+                    if (fg.coll === id) { fg.coll = 'classica'; fgLoadVariants(); } else fgRenderAll();
+                } catch (e) { console.error(e); showToast('Operazione non riuscita.'); }
+            });
+        };
+
+        // ---------- azioni ----------
+        window.app_fgColl = id => { fg.coll = id; fgLoadVariants(); fgRenderColls(); };
+        window.app_fgVariant = i => { fg.variant = i; fgRenderPreview(); };
+        window.app_fgStyle = i => { fg.style = i; fgRenderPreview(); };
+        window.app_fgField = (id, on) => {
+            if (on && fg.fields.size >= FG_MAX_FIELDS) { showToast(`Al massimo ${FG_MAX_FIELDS} dati sulla figurina.`); fgRenderPreview(); return; }
+            if (on) fg.fields.add(id); else fg.fields.delete(id);
+            fgSaveFields();
+            fgRenderPreview();
+        };
+
+        async function fgCopyText(text) {
+            try { await navigator.clipboard.writeText(text); }
+            catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+            }
+        }
+        window.app_fgCopy = async i => {
+            await fgCopyText(fgPrompt(fgUniforms()[i]));
+            showToast('Testo copiato! Incollalo in Gemini insieme alla foto.');
+        };
+
+        function fgFileToImage(file) {
+            return new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = r.result; };
+                r.onerror = rej; r.readAsDataURL(file);
+            });
+        }
+        function fgNormalizePortrait(img) {
+            const c = document.createElement('canvas'); c.width = 600; c.height = 750;
+            const x = c.getContext('2d');
+            const k = Math.max(600 / img.width, 750 / img.height);
+            const w = img.width * k, h = img.height * k;
+            x.drawImage(img, (600 - w) / 2, (750 - h) * 0.2, w, h);
+            let data = c.toDataURL('image/jpeg', 0.85);
+            if (data.length > 330000) data = c.toDataURL('image/jpeg', 0.7);
+            return data;
+        }
+
+        window.app_fgUpload = async (idx, input) => {
+            const file = input.files && input.files[0];
+            input.value = '';
+            if (!file) return;
+            if (!isAdmin) { showToast('Solo l\'amministratore può caricare le divise.'); return; }
+            const id = fg.id, coll = fg.coll, key = id + '|' + coll;
+            try {
+                const data = fgNormalizePortrait(await fgFileToImage(file));
+                const urls = [...(fg.cache[key] || ['', '', ''])];
+                urls[idx] = data;
+                await setDoc(fgRef(id, coll), { variants: urls, updated: Date.now() });
+                fg.cache[key] = urls;
+                if (fg.id === id && fg.coll === coll) {
+                    fg.urls = urls;
+                    fg.imgs = await Promise.all(urls.map(loadImage));
+                    fg.variant = idx;
+                    fgRenderAll();
+                }
+                showToast('Divisa salvata!');
+            } catch (e) {
+                console.error(e);
+                showToast('Non sono riuscito a salvare l\'immagine (controlla le regole di Firestore).');
+            }
+        };
+
+        // ---------- loghi (libreria di PNG tra cui scegliere) ----------
+        const FG_MAX_LOGOS = 6;
+        async function fgSaveLogos(logos, defaultLogo) {
+            await setDoc(fgCfgRef(), { logos, defaultLogo, logo: '' }, { merge: true });
+            fg.config.logos = logos; fg.config.defaultLogo = defaultLogo;
+        }
+        // Riduce il PNG (trasparenza compresa) per tenerlo leggero
+        function fgLogoToPng(img) {
+            let max = [360, 180], data = '';
+            for (let t = 0; t < 3; t++) {
+                const k = Math.min(1, max[0] / img.width, max[1] / img.height);
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                data = c.toDataURL('image/png');
+                if (data.length <= 160000) break;
+                max = [max[0] * 0.7, max[1] * 0.7];
+            }
+            return data;
+        }
+
+        window.app_fgLogoUpload = async input => {
+            const files = [...(input.files || [])];
+            input.value = '';
+            if (!files.length || !isAdmin) return;
+            try {
+                const logos = [...fg.config.logos];
+                for (const file of files) {
+                    if (logos.length >= FG_MAX_LOGOS) { showToast(`Massimo ${FG_MAX_LOGOS} loghi: elimina qualcuno per aggiungerne altri.`); break; }
+                    const data = fgLogoToPng(await fgFileToImage(file));
+                    const name = (file.name || 'Logo').replace(/\.[^.]+$/, '').slice(0, 24) || 'Logo';
+                    logos.push({ id: 'l_' + Date.now().toString(36) + logos.length, name, data });
+                }
+                if (JSON.stringify(logos).length > 800000) { showToast('I loghi sono troppo pesanti: usa file più semplici o meno numerosi.'); return; }
+                if (logos.length === fg.config.logos.length) return;
+                await fgSaveLogos(logos, fg.config.defaultLogo);
+                await Promise.all(logos.filter(l => !fg.logoImgs[l.id]).map(fgLoadLogoImg));
+                const nuovo = logos[logos.length - 1];
+                fg.logoId = nuovo.id; fgApplyLogo(); fgSaveLogoChoice();
+                fgRenderAll();
+                showToast(files.length > 1 ? 'Loghi salvati!' : 'Logo salvato!');
+            } catch (e) { console.error(e); showToast('Non sono riuscito a salvare il logo (controlla le regole di Firestore).'); }
+        };
+        function fgSaveLogoChoice() { try { localStorage.setItem('fgLogoId', fg.logoId); } catch (e) { /* preferenza non salvata */ } }
+        window.app_fgLogoPick = id => {
+            fg.logoId = fgLogoExists(id) ? id : '';
+            fgApplyLogo(); fgSaveLogoChoice(); fgRenderLogos(); fgRenderPreview();
+        };
+        window.app_fgLogoDefault = async id => {
+            if (!isAdmin) return;
+            try {
+                await fgSaveLogos(fg.config.logos, id);
+                fgRenderLogos();
+                showToast(id ? 'Logo impostato per tutti.' : 'Per tutti torna il logo predefinito.');
+            } catch (e) { console.error(e); showToast('Operazione non riuscita.'); }
+        };
+        window.app_fgLogoDel = id => {
+            if (!isAdmin) return;
+            const l = fg.config.logos.find(x => x.id === id);
+            if (!l) return;
+            showConfirmModal('Eliminare il logo?', `"${l.name}" non sarà più disponibile per le figurine.`, async () => {
+                try {
+                    await fgSaveLogos(fg.config.logos.filter(x => x.id !== id), fg.config.defaultLogo === id ? '' : fg.config.defaultLogo);
+                    delete fg.logoImgs[id];
+                    if (fg.logoId === id) { fg.logoId = fgLogoExists(fg.config.defaultLogo) ? fg.config.defaultLogo : ''; fgApplyLogo(); fgSaveLogoChoice(); }
+                    fgRenderAll();
+                } catch (e) { console.error(e); showToast('Operazione non riuscita.'); }
+            });
+        };
+
+        function fgRenderLogos() {
+            const logos = fg.config.logos;
+            const thumb = l => `<img src="${l.data}" alt="${esc(l.name)}" style="height:34px;max-width:90px;object-fit:contain">`;
+            // scelta (per tutti)
+            document.getElementById('fg-logos').innerHTML =
+                `<button type="button" class="figurine-model-btn ${!fg.logoId ? 'active' : ''} border-2 border-secondary rounded-lg py-1 px-2 text-xs text-white" onclick="app_fgLogoPick('')">🏐 Predefinito</button>` +
+                logos.map(l => `
+                <button type="button" class="figurine-model-btn ${l.id === fg.logoId ? 'active' : ''} border-2 border-secondary rounded-lg p-1 flex items-center justify-center" style="background:#dcdcdc55" title="${esc(l.name)}" onclick="app_fgLogoPick('${esc(l.id)}')">${thumb(l)}</button>`).join('');
+            // gestione (amministratore)
+            document.getElementById('fg-logo-admin').innerHTML = (logos.length ? logos.map(l => `
+                <div class="flex items-center justify-between gap-3 rounded-lg border border-secondary px-3 py-2">
+                    <span class="flex items-center gap-3 min-w-0"><span class="rounded p-1 flex-shrink-0" style="background:#dcdcdc55">${thumb(l)}</span><span class="text-sm text-white truncate">${esc(l.name)}${fg.config.defaultLogo === l.id ? ' <span class="text-xs text-yellow-300">· per tutti</span>' : ''}</span></span>
+                    <span class="flex items-center gap-3 flex-shrink-0 text-sm">
+                        ${fg.config.defaultLogo === l.id ? '' : `<button type="button" class="text-yellow-300 hover:text-yellow-200" onclick="app_fgLogoDefault('${esc(l.id)}')">⭐ Per tutti</button>`}
+                        <button type="button" class="text-red-400 hover:text-red-300" onclick="app_fgLogoDel('${esc(l.id)}')">🗑️</button>
+                    </span>
+                </div>`).join('') : '<p class="text-xs text-gray-500">Nessun logo caricato: viene usato il pallone predefinito.</p>') +
+                (logos.length && fg.config.defaultLogo ? `<button type="button" class="text-xs text-gray-400 underline mt-1" onclick="app_fgLogoDefault('')">Torna al pallone predefinito per tutti</button>` : '');
+        }
+
+        window.app_fgDownload = () => {
+            const p = fgPlayer(); if (!p) return;
+            const a = document.createElement('a');
+            a.href = document.getElementById('fg-canvas').toDataURL('image/png');
+            a.download = 'figurina-' + fgSlug(p) + '.png';
+            document.body.appendChild(a); a.click(); a.remove();
+        };
+        window.app_fgShare = evt => {
+            const p = fgPlayer(); if (!p) return;
+            const btn = evt && evt.currentTarget;
+            const url = document.getElementById('fg-canvas').toDataURL('image/png');
+            return withButtonBusy(btn, 'Preparo…', () =>
+                shareDataUrl(url, 'figurina-' + fgSlug(p) + '.png',
+                    `🏐 La figurina di *${(p.name || '') + ' ' + (p.surname || '')}* — Scando Volley\n${location.origin + location.pathname}`));
+        };
+        // Stampa a misura carta collezionabile (63 x 88 mm), centrata su A4
+        window.app_fgPrint = () => {
+            const url = document.getElementById('fg-canvas').toDataURL('image/png');
+            const f = document.createElement('iframe');
+            f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+            document.body.appendChild(f);
+            const d = f.contentWindow.document;
+            d.open();
+            d.write(`<!DOCTYPE html><html><head><style>@page{size:A4;margin:0}html,body{margin:0}body{display:flex;align-items:center;justify-content:center;height:100vh}img{width:63mm;height:88.2mm}</style></head><body><img src="${url}"></body></html>`);
+            d.close();
+            const im = d.querySelector('img');
+            const go = () => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 3000); };
+            if (im.complete) go(); else im.onload = go;
+        };
+
+        window.app_fgUseAsProfile = () => {
+            const p = fgPlayer(); if (!p) return;
+            if (!isAdmin) { showToast('Solo l\'amministratore può cambiare la foto profilo.'); return; }
+            const img = fg.imgs[fg.variant] || fg.photoImg;
+            if (!img) { showToast('Carica prima almeno una divisa.'); return; }
+            showConfirmModal('Usare come foto profilo?',
+                `La foto attuale di ${p.name || 'questo giocatore'} verrà sostituita dalla versione rotonda.`,
+                async () => {
+                    const c = document.createElement('canvas'); c.width = 300; c.height = 300;
+                    fgDrawRound(c.getContext('2d'), 300, fg.style, img);
+                    p.photo = c.toDataURL('image/jpeg', 0.85);
+                    cardCache.delete(p.id);
+                    fg.photoImg = await loadImage(p.photo);
+                    await saveData();
+                    renderAll();
+                });
+        };
 
         // =====================================================================
         // GENERATORE SQUADRE EQUILIBRATE
