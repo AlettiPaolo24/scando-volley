@@ -800,6 +800,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-check.js";
+
+        // App Check: ID PUBBLICO della chiave reCAPTCHA Enterprise (Google Cloud → Fraud Defense).
+        // Incollalo tra gli apici dopo averlo registrato in Firebase → App Check.
+        const APP_CHECK_SITE_KEY = '6Lfd2NwtAAAAAM-sP2mRUsuPF6AvTaJQyAPufLae';
 
         const firebaseConfig = {
             apiKey: "AIzaSyD7duEL7HRu-KAYU345AfUHkHGxCbMSPZw",
@@ -813,6 +818,13 @@
         let db, auth;
         try {
             const app = initializeApp(firebaseConfig);
+            if (APP_CHECK_SITE_KEY) {
+                try {
+                    // in locale serve un "debug token" (lo stampa la console del browser)
+                    if (['localhost', '127.0.0.1'].includes(location.hostname)) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+                    initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+                } catch (e) { console.warn('App Check non attivato:', e); }
+            }
             auth = getAuth(app);
             db = getFirestore(app);
             console.log("Firebase connesso con successo!");
