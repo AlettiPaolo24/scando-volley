@@ -328,7 +328,7 @@
                     <a href="#" class="nav-link" data-page="badge">Badge</a>
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
                     <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
-                    <a href="#" class="nav-link" data-page="figurine">Figurine</a>
+                    <a href="#" class="nav-link hidden" data-page="figurine">Figurine</a>
                 </div>
                 <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -343,7 +343,7 @@
                 <a href="#" class="block nav-link py-2" data-page="badge">Badge</a>
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
                 <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
-                <a href="#" class="block nav-link py-2" data-page="figurine">Figurine</a>
+                <a href="#" class="block nav-link py-2 hidden" data-page="figurine">Figurine</a>
             </div>
         </header>
 
@@ -2210,7 +2210,10 @@
             history.pushState({ page: 'classifica' }, '', '#classifica');
         }
         
+        // Sezione Figurine in stand-by: metti true per riattivarla (e togli "hidden" dai due link del menu)
+        const FIGURINE_ENABLED = false;
         function switchPage(pageId, pushState = true) {
+            if (pageId === 'figurine' && !FIGURINE_ENABLED) pageId = 'classifica';
             pages.forEach(page => page.classList.add('hidden'));
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
             document.querySelectorAll('.nav-link').forEach(link => {
