@@ -233,6 +233,39 @@
         ::-webkit-scrollbar-thumb:hover { background: #6d44a6; }
 
         /* --- Condivisione, serie di presenze e grafici --- */
+        /* --- Novità: account, sondaggio, jolly, stagione --- */
+        .user-chip { display:inline-flex; align-items:center; gap:.4rem; background:var(--primary); color:#fff; border-radius:9999px; padding:.25rem .7rem; font-size:.85rem; max-width:180px; overflow:hidden; white-space:nowrap; }
+        .nf-badge { background:#e94560; color:#fff; border-radius:9999px; font-size:.7rem; padding:0 .4rem; margin-left:.2rem; }
+        .poll-btn { border:2px solid var(--c); color:#fff; border-radius:9999px; font-weight:600; background:transparent; transition:all .15s; }
+        .poll-btn.active { background:var(--c); color:#111; }
+        .poll-btn:disabled { opacity:.45; cursor:not-allowed; }
+        .poll-bar { height:10px; background:#0f1a33; border-radius:9999px; overflow:hidden; }
+        .poll-bar i { display:block; height:100%; border-radius:9999px; transition:width .4s; }
+        .poll-name { display:inline-flex; align-items:center; gap:.3rem; background:var(--primary); border-radius:9999px; padding:.15rem .55rem .15rem .2rem; font-size:.8rem; color:#e5e7eb; }
+        .next-card { border-left:4px solid #22c55e; }
+        .jolly-chip { display:inline-flex; align-items:center; gap:.2rem; background:#6d28d9; color:#fff; border-radius:9999px; padding:0 .45rem; font-size:.75rem; font-weight:700; }
+        .jolly-card { display:inline-flex; align-items:center; justify-content:center; width:2.1rem; height:2.8rem; border-radius:.4rem; background:linear-gradient(160deg,#7c3aed,#db2777); font-size:1.2rem; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+        .jolly-card.used { background:#374151; opacity:.4; filter:grayscale(1); }
+        .jolly-play { background:linear-gradient(90deg,#7c3aed,#db2777); color:#fff; font-weight:700; padding:.6rem 1.2rem; border-radius:9999px; box-shadow:0 4px 14px rgba(219,39,119,.4); }
+        .jolly-play:active { transform:scale(.97); }
+        .pick-chip.active { border-color:var(--accent); }
+        .season-slide { border-radius:1rem; padding:1.5rem 1.2rem; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fff; box-shadow:0 6px 18px rgba(0,0,0,.35); }
+        .season-big { font-size:3.2rem; font-weight:800; line-height:1.05; }
+        .season-unit { font-size:1rem; text-transform:uppercase; letter-spacing:.08em; opacity:.85; margin-top:.2rem; }
+        .season-title { font-size:1.25rem; font-weight:700; margin-top:.8rem; }
+        .season-sub { font-size:.9rem; opacity:.85; margin-top:.4rem; }
+        #story-overlay { position:fixed; inset:0; z-index:10000; background:#000; display:flex; align-items:stretch; justify-content:center; }
+        #story-overlay.hidden { display:none; }
+        .story-slide { width:100%; max-width:480px; border-radius:0; min-height:100%; animation:storyIn .45s ease; }
+        .story-slide .season-big { font-size:5rem; }
+        .story-slide .season-title { font-size:1.7rem; }
+        .story-bars { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:min(460px,94%); display:flex; gap:4px; z-index:2; }
+        .story-bars i { flex:1; height:3px; background:rgba(255,255,255,.35); border-radius:2px; overflow:hidden; position:relative; }
+        .story-bars i.done { background:#fff; }
+        .story-bars i.run::after { content:''; position:absolute; inset:0; background:#fff; animation:storyBar 4s linear forwards; transform-origin:left; }
+        .story-close { position:absolute; top:22px; right:16px; z-index:3; color:#fff; font-size:1.6rem; background:none; }
+        @keyframes storyBar { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+        @keyframes storyIn { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:none; } }
         .share-btn {
             display: inline-flex; align-items: center; gap: .5rem;
             background: #25D366; color: #06331a;
@@ -286,9 +319,9 @@
 <body class="antialiased" style="padding-top:34px">
 
     <!-- ===== VERSIONE DI PROVA ===== -->
-    <div style="position:fixed;top:0;left:0;right:0;z-index:9999;height:34px;background:#d32f2f;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.4)">
-        <span>⚠️ VERSIONE DI PROVA – i dati non sono quelli veri</span>
-        <button id="test-copy-btn" type="button" onclick="app_copyRealData()" style="background:#fff;color:#d32f2f;border-radius:4px;padding:2px 8px;font-size:12px">📥 Copia dati veri</button>
+    <div style="position:fixed;top:0;left:0;right:0;z-index:9999;height:34px;background:#d32f2f;color:#fff;font-weight:700;font-size:12px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.4)">
+        <span>⚠️ VERSIONE DI PROVA</span>
+        <button id="test-copy-btn" type="button" onclick="app_copyRealData()" style="background:#fff;color:#d32f2f;border-radius:4px;padding:2px 8px;font-size:12px;white-space:nowrap">📥 Copia dati veri</button>
     </div>
 
     <!-- Schermata di Accesso -->
@@ -296,14 +329,32 @@
         <div class="card rounded-lg p-8 shadow-2xl text-center w-11/12 max-w-md">
             <h1 class="text-3xl font-bold mb-2 text-white">Scando Volley</h1>
             <p class="text-lg mb-6 text-gray-300">Benvenuto!</p>
-            <p class="mb-4">Seleziona il tuo tipo di accesso:</p>
-            <div id="login-options" class="space-y-4">
-                <button onclick="handleLogin('user')" class="w-full btn-primary text-white font-bold py-3 px-4 rounded-lg text-lg">
-                    Accedi come Utente
+            <div id="auth-signed-in" class="hidden space-y-3">
+                <p class="text-gray-200">Ciao <strong id="auth-hello-name" class="text-white"></strong>!</p>
+                <button onclick="handleLogin('user')" class="w-full btn-primary text-white font-bold py-3 px-4 rounded-lg text-lg">Entra</button>
+                <button onclick="app_signOut()" class="text-sm text-gray-400 underline">Non sei tu? Esci</button>
+            </div>
+            <div id="auth-signed-out" class="space-y-3">
+                <button onclick="app_signInGoogle()" class="w-full bg-white hover:bg-gray-100 text-gray-800 font-bold py-3 px-4 rounded-lg text-lg flex items-center justify-center gap-3">
+                    <svg width="22" height="22" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+                    Entra con Google
                 </button>
-                <button onclick="document.getElementById('password-section').classList.remove('hidden')" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg text-lg">
-                    Accedi come Admin
-                </button>
+                <button onclick="app_toggleEmailForm()" class="w-full btn-primary text-white font-bold py-3 px-4 rounded-lg text-lg">✉️ Entra con email</button>
+                <div id="email-auth" class="hidden space-y-2 text-left">
+                    <input id="auth-name" type="text" placeholder="Nome e cognome" autocomplete="name" class="hidden w-full form-input p-3 rounded-lg">
+                    <input id="auth-email" type="email" placeholder="Email" autocomplete="email" class="w-full form-input p-3 rounded-lg">
+                    <input id="auth-pass" type="password" placeholder="Password (almeno 6 caratteri)" autocomplete="current-password" class="w-full form-input p-3 rounded-lg">
+                    <button id="auth-email-submit" onclick="app_emailAuth()" class="w-full btn-accent text-white font-bold py-3 px-4 rounded-lg">Entra</button>
+                    <div class="flex justify-between text-xs">
+                        <button id="auth-switch" class="underline text-gray-300" onclick="app_toggleSignup()">Non hai un account? Registrati</button>
+                        <button class="underline text-gray-400" onclick="app_resetPassword()">Password dimenticata?</button>
+                    </div>
+                </div>
+                <button onclick="handleLogin('guest')" class="text-sm text-gray-400 underline">Guarda senza account</button>
+            </div>
+            <p id="auth-error" class="text-red-400 text-sm mt-3 hidden"></p>
+            <div class="border-t border-gray-700 mt-5 pt-4">
+                <button onclick="document.getElementById('password-section').classList.toggle('hidden')" class="text-sm text-gray-400 hover:text-white">🛡️ Accedi come Admin</button>
             </div>
             <div id="password-section" class="hidden mt-4">
                 <input type="password" id="password-input" placeholder="Password Amministratore" class="w-full form-input p-3 rounded-lg text-center">
@@ -327,6 +378,8 @@
                 </div>
                 <div class="hidden lg:flex items-center space-x-5 text-gray-300">
                     <a href="#" class="nav-link active" data-page="classifica">Classifica</a>
+                    <a href="#" class="nav-link" data-page="presenze">Ci sei?</a>
+                    <a href="#" class="nav-link" data-page="stagione">La mia stagione</a>
                     <a href="#" class="nav-link" data-page="giocatori">Giocatori</a>
                     <a href="#" class="nav-link" data-page="allenamenti">Allenamenti</a>
                     <a href="#" class="nav-link" data-page="squadre">Squadre</a>
@@ -335,13 +388,19 @@
                     <a href="#" class="nav-link" data-page="calendario">Eventi</a>
                     <a href="#" class="nav-link" data-page="albo">Albo d'Oro</a>
                     <a href="#" class="nav-link hidden" data-page="figurine">Figurine</a>
+                    <a href="#" class="nav-link admin-content hidden" data-page="utenti">Utenti <span class="nf-badge-pending nf-badge hidden"></span></a>
                 </div>
+                <div class="flex items-center gap-3">
+                <button id="user-chip" type="button" onclick="app_openAccount()" class="user-chip">👤</button>
                 <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
+                </div>
             </nav>
             <div id="mobile-menu" class="hidden lg:hidden px-4 pb-4 space-y-2 text-center">
                 <a href="#" class="block nav-link py-2" data-page="classifica">Classifica</a>
+                <a href="#" class="block nav-link py-2" data-page="presenze">Ci sei? (presenze e jolly)</a>
+                <a href="#" class="block nav-link py-2" data-page="stagione">La mia stagione</a>
                 <a href="#" class="block nav-link py-2" data-page="giocatori">Giocatori</a>
                 <a href="#" class="block nav-link py-2" data-page="allenamenti">Registro Allenamenti</a>
                 <a href="#" class="block nav-link py-2" data-page="squadre">Genera Squadre</a>
@@ -350,12 +409,14 @@
                 <a href="#" class="block nav-link py-2" data-page="calendario">Eventi</a>
                 <a href="#" class="block nav-link py-2" data-page="albo">Albo d'Oro</a>
                 <a href="#" class="block nav-link py-2 hidden" data-page="figurine">Figurine</a>
+                <a href="#" class="block nav-link py-2 admin-content hidden" data-page="utenti">Utenti e attività <span class="nf-badge-pending nf-badge hidden"></span></a>
             </div>
         </header>
 
         <main class="container mx-auto p-4 md:p-6">
             <!-- Pagina Classifica -->
             <div id="page-classifica" class="page">
+                <div id="next-training-card"></div>
                 <div class="card rounded-lg p-4 mb-6 border-l-4 border-accent">
                     <h2 class="text-xl font-bold mb-2 text-accent">Regolamento Punti</h2>
                     <ul class="list-disc list-inside text-gray-300 space-y-1">
@@ -363,6 +424,7 @@
                         <li><strong class="text-white">1 Punto</strong> per la presenza a ogni allenamento.</li>
                         <li><strong class="text-white">1 Punto</strong> extra se lavi i piatti dopo la cena di squadra.</li>
                         <li><strong class="text-white">Punti Badge</strong> assegnati al raggiungimento di obiettivi speciali.</li>
+                        <li><strong class="text-white">🃏 Jolly</strong>: 3 a stagione, raddoppia i punti dei <em>set vinti</em> nell'allenamento in cui lo giochi (non presenze, piatti o badge). Si gioca in segreto prima dell'inizio.</li>
                     </ul>
                 </div>
 
@@ -748,6 +810,26 @@
                     <button onclick="saveTrainingDetail()" class="w-full btn-accent text-white font-bold py-2 px-4 rounded-lg">Salva</button>
                 </div>
             </div>
+            <!-- Pagina Ci sei? (sondaggio presenze + jolly) -->
+            <div id="page-presenze" class="page hidden">
+                <h2 class="text-3xl font-bold text-white mb-4">Ci sei?</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 space-y-4"><div id="poll-box"></div><div id="poll-admin"></div></div>
+                    <div id="jolly-box"></div>
+                </div>
+            </div>
+
+            <!-- Pagina La mia stagione -->
+            <div id="page-stagione" class="page hidden">
+                <h2 class="text-3xl font-bold text-white mb-4">La mia stagione</h2>
+                <div id="season-box"></div>
+            </div>
+
+            <!-- Pagina Utenti e attività (solo admin) -->
+            <div id="page-utenti" class="page hidden">
+                <h2 class="text-3xl font-bold text-white mb-4">Utenti e attività</h2>
+                <div id="users-box"></div>
+            </div>
         </main>
     </div>
 
@@ -757,6 +839,13 @@
     </div>
 
     <!-- Modal Conferma Generica -->
+    <!-- Finestra per account / "Chi sei?" -->
+    <div id="nf-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden" onclick="if(event.target===this)app_closeNf()">
+        <div class="card rounded-lg p-6 shadow-2xl w-11/12 max-w-lg text-gray-300" id="nf-modal-content"></div>
+    </div>
+    <!-- Storia "La mia stagione" a schermo intero -->
+    <div id="story-overlay" class="hidden"></div>
+
     <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
         <div class="card rounded-lg p-6 shadow-2xl w-11/12 max-w-sm text-center transform transition-all scale-95 opacity-0" id="confirm-modal-content">
             <h3 id="confirm-modal-title" class="text-xl font-bold text-white mb-4">Sei sicuro?</h3>
@@ -804,8 +893,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, getDocs, collection, updateDoc, deleteDoc, addDoc, deleteField, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
         // VERSIONE DI PROVA: App Check non serve (era solo per Gemini)
         const getAppCheckToken = async () => { throw new Error('App Check non attivo nella versione di prova'); };
 
@@ -851,9 +940,7 @@
             alert("ERRORE: Configurazione di Firebase non valida!");
         }
         
-        signInAnonymously(auth).catch((error) => {
-            console.error("Login anonimo fallito:", error);
-        });
+        // L'accesso anonimo ora avviene solo per "Guarda senza account" / Admin senza account (vedi handleLogin)
 
         const dbDocRef = doc(db, "scandoVolleyData", "appState");
 
@@ -964,6 +1051,7 @@
                 await setDoc(dbDocRef, appState);
                 hasUnsavedChanges = false;
                 showToast('Dati salvati sul database!');
+                logAction('save', 'ha salvato i dati (allenamento del ' + fmtShort(selectedTrainingDate) + ')');
             } catch (e) {
                 console.error("Errore salvataggio:", e);
                 showToast('Errore nel salvataggio dei dati!');
@@ -1145,6 +1233,7 @@
             renderPagamenti();
             if (currentPage === 'album') renderAlbum();
             if (currentPage === 'figurine') fgRenderAll();
+            renderNewFeatures();
         }
 
         function initializeDatePicker() {
@@ -1179,14 +1268,17 @@
         
         // --- CALCOLO CLASSIFICA (usato da Classifica e Albo d'Oro) ---
         function computeStandings() {
+            const jollySet = revealedJollySet();
             return players.map(player => {
-                let totalPoints = 0, attendanceCount = 0, setsWon = 0, dishPoints = 0;
-                Object.values(trainings).forEach(trainingDay => {
+                let totalPoints = 0, attendanceCount = 0, setsWon = 0, dishPoints = 0, jollyPoints = 0;
+                Object.entries(trainings).forEach(([trainingDate, trainingDay]) => {
                     const playerData = trainingDay.players && trainingDay.players[player.id];
                     if (playerData) {
                         if (playerData.present) { attendanceCount++; totalPoints++; }
                         const sets = parseInt(playerData.setsWon, 10) || 0;
                         setsWon += sets; totalPoints += sets;
+                        // 🃏 Jolly: i punti dei set vinti valgono doppio (solo i set)
+                        if (sets > 0 && jollySet.has(trainingDate + '|' + player.id)) { jollyPoints += sets; totalPoints += sets; }
                         if (playerData.dishes) { dishPoints++; totalPoints++; }
                     }
                 });
@@ -1196,7 +1288,7 @@
                 }, 0);
                 totalPoints += badgePoints;
                 const pointAverage = attendanceCount > 0 ? (setsWon / attendanceCount).toFixed(2) : 0;
-                return { ...player, totalPoints, attendanceCount, dishPoints, badgePoints, pointAverage, setsWon };
+                return { ...player, totalPoints, attendanceCount, dishPoints, badgePoints, pointAverage, setsWon, jollyPoints };
             }).sort((a, b) => b.totalPoints - a.totalPoints);
         }
 
@@ -1316,7 +1408,8 @@
                 { key: 'attendanceCount', label: 'Presenze', color: VIZ.s1 },
                 { key: 'setsWon', label: 'Set vinti', color: VIZ.s2 },
                 { key: 'dishPoints', label: 'Piatti', color: VIZ.s3 },
-                { key: 'badgePoints', label: 'Badge', color: VIZ.s4 }
+                { key: 'badgePoints', label: 'Badge', color: VIZ.s4 },
+                { key: 'jollyPoints', label: 'Jolly', color: '#9b59b6' }
             ];
             const W = 600, nameW = 104, valW = 42, rowH = 34, barH = 20, gap = 2, pad = 6;
             const plotW = W - nameW - valW;
@@ -2030,6 +2123,7 @@
                             <span><strong class="text-gray-200">${player.setsWon}</strong> Set</span>
                             <span><strong class="text-gray-200">${player.dishPoints}</strong> Piatti</span>
                             <span><strong class="text-gray-200">${player.badgePoints}</strong> Badge</span>
+                            ${player.jollyPoints ? `<span class="jolly-chip" title="Punti bonus dei jolly">🃏 +${player.jollyPoints}</span>` : ''}
                             <span><strong class="text-gray-200">${player.pointAverage}</strong> Media</span>
                             ${streakChipHtml(streak)}
                         </div>
@@ -2095,7 +2189,7 @@
                 <div class="card rounded-lg p-3 flex flex-wrap items-center gap-4">
                     <div class="flex items-center space-x-3 cursor-pointer flex-grow basis-full sm:basis-1/3" onclick="app_showPlayerDetail('${player.id}')">
                         <img src="${player.photo || 'https://placehold.co/100x100/16213e/dcdcdc?text=' + player.name.charAt(0)}" alt="${player.name}" class="w-12 h-12 rounded-full object-cover">
-                        <p class="font-semibold text-white">${player.name} ${player.surname}</p>
+                        <p class="font-semibold text-white">${player.name} ${player.surname}${trainingTagsHtml(player.id)}</p>
                     </div>
                     <div class="flex items-center space-x-4 flex-wrap gap-2">
                         <label class="flex items-center space-x-2">
@@ -2217,13 +2311,21 @@
             }).join('');
         };
 
-        window.handleLogin = (role) => {
+        window.handleLogin = async (role) => {
             if (role === 'user') {
+                if (!isRegistered()) return;
+                isAdmin = false;
+                initApp();
+            } else if (role === 'guest') {
+                try { if (!auth.currentUser) await signInAnonymously(auth); }
+                catch (e) { showAuthError(authErr(e)); return; }
                 isAdmin = false;
                 initApp();
             } else if (role === 'admin') {
                 const password = document.getElementById('password-input').value;
                 if (password === 'Minnie1970!') {
+                    try { if (!auth.currentUser) await signInAnonymously(auth); }
+                    catch (e) { showAuthError(authErr(e)); return; }
                     isAdmin = true;
                     initApp();
                 } else {
@@ -2264,12 +2366,16 @@
 
             // Stato iniziale nella cronologia
             history.pushState({ page: 'classifica' }, '', '#classifica');
+            afterEnterApp();
         }
         
         // Sezione Figurine in stand-by: metti true per riattivarla (e togli "hidden" dai due link del menu)
         const FIGURINE_ENABLED = false;
+        window.switchPage = (p) => switchPage(p);
         function switchPage(pageId, pushState = true) {
             if (pageId === 'figurine' && !FIGURINE_ENABLED) pageId = 'classifica';
+            if (pageId === 'utenti' && !isAdmin) pageId = 'classifica';
+            if (!document.getElementById('page-' + pageId)) pageId = 'classifica';
             pages.forEach(page => page.classList.add('hidden'));
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
             document.querySelectorAll('.nav-link').forEach(link => {
@@ -2279,6 +2385,9 @@
             currentPage = pageId;
             if (pageId === 'album') renderAlbum();
             if (pageId === 'figurine') renderFigurine();
+            renderNewFeatures();
+            if (pageId === 'utenti' && !logCache.length) app_loadLog();
+            window.scrollTo(0, 0);
             if (pushState) {
                 history.pushState({ page: pageId }, '', '#' + pageId);
             }
@@ -4748,11 +4857,976 @@
             return caption;
         }
 
+        // ============================================================
+        //  NOVITÀ (versione di prova): ACCOUNT, "CI SEI?", JOLLY, LA MIA STAGIONE
+        // ============================================================
+        // Dati in collezioni separate da appState, così le azioni degli utenti
+        // non toccano mai il documento principale che salva l'admin:
+        //   scandoUsers/{uid}        account registrati e abbinamento al giocatore
+        //   scandoPoll/current       prossimo allenamento + risposte (sì / forse / no)
+        //   scandoJolly/{data_gioc}  jolly giocati (segreti fino all'inizio dell'allenamento)
+        //   scandoLog/{auto}         registro delle attività (lo vede l'admin)
+        const JOLLY_PER_SEASON = 3;
+        function seasonLabel() { const d = new Date(), y = d.getFullYear(); return d.getMonth() >= 8 ? y + '/' + (y + 1) : (y - 1) + '/' + y; }
+        const DEFAULT_TRAINING_TIME = '21:00';
+        const pollRef = doc(db, 'scandoPoll', 'current');
+
+        let authUser = null;          // utente Firebase (anche anonimo)
+        let myProfile = null;         // documento scandoUsers del mio account
+        let usersList = [];           // tutti gli account (per l'admin e per "Chi sei?")
+        let poll = null;              // sondaggio del prossimo allenamento
+        let jollyDocs = [];           // tutti i jolly giocati
+        let appEntered = false;       // l'utente ha superato la schermata di accesso
+        let liveStarted = false;
+        let signupMode = false;
+        let loginLogged = false;
+        let seasonViewLogged = false;
+        let storyTimer = null;
+
+        // ---------- utilità ----------
+        const z2 = n => String(n).padStart(2, '0');
+        function localDateStr(d = new Date()) { return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()); }
+        function fmtDay(ds, withYear) {
+            if (!ds) return '';
+            const d = new Date(ds + 'T12:00:00');
+            const opts = { weekday: 'long', day: 'numeric', month: 'long' };
+            if (withYear) opts.year = 'numeric';
+            return d.toLocaleDateString('it-IT', opts);
+        }
+        function fmtShort(ds) { if (!ds) return ''; const d = new Date(ds + 'T12:00:00'); return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); }
+        function weekdayOf(ds) { return new Date(ds + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long' }); }
+        function fmtWhen(ms) {
+            if (!ms) return '—';
+            const d = new Date(ms), now = new Date();
+            const t = z2(d.getHours()) + ':' + z2(d.getMinutes());
+            if (localDateStr(d) === localDateStr(now)) return 'oggi ' + t;
+            const y = new Date(now); y.setDate(now.getDate() - 1);
+            if (localDateStr(d) === localDateStr(y)) return 'ieri ' + t;
+            return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' + t;
+        }
+        function deadlineOf(date, time) { return date ? new Date(date + 'T' + (time || DEFAULT_TRAINING_TIME) + ':00').getTime() : 0; }
+        function pollDeadline() { return poll && poll.date ? deadlineOf(poll.date, poll.time) : 0; }
+        function playerById(id) { return players.find(p => p.id === id) || null; }
+        function playerLabel(p) { return p ? (p.alias || [p.name, p.surname].filter(Boolean).join(' ')) : '?'; }
+        function playerFull(p) { return p ? [p.name, p.surname].filter(Boolean).join(' ') : '?'; }
+        function avatarHtml(p, size = 32) {
+            const src = p && p.photo ? p.photo : 'https://placehold.co/100x100/16213e/dcdcdc?text=' + encodeURIComponent(((p && p.name) || '?').charAt(0));
+            return `<img src="${src}" alt="" class="rounded-full object-cover flex-shrink-0" style="width:${size}px;height:${size}px">`;
+        }
+        // Inizio della stagione in corso = ultima chiusura stagione (reset) registrata nell'Albo d'Oro
+        function seasonStartDate() {
+            const last = (hallOfFame || []).filter(h => !h.manual && h.closedAt).map(h => h.closedAt).sort().pop();
+            return last ? last.slice(0, 10) : '0000-00-00';
+        }
+
+        // ---------- chi sono ----------
+        function isRegistered() { return !!(authUser && !authUser.isAnonymous); }
+        function myPlayerId() {
+            return (myProfile && myProfile.status === 'approved' && myProfile.playerId && playerById(myProfile.playerId)) ? myProfile.playerId : null;
+        }
+        function isBlocked() { return !!(myProfile && myProfile.status === 'blocked'); }
+        function myName() {
+            const p = playerById(myPlayerId());
+            if (p) return playerFull(p);
+            if (myProfile && myProfile.name) return myProfile.name;
+            if (authUser && !authUser.isAnonymous) return authUser.displayName || authUser.email || 'Utente';
+            return isAdmin ? 'Admin' : 'Ospite';
+        }
+        function linkedUidOf(playerId) {
+            const u = usersList.find(u => u.status === 'approved' && u.playerId === playerId);
+            return u ? u.uid : null;
+        }
+
+        // ---------- registro attività ----------
+        async function logAction(type, text, extra = {}) {
+            try {
+                if (!auth.currentUser) return;
+                await addDoc(collection(db, 'scandoLog'), {
+                    ts: Date.now(), uid: auth.currentUser.uid, name: myName() + (isAdmin ? ' (admin)' : ''),
+                    registered: isRegistered(), type, text, ...extra
+                });
+            } catch (e) { console.warn('Registro attività non scritto:', e); }
+        }
+
+        // ---------- ACCESSO ----------
+        const AUTH_ERRORS = {
+            'auth/invalid-email': 'Indirizzo email non valido.',
+            'auth/missing-password': 'Scrivi la password.',
+            'auth/weak-password': 'La password deve avere almeno 6 caratteri.',
+            'auth/email-already-in-use': 'Esiste già un account con questa email: usa "Entra".',
+            'auth/invalid-credential': 'Email o password sbagliate.',
+            'auth/wrong-password': 'Email o password sbagliate.',
+            'auth/user-not-found': 'Nessun account con questa email: premi "Registrati".',
+            'auth/too-many-requests': 'Troppi tentativi: riprova tra qualche minuto.',
+            'auth/popup-closed-by-user': 'Finestra di Google chiusa prima di finire.',
+            'auth/unauthorized-domain': 'Questo sito non è ancora autorizzato in Firebase (Authentication → Impostazioni → Domini autorizzati).',
+            'auth/operation-not-allowed': 'Questo metodo di accesso non è attivo in Firebase (Authentication → Metodo di accesso).',
+            'auth/network-request-failed': 'Connessione assente: controlla internet.'
+        };
+        function authErr(e) { return AUTH_ERRORS[e && e.code] || ('Errore: ' + ((e && (e.code || e.message)) || e)); }
+        function showAuthError(msg) {
+            const el = document.getElementById('auth-error');
+            if (!el) return;
+            el.textContent = msg || '';
+            el.classList.toggle('hidden', !msg);
+        }
+
+        function updateLoginScreen() {
+            const inBox = document.getElementById('auth-signed-in');
+            const outBox = document.getElementById('auth-signed-out');
+            if (!inBox || !outBox) return;
+            const reg = isRegistered();
+            inBox.classList.toggle('hidden', !reg);
+            outBox.classList.toggle('hidden', reg);
+            if (reg) document.getElementById('auth-hello-name').textContent = (myProfile && myProfile.name) || authUser.displayName || authUser.email || '';
+        }
+
+        window.app_signInGoogle = async () => {
+            showAuthError('');
+            const provider = new GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
+                    try { await signInWithRedirect(auth, provider); return; } catch (e2) { showAuthError(authErr(e2)); return; }
+                }
+                if (e && e.code === 'auth/cancelled-popup-request') return;
+                showAuthError(authErr(e));
+            }
+        };
+        window.app_toggleEmailForm = () => {
+            document.getElementById('email-auth').classList.toggle('hidden');
+            showAuthError('');
+        };
+        window.app_toggleSignup = () => {
+            signupMode = !signupMode;
+            document.getElementById('auth-name').classList.toggle('hidden', !signupMode);
+            document.getElementById('auth-email-submit').textContent = signupMode ? 'Crea il mio account' : 'Entra';
+            document.getElementById('auth-switch').textContent = signupMode ? 'Hai già un account? Entra' : 'Non hai un account? Registrati';
+            showAuthError('');
+        };
+        window.app_emailAuth = async () => {
+            showAuthError('');
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value;
+            const name = document.getElementById('auth-name').value.trim();
+            const btn = document.getElementById('auth-email-submit');
+            if (signupMode && !name) { showAuthError('Scrivi nome e cognome.'); return; }
+            btn.disabled = true;
+            try {
+                if (signupMode) {
+                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    await updateProfile(cred.user, { displayName: name });
+                    await ensureUserDoc(cred.user, name);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                }
+            } catch (e) { showAuthError(authErr(e)); }
+            finally { btn.disabled = false; }
+        };
+        window.app_resetPassword = async () => {
+            const email = document.getElementById('auth-email').value.trim();
+            if (!email) { showAuthError('Scrivi prima la tua email qui sopra.'); return; }
+            try { await sendPasswordResetEmail(auth, email); showAuthError(''); showToast('Ti ho mandato un\'email per scegliere una nuova password.'); }
+            catch (e) { showAuthError(authErr(e)); }
+        };
+        window.app_signOut = async () => {
+            try { await signOut(auth); } catch (e) { console.warn(e); }
+            myProfile = null;
+            location.hash = '';
+            location.reload();
+        };
+
+        async function ensureUserDoc(user, nameHint) {
+            const ref = doc(db, 'scandoUsers', user.uid);
+            const snap = await getDoc(ref);
+            const provider = (user.providerData && user.providerData[0] && user.providerData[0].providerId) || 'password';
+            if (!snap.exists()) {
+                await setDoc(ref, {
+                    uid: user.uid, name: nameHint || user.displayName || (user.email || '').split('@')[0],
+                    email: user.email || '', provider, createdAt: Date.now(), lastSeen: Date.now(),
+                    status: 'none', playerId: null, requestedPlayerId: null
+                });
+                logAction('signup', 'si è registrato (' + (provider === 'google.com' ? 'Google' : 'email') + ')');
+            } else {
+                await updateDoc(ref, { lastSeen: Date.now(), ...(user.email ? { email: user.email } : {}), ...(nameHint ? { name: nameHint } : {}) });
+            }
+        }
+
+        let myProfileUnsub = null;
+        onAuthStateChanged(auth, async (user) => {
+            authUser = user;
+            if (myProfileUnsub) { myProfileUnsub(); myProfileUnsub = null; }
+            if (user && !user.isAnonymous) {
+                try { await ensureUserDoc(user); } catch (e) { console.warn('Profilo non creato:', e); }
+                myProfileUnsub = onSnapshot(doc(db, 'scandoUsers', user.uid), s => {
+                    myProfile = s.exists() ? s.data() : null;
+                    updateLoginScreen();
+                    if (appEntered) { renderUserChip(); renderNewFeatures(); maybeAskWhoAmI(); }
+                }, e => console.warn('Profilo non leggibile:', e));
+            } else {
+                myProfile = null;
+            }
+            updateLoginScreen();
+        });
+        getRedirectResult(auth).catch(e => showAuthError(authErr(e)));
+
+        // ---------- dati in tempo reale (partono dopo l'accesso) ----------
+        function startLiveData() {
+            if (liveStarted) return;
+            liveStarted = true;
+            onSnapshot(pollRef, s => { poll = s.exists() ? s.data() : null; renderNewFeatures(); },
+                e => console.warn('Sondaggio non leggibile (regole Firestore?):', e));
+            onSnapshot(collection(db, 'scandoJolly'), s => {
+                jollyDocs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderLeaderboard(); renderCharts(); renderNewFeatures();
+            }, e => console.warn('Jolly non leggibili (regole Firestore?):', e));
+            onSnapshot(collection(db, 'scandoUsers'), s => {
+                usersList = s.docs.map(d => ({ uid: d.id, ...d.data() }));
+                renderNewFeatures();
+            }, e => console.warn('Utenti non leggibili (regole Firestore?):', e));
+        }
+
+        function afterEnterApp() {
+            appEntered = true;
+            startLiveData();
+            renderUserChip();
+            if (!loginLogged) {
+                loginLogged = true;
+                logAction('login', isAdmin ? 'è entrato come Admin' : (isRegistered() ? 'è entrato' : 'è entrato senza account'));
+            }
+            renderNewFeatures();
+            maybeAskWhoAmI();
+            if (isBlocked()) showToast('Il tuo account è stato bloccato dall\'admin: puoi solo guardare.');
+        }
+
+        // ---------- chip utente in alto + finestra account ----------
+        function renderUserChip() {
+            const el = document.getElementById('user-chip');
+            if (!el) return;
+            if (!isRegistered()) {
+                el.innerHTML = isAdmin ? '🛡️ Admin' : '👀 Ospite';
+                el.title = 'Accesso senza account';
+            } else {
+                const p = playerById(myPlayerId());
+                el.innerHTML = (p ? avatarHtml(p, 22) : '👤') + `<span class="hidden sm:inline">${esc(p ? playerLabel(p) : myName())}</span>${isAdmin ? ' 🛡️' : ''}`;
+                el.title = 'Il mio account';
+            }
+        }
+        window.app_openAccount = () => {
+            const box = document.getElementById('nf-modal-content');
+            let html;
+            if (!isRegistered()) {
+                html = `<h3 class="text-xl font-bold text-white mb-2">Stai usando l'app senza account</h3>
+                    <p class="text-gray-300 mb-4">Con un account puoi rispondere al sondaggio, giocare i jolly e vedere la tua stagione.</p>
+                    <div class="flex gap-2 justify-end"><button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_closeNf()">Chiudi</button>
+                    <button class="btn-primary text-white py-2 px-4 rounded font-bold" onclick="app_signOut()">Entra con un account</button></div>`;
+            } else {
+                const st = myProfile ? myProfile.status : 'none';
+                const p = playerById(myPlayerId());
+                const req = myProfile && playerById(myProfile.requestedPlayerId);
+                const stato = st === 'approved' && p ? `✅ Sei collegato a <strong class="text-white">${esc(playerFull(p))}</strong>`
+                    : st === 'pending' && req ? `⏳ In attesa che l'admin confermi che sei <strong class="text-white">${esc(playerFull(req))}</strong>`
+                    : st === 'blocked' ? '⛔ Account bloccato dall\'admin'
+                    : '❔ Non sei ancora collegato a un giocatore';
+                html = `<h3 class="text-xl font-bold text-white mb-1">Il mio account</h3>
+                    <p class="text-gray-300">${esc((myProfile && myProfile.name) || authUser.displayName || '')}</p>
+                    <p class="text-gray-400 text-sm mb-4">${esc(authUser.email || '')}</p>
+                    <p class="mb-4">${stato}</p>
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        ${st !== 'blocked' ? `<button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_openWhoAmI()">${st === 'approved' ? 'Cambia giocatore' : 'Scegli chi sei'}</button>` : ''}
+                        <button class="bg-red-700 text-white py-2 px-4 rounded" onclick="app_signOut()">Esci</button>
+                        <button class="btn-primary text-white py-2 px-4 rounded font-bold" onclick="app_closeNf()">Chiudi</button>
+                    </div>`;
+            }
+            openNf(html);
+        };
+        function openNf(html) {
+            document.getElementById('nf-modal-content').innerHTML = html;
+            document.getElementById('nf-modal').classList.remove('hidden');
+        }
+        window.app_closeNf = () => document.getElementById('nf-modal').classList.add('hidden');
+
+        // ---------- "Chi sei?": abbinamento account → giocatore ----------
+        let whoAskedOnce = false;
+        function maybeAskWhoAmI() {
+            if (whoAskedOnce || !appEntered || !isRegistered() || !myProfile || isAdmin) return;
+            if (myProfile.status === 'none' && players.length) { whoAskedOnce = true; app_openWhoAmI(); }
+        }
+        window.app_openWhoAmI = () => {
+            const mine = myProfile && (myProfile.requestedPlayerId || myProfile.playerId);
+            const list = [...players].sort((a, b) => playerFull(a).localeCompare(playerFull(b)));
+            const html = `<h3 class="text-xl font-bold text-white mb-1">Chi sei?</h3>
+                <p class="text-gray-300 text-sm mb-3">Scegli il tuo nome: l'admin lo confermerà. Dopo potrai rispondere al sondaggio, giocare i jolly e vedere la tua stagione.</p>
+                <div class="grid grid-cols-2 gap-2 overflow-y-auto" style="max-height:55vh">
+                    ${list.map(p => {
+                        const taken = linkedUidOf(p.id) && linkedUidOf(p.id) !== (authUser && authUser.uid);
+                        return `<button type="button" ${taken ? 'disabled' : ''} class="pick-chip ${p.id === mine ? 'active' : ''} ${taken ? 'opacity-40' : ''}" onclick="app_pickWhoAmI('${p.id}')">
+                            ${avatarHtml(p, 32)}<span class="text-sm text-white truncate">${esc(playerFull(p))}${taken ? '<br><span class="text-xs text-gray-400">già collegato</span>' : ''}</span></button>`;
+                    }).join('')}
+                </div>
+                <div class="flex justify-between items-center mt-4 gap-2">
+                    <button class="text-sm text-gray-400 underline" onclick="app_pickWhoAmI('')">Non sono in squadra</button>
+                    <button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_closeNf()">Più tardi</button>
+                </div>`;
+            openNf(html);
+        };
+        window.app_pickWhoAmI = async (pid) => {
+            if (!isRegistered()) return;
+            const ref = doc(db, 'scandoUsers', authUser.uid);
+            try {
+                if (!pid) {
+                    await updateDoc(ref, { status: 'fan', requestedPlayerId: null, playerId: null });
+                    showToast('Ok! Puoi comunque guardare tutto.');
+                } else {
+                    await updateDoc(ref, { status: 'pending', requestedPlayerId: pid });
+                    logAction('link', 'ha chiesto di essere collegato a ' + playerFull(playerById(pid)));
+                    showToast('Richiesta inviata: l\'admin la confermerà a breve.');
+                }
+                app_closeNf();
+            } catch (e) { console.error(e); alert('Non riesco a salvare: ' + (e.message || e)); }
+        };
+
+        // ---------- SONDAGGIO "CI SEI?" ----------
+        const ANS = {
+            si: { icon: '✅', label: 'Ci sono', color: '#22c55e' },
+            forse: { icon: '❓', label: 'Forse', color: '#eab308' },
+            no: { icon: '❌', label: 'Non ci sono', color: '#ef4444' }
+        };
+        function pollAnswers() { return (poll && poll.answers) || {}; }
+        function pollIsOpen() { return !!(poll && poll.date && poll.open !== false && Date.now() < pollDeadline()); }
+        function pollGroups() {
+            const a = pollAnswers();
+            const g = { si: [], forse: [], no: [], none: [] };
+            players.forEach(p => {
+                const v = a[p.id] && a[p.id].v;
+                if (v && g[v]) g[v].push(p);
+                else if (p.status !== 'guest') g.none.push(p);
+            });
+            return g;
+        }
+        function pollTitle() { return poll && poll.date ? `Ci sei ${weekdayOf(poll.date)}?` : 'Prossimo allenamento'; }
+
+        window.app_answerPoll = async (v, pid) => {
+            const target = pid || myPlayerId();
+            if (!target) { showToast('Prima collega il tuo account a un giocatore.'); return; }
+            if (!isAdmin && (isBlocked() || target !== myPlayerId())) return;
+            if (!isAdmin && !pollIsOpen()) { showToast('Le risposte sono chiuse.'); return; }
+            const cur = pollAnswers()[target];
+            try {
+                if (!v || (cur && cur.v === v && !pid)) {
+                    await updateDoc(pollRef, { ['answers.' + target]: deleteField() });
+                } else {
+                    await updateDoc(pollRef, { ['answers.' + target]: { v, ts: Date.now(), by: myName() } });
+                }
+                const who = playerFull(playerById(target));
+                logAction('poll', (pid && pid !== myPlayerId() ? 'ha risposto per ' + who + ': ' : 'ha risposto: ') + (v ? ANS[v].icon + ' ' + ANS[v].label : 'risposta tolta') + ' (' + fmtShort(poll.date) + ')');
+            } catch (e) { console.error(e); alert('Risposta non salvata: ' + (e.message || e)); }
+        };
+
+        function pollShareText() {
+            if (!poll || !poll.date) return '';
+            const g = pollGroups();
+            const names = arr => arr.map(p => playerLabel(p)).join(', ');
+            let t = `🏐 ${pollTitle().toUpperCase()}\n${fmtDay(poll.date)}${poll.time ? ' ore ' + poll.time : ''}${poll.note ? '\n📍 ' + poll.note : ''}\n\n`;
+            t += `✅ Ci sono (${g.si.length}): ${names(g.si) || '-'}\n`;
+            t += `❓ Forse (${g.forse.length}): ${names(g.forse) || '-'}\n`;
+            t += `❌ Non ci sono (${g.no.length}): ${names(g.no) || '-'}\n`;
+            if (g.none.length) t += `⏳ Non hanno risposto (${g.none.length}): ${names(g.none)}\n`;
+            t += `\nRispondi nell'app: ${location.origin + location.pathname}`;
+            return t;
+        }
+        window.app_sharePoll = async () => {
+            const text = pollShareText();
+            if (!text) return;
+            logAction('share', 'ha condiviso il sondaggio presenze');
+            if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+        };
+
+        function answerButtonsHtml(compact) {
+            const pid = myPlayerId();
+            if (!poll || !poll.date) return '';
+            if (!isRegistered()) return `<p class="text-sm text-gray-400">Per rispondere <button class="underline text-accent" onclick="app_signOut()">entra con un account</button>.</p>`;
+            if (isBlocked()) return '';
+            if (!pid) {
+                const pend = myProfile && myProfile.status === 'pending';
+                return `<p class="text-sm text-gray-400">${pend ? '⏳ Aspetta che l\'admin confermi il tuo nome per rispondere.' : 'Per rispondere <button class="underline text-accent" onclick="app_openWhoAmI()">dimmi chi sei</button>.'}</p>`;
+            }
+            const cur = pollAnswers()[pid] && pollAnswers()[pid].v;
+            const open = pollIsOpen();
+            return `<div class="flex flex-wrap gap-2">${Object.entries(ANS).map(([k, a]) => `
+                <button type="button" ${open ? '' : 'disabled'} onclick="app_answerPoll('${k}')"
+                    class="poll-btn ${cur === k ? 'active' : ''} ${compact ? 'text-sm py-1 px-3' : 'py-2 px-4'}" style="--c:${a.color}">${a.icon} ${a.label}</button>`).join('')}
+                ${open ? '' : '<span class="text-xs text-gray-400 self-center">Risposte chiuse</span>'}</div>`;
+        }
+
+        function renderPollPage() {
+            const box = document.getElementById('poll-box');
+            if (!box) return;
+            if (!poll || !poll.date) {
+                box.innerHTML = `<div class="card rounded-lg p-6 text-center text-gray-300">📅 L'admin non ha ancora fissato il prossimo allenamento.</div>`;
+            } else {
+                const g = pollGroups();
+                const answered = g.si.length + g.forse.length + g.no.length || 1;
+                const row = (k) => {
+                    const a = ANS[k], list = g[k], pct = Math.round(list.length / answered * 100);
+                    return `<div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-white">${a.icon} ${a.label}</span><span class="text-gray-300">${list.length}</span></div>
+                        <div class="poll-bar"><i style="width:${pct}%;background:${a.color}"></i></div>
+                        <div class="flex flex-wrap gap-1 mt-2">${list.map(p => `<span class="poll-name">${avatarHtml(p, 20)}${esc(playerLabel(p))}</span>`).join('')}</div>
+                    </div>`;
+                };
+                const closedMsg = poll.open === false ? '🔒 Risposte chiuse dall\'admin' : (Date.now() >= pollDeadline() ? '🏐 Allenamento iniziato: risposte chiuse' : '');
+                box.innerHTML = `<div class="card rounded-lg p-5">
+                    <div class="flex flex-wrap justify-between items-start gap-3 mb-3">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">🏐 ${esc(pollTitle())}</h3>
+                            <p class="text-gray-300 capitalize">${esc(fmtDay(poll.date))}${poll.time ? ' · ore ' + esc(poll.time) : ''}</p>
+                            ${poll.note ? `<p class="text-gray-400 text-sm">📍 ${esc(poll.note)}</p>` : ''}
+                            ${closedMsg ? `<p class="text-yellow-300 text-sm mt-1">${closedMsg}</p>` : ''}
+                        </div>
+                        <button onclick="app_sharePoll()" class="share-btn"><span class="text-lg leading-none">📲</span> Condividi</button>
+                    </div>
+                    <div class="mb-5">${answerButtonsHtml(false)}</div>
+                    ${row('si')}${row('forse')}${row('no')}
+                    ${g.none.length ? `<details class="text-sm text-gray-400"><summary class="cursor-pointer">⏳ Non hanno ancora risposto (${g.none.length})</summary>
+                        <div class="flex flex-wrap gap-1 mt-2">${g.none.map(p => `<span class="poll-name">${avatarHtml(p, 20)}${esc(playerLabel(p))}</span>`).join('')}</div></details>` : ''}
+                    ${isAdmin ? `<details class="mt-4"><summary class="cursor-pointer text-sm text-accent">✍️ Rispondi al posto di un giocatore</summary>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${players.map(p => {
+                            const v = pollAnswers()[p.id] && pollAnswers()[p.id].v;
+                            return `<label class="flex items-center gap-2 bg-primary rounded px-2 py-1">${avatarHtml(p, 24)}<span class="flex-grow text-sm text-white truncate">${esc(playerFull(p))}</span>
+                                <select class="form-input rounded p-1 text-sm" onchange="app_answerPoll(this.value,'${p.id}')">
+                                    <option value="" ${!v ? 'selected' : ''}>—</option>
+                                    ${Object.entries(ANS).map(([k, a]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${a.icon} ${a.label}</option>`).join('')}
+                                </select></label>`;
+                        }).join('')}</div></details>` : ''}
+                </div>`;
+            }
+            renderPollAdmin();
+        }
+
+        function renderPollAdmin() {
+            const box = document.getElementById('poll-admin');
+            if (!box) return;
+            if (!isAdmin) { box.innerHTML = ''; return; }
+            const d = (poll && poll.date) || '';
+            box.innerHTML = `<div class="card rounded-lg p-5 border-l-4 border-accent">
+                <h3 class="text-xl font-bold text-white mb-3">🛡️ Fissa il prossimo allenamento</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <label class="text-sm">Giorno<input type="date" id="poll-date" class="w-full form-input p-2 rounded mt-1" value="${d}"></label>
+                    <label class="text-sm">Ora d'inizio<input type="time" id="poll-time" class="w-full form-input p-2 rounded mt-1" value="${(poll && poll.time) || DEFAULT_TRAINING_TIME}"></label>
+                    <label class="text-sm">Nota (luogo, ecc.)<input type="text" id="poll-note" maxlength="80" class="w-full form-input p-2 rounded mt-1" value="${esc((poll && poll.note) || '')}" placeholder="Palestra comunale"></label>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Le risposte e i jolly si chiudono all'ora d'inizio.</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <button class="btn-accent text-white font-bold py-2 px-4 rounded" onclick="app_savePoll()">💾 Salva</button>
+                    ${d ? `<button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_togglePollOpen()">${poll.open === false ? '🔓 Riapri le risposte' : '🔒 Chiudi le risposte'}</button>
+                    <button class="bg-red-700 text-white py-2 px-4 rounded" onclick="app_cancelPoll()">🗑️ Allenamento annullato</button>` : ''}
+                </div>
+            </div>`;
+        }
+
+        // Sposta i jolly da una data all'altra (se l'admin cambia giorno)
+        async function moveJollies(oldDate, newDate, newDeadline) {
+            const list = jollyDocs.filter(j => j.date === oldDate);
+            for (const j of list) {
+                const { id: _oldId, ...rest } = j;
+                if (newDate) await setDoc(doc(db, 'scandoJolly', newDate + '_' + j.playerId), { ...rest, date: newDate, deadline: newDeadline });
+                await deleteDoc(doc(db, 'scandoJolly', j.id));
+            }
+            return list.length;
+        }
+
+        window.app_savePoll = async () => {
+            if (!isAdmin) return;
+            const date = document.getElementById('poll-date').value;
+            const time = document.getElementById('poll-time').value || DEFAULT_TRAINING_TIME;
+            const note = document.getElementById('poll-note').value.trim();
+            if (!date) { showToast('Scegli il giorno.'); return; }
+            const go = async (resetAnswers) => {
+                try {
+                    if (poll && poll.date && poll.date !== date) {
+                        const old = poll;
+                        await setDoc(doc(db, 'scandoPoll', 'archivio_' + old.date), { ...old, archivedAt: Date.now() });
+                        const moved = await moveJollies(old.date, date, deadlineOf(date, time));
+                        if (moved) showToast(moved + ' jolly spostati alla nuova data.');
+                    } else if (poll && poll.date === date && poll.time !== time) {
+                        for (const j of jollyDocs.filter(j => j.date === date)) await updateDoc(doc(db, 'scandoJolly', j.id), { deadline: deadlineOf(date, time) });
+                    }
+                    const keep = poll && !resetAnswers ? (poll.answers || {}) : {};
+                    await setDoc(pollRef, { date, time, note, open: true, answers: keep, updatedAt: Date.now(), createdAt: (poll && !resetAnswers && poll.createdAt) || Date.now() });
+                    logAction('poll-set', 'ha fissato l\'allenamento: ' + fmtDay(date) + ' ore ' + time);
+                    showToast('Prossimo allenamento salvato ✅');
+                } catch (e) { console.error(e); alert('Non salvato: ' + (e.message || e)); }
+            };
+            if (poll && poll.date && poll.date !== date && Object.keys(poll.answers || {}).length) {
+                showConfirmModal('Cambiare giorno?', 'Le risposte date per ' + fmtDay(poll.date) + ' verranno azzerate (i jolly giocati vengono spostati al nuovo giorno).', () => go(true));
+            } else {
+                go(!poll || poll.date !== date);
+            }
+        };
+        window.app_togglePollOpen = async () => {
+            if (!isAdmin || !poll) return;
+            await updateDoc(pollRef, { open: poll.open === false });
+            logAction('poll-set', poll.open === false ? 'ha riaperto le risposte' : 'ha chiuso le risposte');
+        };
+        window.app_cancelPoll = () => {
+            if (!isAdmin || !poll) return;
+            showConfirmModal('Allenamento annullato?', 'Il sondaggio viene tolto e i jolly giocati per questo giorno vengono restituiti ai giocatori.', async () => {
+                try {
+                    const back = await moveJollies(poll.date, null);
+                    await setDoc(doc(db, 'scandoPoll', 'archivio_' + poll.date), { ...poll, cancelled: true, archivedAt: Date.now() });
+                    await deleteDoc(pollRef);
+                    logAction('poll-set', 'ha annullato l\'allenamento del ' + fmtShort(poll.date) + (back ? ' (' + back + ' jolly restituiti)' : ''));
+                    showToast('Allenamento annullato' + (back ? ': ' + back + ' jolly restituiti' : ''));
+                } catch (e) { console.error(e); alert('Errore: ' + (e.message || e)); }
+            });
+        };
+
+        // ---------- JOLLY ----------
+        function jollyRevealed(j) { return Date.now() >= (j.deadline || 0); }
+        function seasonJollies(pid) { const s = seasonStartDate(); return jollyDocs.filter(j => j.playerId === pid && j.date > s); }
+        function jollyLeft(pid) { return Math.max(0, JOLLY_PER_SEASON - seasonJollies(pid).length); }
+        // Insieme "data|giocatore" dei jolly già scoperti (contano in classifica)
+        function revealedJollySet() {
+            const s = new Set();
+            jollyDocs.forEach(j => { if (jollyRevealed(j)) s.add(j.date + '|' + j.playerId); });
+            return s;
+        }
+        function jollyResult(j) {
+            const pd = trainings[j.date] && trainings[j.date].players && trainings[j.date].players[j.playerId];
+            const sets = pd ? (parseInt(pd.setsWon, 10) || 0) : 0;
+            if (!jollyRevealed(j)) return { txt: '🤫 segreto fino all\'inizio', cls: 'text-gray-400' };
+            if (!pd) return { txt: trainings[j.date] ? 'perso (assente)' : 'in attesa del risultato', cls: 'text-gray-400' };
+            return sets > 0 ? { txt: '+' + sets + ' punti bonus', cls: 'text-green-400' } : { txt: 'nessun set vinto: 0 bonus', cls: 'text-gray-400' };
+        }
+
+        window.app_playJolly = () => {
+            const pid = myPlayerId();
+            if (!pid || isBlocked()) return;
+            if (!poll || !poll.date || !pollIsOpen()) { showToast('Ora non si può giocare il jolly.'); return; }
+            if (jollyLeft(pid) <= 0) { showToast('Hai già usato tutti i jolly della stagione.'); return; }
+            showConfirmModal('🃏 Giocare il jolly?', `Per ${fmtDay(poll.date)} i punti dei set che vinci valgono doppio. Nessuno lo saprà fino all'inizio dell'allenamento. Se non vieni, il jolly è perso. Puoi ritirarlo fino alle ${poll.time || DEFAULT_TRAINING_TIME}.`, async () => {
+                try {
+                    await setDoc(doc(db, 'scandoJolly', poll.date + '_' + pid), {
+                        date: poll.date, playerId: pid, uid: authUser.uid, deadline: pollDeadline(), ts: Date.now()
+                    });
+                    logAction('jolly', 'ha giocato un jolly', { secretUntil: pollDeadline() });
+                    showToast('🃏 Jolly giocato! Acqua in bocca…');
+                } catch (e) { console.error(e); alert('Jolly non salvato: ' + (e.message || e)); }
+            });
+        };
+        window.app_withdrawJolly = () => {
+            const pid = myPlayerId();
+            if (!pid || !poll || !pollIsOpen()) return;
+            showConfirmModal('Ritirare il jolly?', 'Il jolly torna disponibile per un altro allenamento.', async () => {
+                try {
+                    await deleteDoc(doc(db, 'scandoJolly', poll.date + '_' + pid));
+                    logAction('jolly', 'ha ritirato un jolly', { secretUntil: pollDeadline() });
+                    showToast('Jolly ritirato.');
+                } catch (e) { alert('Errore: ' + (e.message || e)); }
+            });
+        };
+        window.app_refundJolly = (id) => {
+            if (!isAdmin) return;
+            const j = jollyDocs.find(x => x.id === id);
+            if (!j) return;
+            showConfirmModal('Restituire il jolly?', `Il jolly di ${playerFull(playerById(j.playerId))} del ${fmtShort(j.date)} viene cancellato e torna disponibile.`, async () => {
+                await deleteDoc(doc(db, 'scandoJolly', id));
+                logAction('jolly-admin', 'ha restituito il jolly di ' + playerFull(playerById(j.playerId)) + ' (' + fmtShort(j.date) + ')');
+            });
+        };
+
+        function jollyCardsHtml(left) {
+            return Array.from({ length: JOLLY_PER_SEASON }, (_, i) => `<span class="jolly-card ${i < left ? '' : 'used'}">🃏</span>`).join('');
+        }
+        function renderJollyBox() {
+            const box = document.getElementById('jolly-box');
+            if (!box) return;
+            const pid = myPlayerId();
+            const rules = `<p class="text-xs text-gray-400 mt-3">${JOLLY_PER_SEASON} jolly a stagione. Il jolly raddoppia i punti dei <strong>set vinti</strong> nell'allenamento in cui lo giochi (non presenze, piatti o badge). Si gioca in segreto entro l'ora d'inizio; se non vieni è perso.</p>`;
+            if (!pid) {
+                box.innerHTML = `<div class="card rounded-lg p-5"><h3 class="text-xl font-bold text-white mb-1">🃏 Il jolly</h3>
+                    <p class="text-gray-300 text-sm">${isRegistered() ? 'Collega il tuo account a un giocatore per usare i jolly.' : 'Entra con un account per usare i jolly.'}</p>${rules}</div>`;
+                return;
+            }
+            const left = jollyLeft(pid);
+            const mine = seasonJollies(pid).sort((a, b) => b.date.localeCompare(a.date));
+            const forNext = poll && poll.date ? jollyDocs.find(j => j.date === poll.date && j.playerId === pid) : null;
+            let action = '';
+            if (!poll || !poll.date) action = '<p class="text-gray-400 text-sm">Potrai giocarlo quando l\'admin fissa il prossimo allenamento.</p>';
+            else if (forNext && pollIsOpen()) action = `<p class="text-green-300 mb-2">🃏 Jolly giocato per ${esc(fmtDay(poll.date))} — è un segreto!</p><button class="bg-gray-600 text-white text-sm py-1 px-3 rounded" onclick="app_withdrawJolly()">Ritira il jolly</button>`;
+            else if (forNext) action = `<p class="text-green-300">🃏 Hai giocato il jolly per ${esc(fmtDay(poll.date))}.</p>`;
+            else if (!pollIsOpen()) action = '<p class="text-gray-400 text-sm">Giocate chiuse per questo allenamento.</p>';
+            else if (left > 0) action = `<button class="jolly-play" onclick="app_playJolly()">🃏 Gioca il jolly per ${esc(weekdayOf(poll.date))}</button>`;
+            else action = '<p class="text-gray-400 text-sm">Hai usato tutti i jolly di questa stagione.</p>';
+            box.innerHTML = `<div class="card rounded-lg p-5">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h3 class="text-xl font-bold text-white">🃏 I tuoi jolly</h3>
+                    <div class="flex gap-1">${jollyCardsHtml(left)}</div>
+                </div>
+                ${action}
+                ${mine.length ? `<div class="mt-4 text-sm"><p class="text-gray-400 mb-1">Giocati in questa stagione:</p>${mine.map(j => {
+                    const r = jollyResult(j);
+                    return `<div class="flex justify-between border-t border-gray-700 py-1"><span class="capitalize">${esc(fmtDay(j.date))}</span><span class="${r.cls}">${r.txt}</span></div>`;
+                }).join('')}</div>` : ''}
+                ${rules}
+            </div>`;
+        }
+
+        // ---------- riquadro "Prossimo allenamento" in Classifica ----------
+        function renderNextTrainingCard() {
+            const box = document.getElementById('next-training-card');
+            if (!box) return;
+            if (!poll || !poll.date) {
+                box.innerHTML = isAdmin ? `<div class="card rounded-lg p-3 mb-4 text-sm text-gray-300">📅 Nessun prossimo allenamento fissato. <button class="underline text-accent" onclick="switchPage('presenze')">Fissalo ora</button></div>` : '';
+                return;
+            }
+            const g = pollGroups();
+            const pid = myPlayerId();
+            const forNext = pid ? jollyDocs.find(j => j.date === poll.date && j.playerId === pid) : null;
+            box.innerHTML = `<div class="card rounded-lg p-4 mb-4 next-card">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-accent font-bold">Prossimo allenamento</p>
+                        <p class="text-lg font-bold text-white capitalize">${esc(fmtDay(poll.date))}${poll.time ? ' · ' + esc(poll.time) : ''}</p>
+                    </div>
+                    <div class="flex gap-3 text-sm text-gray-200"><span>✅ ${g.si.length}</span><span>❓ ${g.forse.length}</span><span>❌ ${g.no.length}</span></div>
+                </div>
+                ${answerButtonsHtml(true)}
+                <div class="flex flex-wrap justify-between items-center gap-2 mt-3 text-sm">
+                    ${pid ? `<span>${forNext ? '🃏 Jolly giocato 🤫' : `Jolly rimasti: ${jollyLeft(pid)}`}</span>` : '<span></span>'}
+                    <button class="underline text-accent" onclick="switchPage('presenze')">Vedi chi c'è${pid && !forNext && pollIsOpen() && jollyLeft(pid) ? ' · gioca il jolly' : ''} →</button>
+                </div>
+            </div>`;
+        }
+
+        // ---------- ADMIN: UTENTI E ATTIVITÀ ----------
+        let logCache = [];
+        let logFilter = '';
+        window.app_loadLog = async () => {
+            if (!isAdmin) return;
+            const box = document.getElementById('log-list');
+            if (box) box.innerHTML = '<p class="text-gray-400">Carico…</p>';
+            try {
+                const q = query(collection(db, 'scandoLog'), orderBy('ts', 'desc'), limit(300));
+                const snap = await getDocs(q);
+                logCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            } catch (e) {
+                console.error(e);
+                if (box) box.innerHTML = `<p class="text-red-400">Registro non leggibile: ${esc(e.message || e)}</p>`;
+                return;
+            }
+            renderLogList();
+        };
+        window.app_filterLog = (v) => { logFilter = v; renderLogList(); };
+        function renderLogList() {
+            const box = document.getElementById('log-list');
+            if (!box) return;
+            const list = logCache.filter(l => !logFilter || l.uid === logFilter);
+            if (!list.length) { box.innerHTML = '<p class="text-gray-400">Nessuna attività registrata.</p>'; return; }
+            const ICON = { login: '🔑', signup: '🆕', link: '🔗', approve: '✅', poll: '🗳️', 'poll-set': '📅', jolly: '🃏', 'jolly-admin': '🃏', save: '💾', share: '📲', season: '📊', users: '👥' };
+            box.innerHTML = list.map(l => {
+                const secret = l.secretUntil && Date.now() < l.secretUntil;
+                const text = secret ? '🤫 azione segreta (si vedrà all\'inizio dell\'allenamento)' : l.text;
+                return `<div class="flex gap-3 py-2 border-b border-gray-700 text-sm">
+                    <span class="text-gray-400 w-24 flex-shrink-0">${fmtWhen(l.ts)}</span>
+                    <span>${ICON[l.type] || '•'}</span>
+                    <span><strong class="text-white">${esc(l.name || '?')}</strong> ${esc(text || '')}</span>
+                </div>`;
+            }).join('');
+        }
+
+        window.app_approveUser = async (uid, pid) => {
+            if (!isAdmin) return;
+            const u = usersList.find(x => x.uid === uid);
+            const target = pid || (u && u.requestedPlayerId);
+            if (!target) return;
+            const other = linkedUidOf(target);
+            const doIt = async () => {
+                try {
+                    if (other && other !== uid) await updateDoc(doc(db, 'scandoUsers', other), { status: 'none', playerId: null });
+                    await updateDoc(doc(db, 'scandoUsers', uid), { status: 'approved', playerId: target, requestedPlayerId: null });
+                    logAction('approve', 'ha collegato ' + ((u && u.name) || 'un account') + ' a ' + playerFull(playerById(target)));
+                    showToast('Account collegato ✅');
+                } catch (e) { alert('Errore: ' + (e.message || e)); }
+            };
+            if (other && other !== uid) {
+                const ou = usersList.find(x => x.uid === other);
+                showConfirmModal('Giocatore già collegato', `${playerFull(playerById(target))} è già collegato a ${(ou && ou.name) || 'un altro account'}. Spostarlo su questo account?`, doIt);
+            } else doIt();
+        };
+        window.app_setUserStatus = async (uid, status) => {
+            if (!isAdmin) return;
+            const u = usersList.find(x => x.uid === uid);
+            const patch = { status };
+            if (status === 'none') { patch.playerId = null; patch.requestedPlayerId = null; }
+            try {
+                await updateDoc(doc(db, 'scandoUsers', uid), patch);
+                const label = { blocked: 'ha bloccato', none: 'ha scollegato', approved: 'ha sbloccato' }[status] || 'ha modificato';
+                logAction('users', label + ' l\'account di ' + ((u && u.name) || '?'));
+            } catch (e) { alert('Errore: ' + (e.message || e)); }
+        };
+        window.app_unblockUser = (uid) => {
+            const u = usersList.find(x => x.uid === uid);
+            app_setUserStatus(uid, u && u.playerId ? 'approved' : 'none');
+        };
+        window.app_linkUserSelect = (uid, pid) => { if (pid) app_approveUser(uid, pid); else app_setUserStatus(uid, 'none'); };
+
+        function renderUsersPage() {
+            const box = document.getElementById('users-box');
+            if (!box) return;
+            if (!isAdmin) { box.innerHTML = ''; return; }
+            const pending = usersList.filter(u => u.status === 'pending');
+            const sorted = [...usersList].sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+            const statusTxt = u => ({ approved: '✅ collegato', pending: '⏳ in attesa', blocked: '⛔ bloccato', fan: '👀 tifoso', none: '❔ da collegare' }[u.status] || '❔ da collegare');
+            const revealed = jollyDocs.filter(jollyRevealed).sort((a, b) => b.date.localeCompare(a.date));
+            const hidden = jollyDocs.filter(j => !jollyRevealed(j)).length;
+            box.innerHTML = `
+                ${pending.length ? `<div class="card rounded-lg p-4 mb-6 border-l-4 border-yellow-400">
+                    <h3 class="text-xl font-bold text-white mb-3">⏳ Richieste da confermare (${pending.length})</h3>
+                    ${pending.map(u => {
+                        const p = playerById(u.requestedPlayerId);
+                        return `<div class="flex flex-wrap items-center gap-3 py-2 border-b border-gray-700">
+                            ${avatarHtml(p, 36)}
+                            <div class="flex-grow"><p class="text-white font-semibold">${esc(u.name || '?')} <span class="text-gray-400 font-normal text-sm">${esc(u.email || '')}</span></p>
+                            <p class="text-sm text-gray-300">dice di essere <strong>${esc(playerFull(p))}</strong></p></div>
+                            <button class="bg-green-600 text-white text-sm py-1 px-3 rounded" onclick="app_approveUser('${u.uid}')">Conferma</button>
+                            <button class="bg-gray-600 text-white text-sm py-1 px-3 rounded" onclick="app_setUserStatus('${u.uid}','none')">Rifiuta</button>
+                        </div>`;
+                    }).join('')}
+                </div>` : ''}
+                <div class="card rounded-lg p-4 mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">👥 Account registrati (${usersList.length})</h3>
+                    ${sorted.length ? sorted.map(u => `
+                        <div class="flex flex-wrap items-center gap-2 py-2 border-b border-gray-700 text-sm">
+                            <div class="flex-grow min-w-[180px]"><p class="text-white font-semibold">${esc(u.name || '?')}</p>
+                                <p class="text-gray-400 text-xs">${esc(u.email || '')} · ultimo accesso ${fmtWhen(u.lastSeen)}</p></div>
+                            <span class="text-xs">${statusTxt(u)}</span>
+                            <select class="form-input rounded p-1 text-xs" onchange="app_linkUserSelect('${u.uid}', this.value)">
+                                <option value="">— nessun giocatore —</option>
+                                ${players.map(p => `<option value="${p.id}" ${u.status === 'approved' && u.playerId === p.id ? 'selected' : ''}>${esc(playerFull(p))}</option>`).join('')}
+                            </select>
+                            ${u.status === 'blocked' ? `<button class="bg-gray-600 text-white text-xs py-1 px-2 rounded" onclick="app_unblockUser('${u.uid}')">Sblocca</button>`
+                                : `<button class="bg-red-700 text-white text-xs py-1 px-2 rounded" onclick="app_setUserStatus('${u.uid}','blocked')">Blocca</button>`}
+                        </div>`).join('') : '<p class="text-gray-400">Ancora nessun account.</p>'}
+                </div>
+                <div class="card rounded-lg p-4 mb-6">
+                    <h3 class="text-xl font-bold text-white mb-1">🃏 Jolly giocati</h3>
+                    <p class="text-xs text-gray-400 mb-3">${hidden ? hidden + ' jolly ancora segreti (si vedono all\'inizio dell\'allenamento). ' : ''}Se un allenamento salta, puoi restituire il jolly.</p>
+                    ${revealed.length ? revealed.map(j => {
+                        const r = jollyResult(j);
+                        return `<div class="flex flex-wrap items-center gap-2 py-1 border-b border-gray-700 text-sm">
+                            <span class="w-28 capitalize">${esc(fmtShort(j.date))}</span><span class="flex-grow text-white">${esc(playerFull(playerById(j.playerId)))}</span>
+                            <span class="${r.cls}">${r.txt}</span>
+                            <button class="text-xs underline text-gray-400" onclick="app_refundJolly('${j.id}')">restituisci</button></div>`;
+                    }).join('') : '<p class="text-gray-400 text-sm">Nessun jolly scoperto.</p>'}
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+                        <h3 class="text-xl font-bold text-white">📜 Attività</h3>
+                        <div class="flex gap-2">
+                            <select class="form-input rounded p-1 text-sm" onchange="app_filterLog(this.value)">
+                                <option value="">Tutti</option>
+                                ${sorted.map(u => `<option value="${u.uid}" ${logFilter === u.uid ? 'selected' : ''}>${esc(u.name || '?')}</option>`).join('')}
+                            </select>
+                            <button class="bg-gray-600 text-white text-sm py-1 px-3 rounded" onclick="app_loadLog()">↻ Aggiorna</button>
+                        </div>
+                    </div>
+                    <div id="log-list"><p class="text-gray-400 text-sm">Premi "Aggiorna" per vedere le ultime attività.</p></div>
+                </div>`;
+            if (logCache.length) renderLogList();
+        }
+
+        // ---------- LA MIA STAGIONE ----------
+        let seasonPid = null;
+        function realTrainingDates() {
+            return Object.keys(trainings).sort().filter(d => {
+                const ps = trainings[d] && trainings[d].players;
+                return ps && Object.values(ps).some(x => x && (x.present || (parseInt(x.setsWon, 10) || 0) > 0));
+            });
+        }
+        function seasonStats(pid) {
+            const p = playerById(pid);
+            if (!p) return null;
+            const st = computeStandings();
+            const me = st.find(x => x.id === pid) || {};
+            const ranked = rankedStandings();
+            const r = ranked.find(x => x.id === pid);
+            const dates = realTrainingDates();
+            let best = null;
+            const months = {};
+            dates.forEach(d => {
+                const pd = trainings[d].players[pid];
+                if (!pd) return;
+                const sets = parseInt(pd.setsWon, 10) || 0;
+                if (sets > 0 && (!best || sets > best.sets)) best = { date: d, sets };
+                const m = d.slice(0, 7);
+                months[m] = (months[m] || 0) + sets + (pd.present ? 1 : 0) + (pd.dishes ? 1 : 0);
+            });
+            const bestMonth = Object.entries(months).sort((a, b) => b[1] - a[1])[0];
+            const streak = computeStreaks()[pid] || { current: 0, best: 0 };
+            const active = st.filter(x => x.attendanceCount > 0);
+            const teamAvg = active.length ? active.reduce((a, x) => a + parseFloat(x.pointAverage || 0), 0) / active.length : 0;
+            const myAvg = parseFloat(me.pointAverage || 0);
+            const maxDishes = Math.max(0, ...st.map(x => x.dishPoints || 0));
+            const pct = dates.length ? Math.round((me.attendanceCount || 0) / dates.length * 100) : 0;
+            const jolly = seasonJollies(pid);
+            const badgeList = (p.assignedBadges || []).map(id => badges.find(b => b.id === id)).filter(Boolean);
+            let title = ['💪', 'Il Gregario di Lusso', 'Sempre utile alla causa.'];
+            if (!me.attendanceCount) title = ['👀', 'Lo Spettatore', 'La stagione è lunga: ti aspettiamo in campo!'];
+            else if (r && r.rank === 1) title = ['👑', 'Il Capoclassifica', 'Tutti inseguono te.'];
+            else if (myAvg > 0 && myAvg >= teamAvg * 1.25 && me.attendanceCount >= 2) title = ['💥', 'Il Bomber', 'Quando giochi tu, i set arrivano.'];
+            else if (pct >= 90 && dates.length >= 3) title = ['🧱', 'Lo Stakanovista', 'Non salti un allenamento.'];
+            else if (me.dishPoints >= 3 && me.dishPoints === maxDishes) title = ['🍽️', 'Il Re dei Piatti', 'Lo spogliatoio ringrazia.'];
+            else if ((me.jollyPoints || 0) >= 4) title = ['🃏', 'Il Giocatore d\'Azzardo', 'I jolly giusti al momento giusto.'];
+            return {
+                p, points: me.totalPoints || 0, rank: r ? r.rank : null, of: ranked.length,
+                presences: me.attendanceCount || 0, trainings: dates.length, pct,
+                sets: me.setsWon || 0, avg: myAvg, teamAvg, dishes: me.dishPoints || 0,
+                badgePts: me.badgePoints || 0, badgeList, best, bestMonth,
+                streakBest: streak.best, streakNow: streak.current,
+                jollyUsed: jolly.length, jollyPts: me.jollyPoints || 0, title
+            };
+        }
+        function monthName(m) { return new Date(m + '-15T12:00:00').toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }); }
+        function seasonSlides(s) {
+            const first = s.p.name || playerLabel(s.p);
+            return [
+                { bg: 'linear-gradient(160deg,#e94560,#7b1fa2)', big: '🏐', title: `${first}, ecco la tua stagione`, sub: seasonLabel() },
+                { bg: 'linear-gradient(160deg,#0f3460,#1565c0)', big: s.points, unit: 'punti', title: s.rank ? `${s.rank}° posto su ${s.of}` : 'Ancora fuori classifica', sub: s.rank === 1 ? 'Sei in vetta!' : (s.rank && s.rank <= 3 ? 'Sei sul podio!' : '') },
+                { bg: 'linear-gradient(160deg,#00695c,#26a69a)', big: s.presences, unit: 'presenze', title: `su ${s.trainings} allenamenti (${s.pct}%)`, sub: s.streakBest ? `Serie record: ${s.streakBest} di fila 🔥` : '' },
+                { bg: 'linear-gradient(160deg,#d95926,#f6a623)', big: s.sets, unit: 'set vinti', title: `Media ${s.avg.toFixed(2)} a presenza`, sub: `La squadra fa ${s.teamAvg.toFixed(2)}${s.best ? ` · serata top: ${s.best.sets} set (${fmtShort(s.best.date)})` : ''}` },
+                { bg: 'linear-gradient(160deg,#37474f,#607d8b)', big: s.dishes, unit: 'volte ai piatti', title: s.badgeList.length ? 'Badge: ' + s.badgeList.map(b => b.icon || '🏅').join(' ') : 'Nessun badge, per ora', sub: s.bestMonth ? `Mese migliore: ${monthName(s.bestMonth[0])}` : '' },
+                { bg: 'linear-gradient(160deg,#4a148c,#9c27b0)', big: '🃏 ' + s.jollyUsed + '/' + JOLLY_PER_SEASON, unit: 'jolly giocati', title: s.jollyPts ? `+${s.jollyPts} punti bonus` : 'Nessun punto bonus (ancora)', sub: '' },
+                { bg: 'linear-gradient(160deg,#e94560,#f6c700)', big: s.title[0], title: s.title[1], sub: s.title[2] }
+            ];
+        }
+        function slideHtml(sl) {
+            return `<div class="season-slide" style="background:${sl.bg}">
+                <div class="season-big">${esc(String(sl.big))}</div>
+                ${sl.unit ? `<div class="season-unit">${esc(sl.unit)}</div>` : ''}
+                <div class="season-title">${esc(sl.title || '')}</div>
+                ${sl.sub ? `<div class="season-sub">${esc(sl.sub)}</div>` : ''}
+            </div>`;
+        }
+        window.app_seasonPick = (pid) => { seasonPid = pid; renderSeasonPage(); };
+        function renderSeasonPage() {
+            const box = document.getElementById('season-box');
+            if (!box) return;
+            if (!seasonPid || !playerById(seasonPid)) seasonPid = myPlayerId() || null;
+            const opts = [...players].sort((a, b) => playerFull(a).localeCompare(playerFull(b)))
+                .map(p => `<option value="${p.id}" ${p.id === seasonPid ? 'selected' : ''}>${esc(playerFull(p))}${p.id === myPlayerId() ? ' (tu)' : ''}</option>`).join('');
+            const picker = `<div class="flex flex-wrap items-center gap-2 mb-4"><span class="text-gray-300 text-sm">Stagione di</span>
+                <select class="form-input rounded p-2" onchange="app_seasonPick(this.value)"><option value="">— scegli —</option>${opts}</select></div>`;
+            const s = seasonPid ? seasonStats(seasonPid) : null;
+            if (!s) { box.innerHTML = picker + `<div class="card rounded-lg p-6 text-gray-300">Scegli un giocatore per vedere la sua stagione.</div>`; return; }
+            box.innerHTML = picker + `
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="btn-accent text-white font-bold py-2 px-4 rounded" onclick="app_playStory()">▶ Guarda come storia</button>
+                    <button class="share-btn" onclick="app_shareSeason(event)"><span class="text-lg leading-none">📲</span> Condividi</button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${seasonSlides(s).map(slideHtml).join('')}</div>`;
+            if (!seasonViewLogged && seasonPid === myPlayerId()) { seasonViewLogged = true; logAction('season', 'ha guardato La mia stagione'); }
+        }
+        window.app_playStory = () => {
+            const s = seasonStats(seasonPid);
+            if (!s) return;
+            const slides = seasonSlides(s);
+            const ov = document.getElementById('story-overlay');
+            let i = 0;
+            const show = () => {
+                clearTimeout(storyTimer);
+                if (i >= slides.length) { app_closeStory(); return; }
+                ov.innerHTML = `<div class="story-bars">${slides.map((_, k) => `<i class="${k < i ? 'done' : (k === i ? 'run' : '')}"></i>`).join('')}</div>
+                    <button class="story-close" onclick="event.stopPropagation();app_closeStory()">✕</button>
+                    ${slideHtml(slides[i]).replace('season-slide', 'season-slide story-slide')}`;
+                storyTimer = setTimeout(() => { i++; show(); }, 4000);
+            };
+            ov.onclick = (e) => { const left = e.clientX < window.innerWidth / 3; i = Math.max(0, i + (left ? -1 : 1)); show(); };
+            ov.classList.remove('hidden');
+            show();
+        };
+        window.app_closeStory = () => { clearTimeout(storyTimer); const ov = document.getElementById('story-overlay'); ov.classList.add('hidden'); ov.innerHTML = ''; };
+
+        window.app_shareSeason = (evt) => {
+            const btn = evt && evt.currentTarget;
+            return withButtonBusy(btn, 'Preparo…', async () => {
+                const s = seasonStats(seasonPid);
+                if (!s) return;
+                const W = 1080, H = 1350;
+                const c = document.createElement('canvas'); c.width = W; c.height = H;
+                const ctx = c.getContext('2d');
+                try { await document.fonts.ready; } catch (e) {}
+                paintBackdrop(ctx, W, H);
+                paintHeader(ctx, W, 'LA MIA STAGIONE', seasonLabel());
+                const img = await loadImageSafe(s.p.photo);
+                drawAvatar(ctx, img, s.p, W / 2, 360, 110, '#e94560');
+                ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '700 56px Poppins, sans-serif';
+                ctx.fillText(playerFull(s.p), W / 2, 540);
+                ctx.fillStyle = '#f6c700'; ctx.font = '700 40px Poppins, sans-serif';
+                ctx.fillText(s.title[0] + ' ' + s.title[1], W / 2, 600);
+                const tiles = [
+                    ['PUNTI', String(s.points)], ['POSIZIONE', s.rank ? s.rank + '° / ' + s.of : '—'], ['PRESENZE', s.presences + ' (' + s.pct + '%)'],
+                    ['SET VINTI', String(s.sets)], ['SERIE RECORD', s.streakBest + ' 🔥'], ['JOLLY', s.jollyUsed + '/' + JOLLY_PER_SEASON + (s.jollyPts ? ' (+' + s.jollyPts + ')' : '')]
+                ];
+                const tw = 300, th = 180, gx = 30, x0 = (W - (tw * 3 + gx * 2)) / 2, y0 = 660;
+                tiles.forEach((t, k) => {
+                    const x = x0 + (k % 3) * (tw + gx), y = y0 + Math.floor(k / 3) * (th + gx);
+                    roundRectPath(ctx, x, y, tw, th, 24); ctx.fillStyle = '#16213e'; ctx.fill();
+                    ctx.fillStyle = '#9ca3af'; ctx.font = '600 26px Poppins, sans-serif'; ctx.fillText(t[0], x + tw / 2, y + 56);
+                    ctx.fillStyle = '#fff'; ctx.font = '700 ' + (t[1].length > 9 ? 40 : 54) + 'px Poppins, sans-serif'; ctx.fillText(t[1], x + tw / 2, y + 128);
+                });
+                ctx.fillStyle = '#d1d5db'; ctx.font = '400 30px Poppins, sans-serif';
+                const extra = [s.dishes ? '🍽️ ' + s.dishes + ' volte ai piatti' : '', s.badgeList.length ? 'Badge ' + s.badgeList.map(b => b.icon || '🏅').join(' ') : ''].filter(Boolean).join('   ·   ');
+                if (extra) ctx.fillText(extra, W / 2, 1150);
+                if (s.best) ctx.fillText('Serata top: ' + s.best.sets + ' set il ' + fmtShort(s.best.date), W / 2, 1200);
+                paintFooter(ctx, W, H);
+                logAction('share', 'ha condiviso La stagione di ' + playerFull(s.p));
+                await sharePng(c, 'stagione-' + (s.p.name || 'giocatore').toLowerCase() + '.png', '📊 La mia stagione a Scando Volley!');
+            });
+        };
+
+        // ---------- render di tutte le novità ----------
+        function renderNewFeatures() {
+            if (!appEntered) return;
+            try {
+                renderNextTrainingCard();
+                if (currentPage === 'presenze') { renderPollPage(); renderJollyBox(); }
+                if (currentPage === 'stagione') renderSeasonPage();
+                if (currentPage === 'utenti') renderUsersPage();
+                renderUserChip();
+                maybeAskWhoAmI();
+                document.querySelectorAll('.nf-badge-pending').forEach(el => {
+                    const n = isAdmin ? usersList.filter(u => u.status === 'pending').length : 0;
+                    el.textContent = n ? n : ''; el.classList.toggle('hidden', !n);
+                });
+            } catch (e) { console.error('Errore nelle novità:', e); }
+        }
+
+        // registra le condivisioni della classifica
+        const _origShareStandings = window.app_shareStandings;
+        window.app_shareStandings = (evt) => { logAction('share', 'ha condiviso la classifica'); return _origShareStandings(evt); };
+
+        // Etichette nel registro allenamenti: risposta al sondaggio e jolly (solo quando è scoperto)
+        function trainingTagsHtml(pid) {
+            let out = '';
+            if (poll && poll.date === selectedTrainingDate) {
+                const a = pollAnswers()[pid];
+                if (a && ANS[a.v]) out += ` <span class="text-sm" title="Sondaggio: ${ANS[a.v].label}">${ANS[a.v].icon}</span>`;
+            }
+            const j = jollyDocs.find(x => x.date === selectedTrainingDate && x.playerId === pid);
+            if (j && jollyRevealed(j)) out += ' <span class="jolly-chip" title="Ha giocato il jolly: set x2">🃏 x2</span>';
+            return out;
+        }
+
         // --- EVENT LISTENERS ---
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                switchPage(e.target.dataset.page);
+                switchPage(e.currentTarget.dataset.page);
             });
         });
         
