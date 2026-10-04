@@ -233,21 +233,26 @@
         ::-webkit-scrollbar-thumb:hover { background: #6d44a6; }
 
         /* --- Condivisione, serie di presenze e grafici --- */
-        /* --- Novità: account, sondaggio, jolly, stagione --- */
+        /* --- Novità: account, jolly, notifiche, stagione --- */
         .user-chip { display:inline-flex; align-items:center; gap:.4rem; background:var(--primary); color:#fff; border-radius:9999px; padding:.25rem .7rem; font-size:.85rem; max-width:180px; overflow:hidden; white-space:nowrap; }
+        .notif-bell { position:relative; font-size:1.2rem; padding:.15rem .35rem; }
+        .notif-bell .nf-badge { position:absolute; top:-4px; right:-6px; margin:0; }
         .nf-badge { background:#e94560; color:#fff; border-radius:9999px; font-size:.7rem; padding:0 .4rem; margin-left:.2rem; }
-        .poll-btn { border:2px solid var(--c); color:#fff; border-radius:9999px; font-weight:600; background:transparent; transition:all .15s; }
-        .poll-btn.active { background:var(--c); color:#111; }
-        .poll-btn:disabled { opacity:.45; cursor:not-allowed; }
-        .poll-bar { height:10px; background:#0f1a33; border-radius:9999px; overflow:hidden; }
-        .poll-bar i { display:block; height:100%; border-radius:9999px; transition:width .4s; }
-        .poll-name { display:inline-flex; align-items:center; gap:.3rem; background:var(--primary); border-radius:9999px; padding:.15rem .55rem .15rem .2rem; font-size:.8rem; color:#e5e7eb; }
-        .next-card { border-left:4px solid #22c55e; }
+        .notif-unread { background:rgba(233,69,96,.10); border-radius:.4rem; }
+        .nf-switch { appearance:none !important; -webkit-appearance:none !important; width:42px !important; height:24px !important; border:none !important; border-radius:9999px !important; background:#4b5563 !important; position:relative; cursor:pointer; flex-shrink:0; transition:background .2s; }
+        .nf-switch::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .2s; }
+        .nf-switch:checked { background:#22c55e !important; }
+        .nf-switch:checked::after { left:21px; }
         .jolly-chip { display:inline-flex; align-items:center; gap:.2rem; background:#6d28d9; color:#fff; border-radius:9999px; padding:0 .45rem; font-size:.75rem; font-weight:700; }
         .jolly-card { display:inline-flex; align-items:center; justify-content:center; width:2.1rem; height:2.8rem; border-radius:.4rem; background:linear-gradient(160deg,#7c3aed,#db2777); font-size:1.2rem; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+        .jolly-strip .jolly-card { width:1.5rem; height:2rem; font-size:.85rem; }
         .jolly-card.used { background:#374151; opacity:.4; filter:grayscale(1); }
-        .jolly-play { background:linear-gradient(90deg,#7c3aed,#db2777); color:#fff; font-weight:700; padding:.6rem 1.2rem; border-radius:9999px; box-shadow:0 4px 14px rgba(219,39,119,.4); }
+        .jolly-play { background:linear-gradient(90deg,#7c3aed,#db2777); color:#fff; font-weight:700; padding:.7rem 1.2rem; border-radius:9999px; box-shadow:0 4px 14px rgba(219,39,119,.4); width:100%; }
         .jolly-play:active { transform:scale(.97); }
+        .jolly-armed { background:linear-gradient(135deg,rgba(124,58,237,.35),rgba(219,39,119,.35)); border:1px solid #a855f7; border-radius:.75rem; padding:.8rem 1rem; }
+        .jolly-strip { border-left:4px solid #a855f7; }
+        .jolly-reveal { font-size:5rem; line-height:1; animation:jollyFlip 1s ease; display:inline-block; }
+        @keyframes jollyFlip { 0% { transform:rotateY(90deg) scale(.4); opacity:0; } 60% { transform:rotateY(-15deg) scale(1.15); opacity:1; } 100% { transform:none; } }
         .pick-chip.active { border-color:var(--accent); }
         .season-slide { border-radius:1rem; padding:1.5rem 1.2rem; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fff; box-shadow:0 6px 18px rgba(0,0,0,.35); }
         .season-big { font-size:3.2rem; font-weight:800; line-height:1.05; }
@@ -378,7 +383,7 @@
                 </div>
                 <div class="hidden lg:flex items-center space-x-5 text-gray-300">
                     <a href="#" class="nav-link active" data-page="classifica">Classifica</a>
-                    <a href="#" class="nav-link" data-page="presenze">Ci sei?</a>
+                    <a href="#" class="nav-link" data-page="jolly">🃏 Jolly</a>
                     <a href="#" class="nav-link" data-page="stagione">La mia stagione</a>
                     <a href="#" class="nav-link" data-page="giocatori">Giocatori</a>
                     <a href="#" class="nav-link" data-page="allenamenti">Allenamenti</a>
@@ -390,7 +395,8 @@
                     <a href="#" class="nav-link hidden" data-page="figurine">Figurine</a>
                     <a href="#" class="nav-link admin-content hidden" data-page="utenti">Utenti <span class="nf-badge-pending nf-badge hidden"></span></a>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                <button id="notif-bell" type="button" onclick="switchPage('notifiche')" class="notif-bell hidden" title="Notifiche">🔔<span id="notif-count" class="nf-badge hidden"></span></button>
                 <button id="user-chip" type="button" onclick="app_openAccount()" class="user-chip">👤</button>
                 <button id="mobile-menu-button" class="lg:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -399,8 +405,9 @@
             </nav>
             <div id="mobile-menu" class="hidden lg:hidden px-4 pb-4 space-y-2 text-center">
                 <a href="#" class="block nav-link py-2" data-page="classifica">Classifica</a>
-                <a href="#" class="block nav-link py-2" data-page="presenze">Ci sei? (presenze e jolly)</a>
+                <a href="#" class="block nav-link py-2" data-page="jolly">🃏 Jolly</a>
                 <a href="#" class="block nav-link py-2" data-page="stagione">La mia stagione</a>
+                <a href="#" class="block nav-link py-2" data-page="notifiche">🔔 Notifiche</a>
                 <a href="#" class="block nav-link py-2" data-page="giocatori">Giocatori</a>
                 <a href="#" class="block nav-link py-2" data-page="allenamenti">Registro Allenamenti</a>
                 <a href="#" class="block nav-link py-2" data-page="squadre">Genera Squadre</a>
@@ -416,7 +423,7 @@
         <main class="container mx-auto p-4 md:p-6">
             <!-- Pagina Classifica -->
             <div id="page-classifica" class="page">
-                <div id="next-training-card"></div>
+                <div id="jolly-strip"></div>
                 <div class="card rounded-lg p-4 mb-6 border-l-4 border-accent">
                     <h2 class="text-xl font-bold mb-2 text-accent">Regolamento Punti</h2>
                     <ul class="list-disc list-inside text-gray-300 space-y-1">
@@ -424,7 +431,7 @@
                         <li><strong class="text-white">1 Punto</strong> per la presenza a ogni allenamento.</li>
                         <li><strong class="text-white">1 Punto</strong> extra se lavi i piatti dopo la cena di squadra.</li>
                         <li><strong class="text-white">Punti Badge</strong> assegnati al raggiungimento di obiettivi speciali.</li>
-                        <li><strong class="text-white">🃏 Jolly</strong>: 3 a stagione, raddoppia i punti dei <em>set vinti</em> nell'allenamento in cui lo giochi (non presenze, piatti o badge). Si gioca in segreto prima dell'inizio.</li>
+                        <li><strong class="text-white">🃏 Jolly</strong>: 3 a stagione, raddoppia i punti dei <em>set vinti</em> nel prossimo allenamento (non presenze, piatti o badge). Si gioca in segreto e si scopre quando vengono inseriti i punteggi.</li>
                     </ul>
                 </div>
 
@@ -810,12 +817,12 @@
                     <button onclick="saveTrainingDetail()" class="w-full btn-accent text-white font-bold py-2 px-4 rounded-lg">Salva</button>
                 </div>
             </div>
-            <!-- Pagina Ci sei? (sondaggio presenze + jolly) -->
-            <div id="page-presenze" class="page hidden">
-                <h2 class="text-3xl font-bold text-white mb-4">Ci sei?</h2>
+            <!-- Pagina Jolly -->
+            <div id="page-jolly" class="page hidden">
+                <h2 class="text-3xl font-bold text-white mb-4">🃏 Jolly</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="lg:col-span-2 space-y-4"><div id="poll-box"></div><div id="poll-admin"></div></div>
-                    <div id="jolly-box"></div>
+                    <div class="space-y-4"><div id="jolly-mine"></div><div id="jolly-admin"></div></div>
+                    <div class="lg:col-span-2" id="jolly-team"></div>
                 </div>
             </div>
 
@@ -823,6 +830,12 @@
             <div id="page-stagione" class="page hidden">
                 <h2 class="text-3xl font-bold text-white mb-4">La mia stagione</h2>
                 <div id="season-box"></div>
+            </div>
+
+            <!-- Pagina Notifiche -->
+            <div id="page-notifiche" class="page hidden">
+                <h2 class="text-3xl font-bold text-white mb-4">🔔 Notifiche</h2>
+                <div id="notif-box"></div>
             </div>
 
             <!-- Pagina Utenti e attività (solo admin) -->
@@ -839,9 +852,9 @@
     </div>
 
     <!-- Modal Conferma Generica -->
-    <!-- Finestra per account / "Chi sei?" -->
+    <!-- Finestra per account / "Chi sei?" / jolly scoperti -->
     <div id="nf-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden" onclick="if(event.target===this)app_closeNf()">
-        <div class="card rounded-lg p-6 shadow-2xl w-11/12 max-w-lg text-gray-300" id="nf-modal-content"></div>
+        <div class="card rounded-lg p-6 shadow-2xl w-11/12 max-w-lg text-gray-300 overflow-y-auto" style="max-height:90vh" id="nf-modal-content"></div>
     </div>
     <!-- Storia "La mia stagione" a schermo intero -->
     <div id="story-overlay" class="hidden"></div>
@@ -894,7 +907,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, getDocs, collection, updateDoc, deleteDoc, addDoc, deleteField, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, getDocs, collection, updateDoc, deleteDoc, addDoc, deleteField, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
         // VERSIONE DI PROVA: App Check non serve (era solo per Gemini)
         const getAppCheckToken = async () => { throw new Error('App Check non attivo nella versione di prova'); };
 
@@ -1051,7 +1064,7 @@
                 await setDoc(dbDocRef, appState);
                 hasUnsavedChanges = false;
                 showToast('Dati salvati sul database!');
-                logAction('save', 'ha salvato i dati (allenamento del ' + fmtShort(selectedTrainingDate) + ')');
+                await afterScoresSaved(selectedTrainingDate);   // notifiche + scoperta dei jolly
             } catch (e) {
                 console.error("Errore salvataggio:", e);
                 showToast('Errore nel salvataggio dei dati!');
@@ -4405,6 +4418,7 @@
 
         function checkAndAwardBadges(currentTrainingDate) {
             const awardedMessages = [];
+            lastAwardedBadges = [];
             const sortedTrainingDates = Object.keys(trainings).sort();
             players.forEach(player => {
                 if (!player.assignedBadges) player.assignedBadges = [];
@@ -4451,6 +4465,7 @@
                     if(criterionMet) {
                         player.assignedBadges.push(badge.id);
                         awardedMessages.push(`${player.name} ha sbloccato: ${badge.name}!`);
+                        lastAwardedBadges.push({ player: [player.name, player.surname].filter(Boolean).join(' '), name: badge.name, icon: badge.icon });
                     }
                 });
             });
@@ -4858,43 +4873,52 @@
         }
 
         // ============================================================
-        //  NOVITÀ (versione di prova): ACCOUNT, "CI SEI?", JOLLY, LA MIA STAGIONE
+        //  NOVITÀ (versione di prova): ACCOUNT, JOLLY SEGRETO, NOTIFICHE, LA MIA STAGIONE
         // ============================================================
         // Dati in collezioni separate da appState, così le azioni degli utenti
         // non toccano mai il documento principale che salva l'admin:
-        //   scandoUsers/{uid}        account registrati e abbinamento al giocatore
-        //   scandoPoll/current       prossimo allenamento + risposte (sì / forse / no)
-        //   scandoJolly/{data_gioc}  jolly giocati (segreti fino all'inizio dell'allenamento)
-        //   scandoLog/{auto}         registro delle attività (lo vede l'admin)
+        //   scandoUsers/{uid}          account registrati, abbinamento al giocatore, impostazioni notifiche
+        //   scandoJollyPending/{uid}   jolly giocato e non ancora scoperto (lo leggono solo il giocatore e l'admin)
+        //   scandoJolly/{data_gioc}    jolly scoperti (li vedono tutti)
+        //   scandoConfig/jolly         ora limite per giocare il jolly
+        //   scandoNotif/{id}           notifiche (a un utente oppure a tutti)
+        //   scandoLog/{auto}           registro delle attività (lo legge solo l'admin)
+        // ⚠️ Le email qui sotto devono essere le stesse scritte nelle regole di Firestore.
+        const ADMIN_EMAILS = ['alettipaolo24@gmail.com'];
         const JOLLY_PER_SEASON = 3;
-        function seasonLabel() { const d = new Date(), y = d.getFullYear(); return d.getMonth() >= 8 ? y + '/' + (y + 1) : (y - 1) + '/' + y; }
-        const DEFAULT_TRAINING_TIME = '21:00';
-        const pollRef = doc(db, 'scandoPoll', 'current');
+        const DEFAULT_JOLLY_CUTOFF = '20:30';
+        const jollyCfgRef = doc(db, 'scandoConfig', 'jolly');
+        const NOTIF_TYPES = {
+            jolly: { label: 'Il mio jolly scoperto', icon: '🃏' },
+            jollyAll: { label: 'Jolly scoperti degli altri giocatori', icon: '🃏' },
+            classifica: { label: 'Classifica aggiornata', icon: '📊' },
+            badge: { label: 'Badge sbloccati', icon: '🏅' },
+            account: { label: 'Il mio account (conferma, blocco)', icon: '👤' }
+        };
 
         let authUser = null;          // utente Firebase (anche anonimo)
         let myProfile = null;         // documento scandoUsers del mio account
-        let usersList = [];           // tutti gli account (per l'admin e per "Chi sei?")
-        let poll = null;              // sondaggio del prossimo allenamento
-        let jollyDocs = [];           // tutti i jolly giocati
-        let appEntered = false;       // l'utente ha superato la schermata di accesso
+        let usersList = [];           // tutti gli account (solo admin)
+        let usersError = '';
+        let jollyDocs = [];           // jolly già scoperti
+        let myPending = null;         // il mio jolly giocato e non ancora scoperto
+        let jollyCfg = { cutoff: DEFAULT_JOLLY_CUTOFF };
+        let notifMine = [], notifAll = [];
+        let notifSeen = null;         // id già visti in questa sessione (per gli avvisi)
+        let notifLoaded = { mine: false, all: false };
+        let appEntered = false;
         let liveStarted = false;
         let signupMode = false;
         let loginLogged = false;
         let seasonViewLogged = false;
         let storyTimer = null;
+        let lastAwardedBadges = [];
 
         // ---------- utilità ----------
         const z2 = n => String(n).padStart(2, '0');
         function localDateStr(d = new Date()) { return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()); }
-        function fmtDay(ds, withYear) {
-            if (!ds) return '';
-            const d = new Date(ds + 'T12:00:00');
-            const opts = { weekday: 'long', day: 'numeric', month: 'long' };
-            if (withYear) opts.year = 'numeric';
-            return d.toLocaleDateString('it-IT', opts);
-        }
-        function fmtShort(ds) { if (!ds) return ''; const d = new Date(ds + 'T12:00:00'); return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); }
-        function weekdayOf(ds) { return new Date(ds + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long' }); }
+        function fmtDay(ds) { if (!ds) return ''; return new Date(ds + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }); }
+        function fmtShort(ds) { if (!ds) return ''; return new Date(ds + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); }
         function fmtWhen(ms) {
             if (!ms) return '—';
             const d = new Date(ms), now = new Date();
@@ -4904,8 +4928,14 @@
             if (localDateStr(d) === localDateStr(y)) return 'ieri ' + t;
             return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' + t;
         }
-        function deadlineOf(date, time) { return date ? new Date(date + 'T' + (time || DEFAULT_TRAINING_TIME) + ':00').getTime() : 0; }
-        function pollDeadline() { return poll && poll.date ? deadlineOf(poll.date, poll.time) : 0; }
+        function tsMs(v) {
+            if (!v) return 0;
+            if (typeof v === 'number') return v;
+            if (typeof v.toMillis === 'function') return v.toMillis();
+            if (v.seconds) return v.seconds * 1000;
+            return 0;
+        }
+        function seasonLabel() { const d = new Date(), y = d.getFullYear(); return d.getMonth() >= 8 ? y + '/' + (y + 1) : (y - 1) + '/' + y; }
         function playerById(id) { return players.find(p => p.id === id) || null; }
         function playerLabel(p) { return p ? (p.alias || [p.name, p.surname].filter(Boolean).join(' ')) : '?'; }
         function playerFull(p) { return p ? [p.name, p.surname].filter(Boolean).join(' ') : '?'; }
@@ -4918,9 +4948,14 @@
             const last = (hallOfFame || []).filter(h => !h.manual && h.closedAt).map(h => h.closedAt).sort().pop();
             return last ? last.slice(0, 10) : '0000-00-00';
         }
+        function trainingHappened(date) {
+            const ps = trainings[date] && trainings[date].players;
+            return !!(ps && Object.values(ps).some(x => x && (x.present || (parseInt(x.setsWon, 10) || 0) > 0)));
+        }
 
         // ---------- chi sono ----------
         function isRegistered() { return !!(authUser && !authUser.isAnonymous); }
+        function isServerAdmin() { return isRegistered() && ADMIN_EMAILS.includes((authUser.email || '').toLowerCase()); }
         function myPlayerId() {
             return (myProfile && myProfile.status === 'approved' && myProfile.playerId && playerById(myProfile.playerId)) ? myProfile.playerId : null;
         }
@@ -4929,7 +4964,7 @@
             const p = playerById(myPlayerId());
             if (p) return playerFull(p);
             if (myProfile && myProfile.name) return myProfile.name;
-            if (authUser && !authUser.isAnonymous) return authUser.displayName || authUser.email || 'Utente';
+            if (isRegistered()) return authUser.displayName || authUser.email || 'Utente';
             return isAdmin ? 'Admin' : 'Ospite';
         }
         function linkedUidOf(playerId) {
@@ -4937,7 +4972,7 @@
             return u ? u.uid : null;
         }
 
-        // ---------- registro attività ----------
+        // ---------- registro attività e notifiche ----------
         async function logAction(type, text, extra = {}) {
             try {
                 if (!auth.currentUser) return;
@@ -4946,6 +4981,14 @@
                     registered: isRegistered(), type, text, ...extra
                 });
             } catch (e) { console.warn('Registro attività non scritto:', e); }
+        }
+        async function sendNotif(to, type, title, body, id) {
+            if (!to || !auth.currentUser) return;
+            const data = { to, type, title, body, ts: Date.now(), from: auth.currentUser.uid };
+            try {
+                if (id) await setDoc(doc(db, 'scandoNotif', id), data);
+                else await addDoc(collection(db, 'scandoNotif'), data);
+            } catch (e) { console.warn('Notifica non inviata (serve l\'account admin):', e); }
         }
 
         // ---------- ACCESSO ----------
@@ -4970,7 +5013,6 @@
             el.textContent = msg || '';
             el.classList.toggle('hidden', !msg);
         }
-
         function updateLoginScreen() {
             const inBox = document.getElementById('auth-signed-in');
             const outBox = document.getElementById('auth-signed-out');
@@ -4980,7 +5022,6 @@
             outBox.classList.toggle('hidden', reg);
             if (reg) document.getElementById('auth-hello-name').textContent = (myProfile && myProfile.name) || authUser.displayName || authUser.email || '';
         }
-
         window.app_signInGoogle = async () => {
             showAuthError('');
             const provider = new GoogleAuthProvider();
@@ -4995,10 +5036,7 @@
                 showAuthError(authErr(e));
             }
         };
-        window.app_toggleEmailForm = () => {
-            document.getElementById('email-auth').classList.toggle('hidden');
-            showAuthError('');
-        };
+        window.app_toggleEmailForm = () => { document.getElementById('email-auth').classList.toggle('hidden'); showAuthError(''); };
         window.app_toggleSignup = () => {
             signupMode = !signupMode;
             document.getElementById('auth-name').classList.toggle('hidden', !signupMode);
@@ -5059,11 +5097,11 @@
             authUser = user;
             if (myProfileUnsub) { myProfileUnsub(); myProfileUnsub = null; }
             if (user && !user.isAnonymous) {
-                try { await ensureUserDoc(user); } catch (e) { console.warn('Profilo non creato:', e); }
+                try { await ensureUserDoc(user); } catch (e) { console.warn('Profilo non aggiornato:', e); }
                 myProfileUnsub = onSnapshot(doc(db, 'scandoUsers', user.uid), s => {
                     myProfile = s.exists() ? s.data() : null;
                     updateLoginScreen();
-                    if (appEntered) { renderUserChip(); renderNewFeatures(); maybeAskWhoAmI(); }
+                    if (appEntered) { renderNewFeatures(); maybeAskWhoAmI(); }
                 }, e => console.warn('Profilo non leggibile:', e));
             } else {
                 myProfile = null;
@@ -5076,22 +5114,33 @@
         function startLiveData() {
             if (liveStarted) return;
             liveStarted = true;
-            onSnapshot(pollRef, s => { poll = s.exists() ? s.data() : null; renderNewFeatures(); },
-                e => console.warn('Sondaggio non leggibile (regole Firestore?):', e));
             onSnapshot(collection(db, 'scandoJolly'), s => {
                 jollyDocs = s.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderLeaderboard(); renderCharts(); renderNewFeatures();
+                if (currentPage === 'allenamenti') renderTrainingLog();
             }, e => console.warn('Jolly non leggibili (regole Firestore?):', e));
-            onSnapshot(collection(db, 'scandoUsers'), s => {
-                usersList = s.docs.map(d => ({ uid: d.id, ...d.data() }));
-                renderNewFeatures();
-            }, e => console.warn('Utenti non leggibili (regole Firestore?):', e));
+            onSnapshot(jollyCfgRef, s => { jollyCfg = s.exists() ? { cutoff: DEFAULT_JOLLY_CUTOFF, ...s.data() } : { cutoff: DEFAULT_JOLLY_CUTOFF }; renderNewFeatures(); },
+                e => console.warn('Impostazioni jolly non leggibili:', e));
+            if (isRegistered()) {
+                const uid = authUser.uid;
+                onSnapshot(doc(db, 'scandoJollyPending', uid), s => { myPending = s.exists() ? s.data() : null; renderNewFeatures(); },
+                    e => console.warn('Jolly in attesa non leggibile:', e));
+                onSnapshot(query(collection(db, 'scandoNotif'), where('to', '==', uid)), s => { notifMine = s.docs.map(d => ({ id: d.id, ...d.data() })); notifLoaded.mine = true; onNotifsChanged(); },
+                    e => console.warn('Notifiche non leggibili:', e));
+                onSnapshot(query(collection(db, 'scandoNotif'), where('to', '==', 'all')), s => { notifAll = s.docs.map(d => ({ id: d.id, ...d.data() })); notifLoaded.all = true; onNotifsChanged(); },
+                    e => console.warn('Notifiche non leggibili:', e));
+            }
+            if (isAdmin) {
+                onSnapshot(collection(db, 'scandoUsers'), s => {
+                    usersList = s.docs.map(d => ({ uid: d.id, ...d.data() })); usersError = '';
+                    renderNewFeatures();
+                }, e => { usersError = 'Per vedere gli utenti entra con l\'account admin (Google: ' + ADMIN_EMAILS.join(', ') + ').'; console.warn(e); renderNewFeatures(); });
+            }
         }
 
         function afterEnterApp() {
             appEntered = true;
             startLiveData();
-            renderUserChip();
             if (!loginLogged) {
                 loginLogged = true;
                 logAction('login', isAdmin ? 'è entrato come Admin' : (isRegistered() ? 'è entrato' : 'è entrato senza account'));
@@ -5101,25 +5150,29 @@
             if (isBlocked()) showToast('Il tuo account è stato bloccato dall\'admin: puoi solo guardare.');
         }
 
-        // ---------- chip utente in alto + finestra account ----------
+        // ---------- chip utente + campanella ----------
         function renderUserChip() {
             const el = document.getElementById('user-chip');
-            if (!el) return;
-            if (!isRegistered()) {
-                el.innerHTML = isAdmin ? '🛡️ Admin' : '👀 Ospite';
-                el.title = 'Accesso senza account';
-            } else {
-                const p = playerById(myPlayerId());
-                el.innerHTML = (p ? avatarHtml(p, 22) : '👤') + `<span class="hidden sm:inline">${esc(p ? playerLabel(p) : myName())}</span>${isAdmin ? ' 🛡️' : ''}`;
-                el.title = 'Il mio account';
+            if (el) {
+                if (!isRegistered()) { el.innerHTML = isAdmin ? '🛡️ Admin' : '👀 Ospite'; }
+                else {
+                    const p = playerById(myPlayerId());
+                    el.innerHTML = (p ? avatarHtml(p, 22) : '👤') + `<span class="hidden sm:inline">${esc(p ? playerLabel(p) : myName())}</span>${isAdmin ? ' 🛡️' : ''}`;
+                }
+            }
+            const bell = document.getElementById('notif-bell');
+            if (bell) {
+                bell.classList.toggle('hidden', !isRegistered());
+                const n = unreadNotifs().length;
+                const b = document.getElementById('notif-count');
+                b.textContent = n > 9 ? '9+' : n; b.classList.toggle('hidden', !n);
             }
         }
         window.app_openAccount = () => {
-            const box = document.getElementById('nf-modal-content');
             let html;
             if (!isRegistered()) {
                 html = `<h3 class="text-xl font-bold text-white mb-2">Stai usando l'app senza account</h3>
-                    <p class="text-gray-300 mb-4">Con un account puoi rispondere al sondaggio, giocare i jolly e vedere la tua stagione.</p>
+                    <p class="text-gray-300 mb-4">Con un account puoi giocare i jolly, ricevere notifiche e vedere la tua stagione.</p>
                     <div class="flex gap-2 justify-end"><button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_closeNf()">Chiudi</button>
                     <button class="btn-primary text-white py-2 px-4 rounded font-bold" onclick="app_signOut()">Entra con un account</button></div>`;
             } else {
@@ -5132,9 +5185,10 @@
                     : '❔ Non sei ancora collegato a un giocatore';
                 html = `<h3 class="text-xl font-bold text-white mb-1">Il mio account</h3>
                     <p class="text-gray-300">${esc((myProfile && myProfile.name) || authUser.displayName || '')}</p>
-                    <p class="text-gray-400 text-sm mb-4">${esc(authUser.email || '')}</p>
+                    <p class="text-gray-400 text-sm mb-4">${esc(authUser.email || '')}${isServerAdmin() ? ' · 🛡️ account admin' : ''}</p>
                     <p class="mb-4">${stato}</p>
                     <div class="flex flex-wrap gap-2 justify-end">
+                        <button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_closeNf();switchPage('notifiche')">🔔 Notifiche</button>
                         ${st !== 'blocked' ? `<button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_openWhoAmI()">${st === 'approved' ? 'Cambia giocatore' : 'Scegli chi sei'}</button>` : ''}
                         <button class="bg-red-700 text-white py-2 px-4 rounded" onclick="app_signOut()">Esci</button>
                         <button class="btn-primary text-white py-2 px-4 rounded font-bold" onclick="app_closeNf()">Chiudi</button>
@@ -5156,28 +5210,24 @@
         }
         window.app_openWhoAmI = () => {
             const mine = myProfile && (myProfile.requestedPlayerId || myProfile.playerId);
-            const list = [...players].sort((a, b) => playerFull(a).localeCompare(playerFull(b)));
-            const html = `<h3 class="text-xl font-bold text-white mb-1">Chi sei?</h3>
-                <p class="text-gray-300 text-sm mb-3">Scegli il tuo nome: l'admin lo confermerà. Dopo potrai rispondere al sondaggio, giocare i jolly e vedere la tua stagione.</p>
+            const list = [...players].filter(p => p.status !== 'guest').sort((a, b) => playerFull(a).localeCompare(playerFull(b)));
+            openNf(`<h3 class="text-xl font-bold text-white mb-1">Chi sei?</h3>
+                <p class="text-gray-300 text-sm mb-3">Scegli il tuo nome: l'admin lo confermerà. Dopo potrai giocare i jolly e vedere la tua stagione.</p>
                 <div class="grid grid-cols-2 gap-2 overflow-y-auto" style="max-height:55vh">
-                    ${list.map(p => {
-                        const taken = linkedUidOf(p.id) && linkedUidOf(p.id) !== (authUser && authUser.uid);
-                        return `<button type="button" ${taken ? 'disabled' : ''} class="pick-chip ${p.id === mine ? 'active' : ''} ${taken ? 'opacity-40' : ''}" onclick="app_pickWhoAmI('${p.id}')">
-                            ${avatarHtml(p, 32)}<span class="text-sm text-white truncate">${esc(playerFull(p))}${taken ? '<br><span class="text-xs text-gray-400">già collegato</span>' : ''}</span></button>`;
-                    }).join('')}
+                    ${list.map(p => `<button type="button" class="pick-chip ${p.id === mine ? 'active' : ''}" onclick="app_pickWhoAmI('${p.id}')">
+                        ${avatarHtml(p, 32)}<span class="text-sm text-white truncate">${esc(playerFull(p))}</span></button>`).join('')}
                 </div>
                 <div class="flex justify-between items-center mt-4 gap-2">
                     <button class="text-sm text-gray-400 underline" onclick="app_pickWhoAmI('')">Non sono in squadra</button>
                     <button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_closeNf()">Più tardi</button>
-                </div>`;
-            openNf(html);
+                </div>`);
         };
         window.app_pickWhoAmI = async (pid) => {
             if (!isRegistered()) return;
             const ref = doc(db, 'scandoUsers', authUser.uid);
             try {
                 if (!pid) {
-                    await updateDoc(ref, { status: 'fan', requestedPlayerId: null, playerId: null });
+                    await updateDoc(ref, { status: 'fan', requestedPlayerId: null });
                     showToast('Ok! Puoi comunque guardare tutto.');
                 } else {
                     await updateDoc(ref, { status: 'pending', requestedPlayerId: pid });
@@ -5188,317 +5238,277 @@
             } catch (e) { console.error(e); alert('Non riesco a salvare: ' + (e.message || e)); }
         };
 
-        // ---------- SONDAGGIO "CI SEI?" ----------
-        const ANS = {
-            si: { icon: '✅', label: 'Ci sono', color: '#22c55e' },
-            forse: { icon: '❓', label: 'Forse', color: '#eab308' },
-            no: { icon: '❌', label: 'Non ci sono', color: '#ef4444' }
-        };
-        function pollAnswers() { return (poll && poll.answers) || {}; }
-        function pollIsOpen() { return !!(poll && poll.date && poll.open !== false && Date.now() < pollDeadline()); }
-        function pollGroups() {
-            const a = pollAnswers();
-            const g = { si: [], forse: [], no: [], none: [] };
-            players.forEach(p => {
-                const v = a[p.id] && a[p.id].v;
-                if (v && g[v]) g[v].push(p);
-                else if (p.status !== 'guest') g.none.push(p);
-            });
-            return g;
-        }
-        function pollTitle() { return poll && poll.date ? `Ci sei ${weekdayOf(poll.date)}?` : 'Prossimo allenamento'; }
-
-        window.app_answerPoll = async (v, pid) => {
-            const target = pid || myPlayerId();
-            if (!target) { showToast('Prima collega il tuo account a un giocatore.'); return; }
-            if (!isAdmin && (isBlocked() || target !== myPlayerId())) return;
-            if (!isAdmin && !pollIsOpen()) { showToast('Le risposte sono chiuse.'); return; }
-            const cur = pollAnswers()[target];
-            try {
-                if (!v || (cur && cur.v === v && !pid)) {
-                    await updateDoc(pollRef, { ['answers.' + target]: deleteField() });
-                } else {
-                    await updateDoc(pollRef, { ['answers.' + target]: { v, ts: Date.now(), by: myName() } });
-                }
-                const who = playerFull(playerById(target));
-                logAction('poll', (pid && pid !== myPlayerId() ? 'ha risposto per ' + who + ': ' : 'ha risposto: ') + (v ? ANS[v].icon + ' ' + ANS[v].label : 'risposta tolta') + ' (' + fmtShort(poll.date) + ')');
-            } catch (e) { console.error(e); alert('Risposta non salvata: ' + (e.message || e)); }
-        };
-
-        function pollShareText() {
-            if (!poll || !poll.date) return '';
-            const g = pollGroups();
-            const names = arr => arr.map(p => playerLabel(p)).join(', ');
-            let t = `🏐 ${pollTitle().toUpperCase()}\n${fmtDay(poll.date)}${poll.time ? ' ore ' + poll.time : ''}${poll.note ? '\n📍 ' + poll.note : ''}\n\n`;
-            t += `✅ Ci sono (${g.si.length}): ${names(g.si) || '-'}\n`;
-            t += `❓ Forse (${g.forse.length}): ${names(g.forse) || '-'}\n`;
-            t += `❌ Non ci sono (${g.no.length}): ${names(g.no) || '-'}\n`;
-            if (g.none.length) t += `⏳ Non hanno risposto (${g.none.length}): ${names(g.none)}\n`;
-            t += `\nRispondi nell'app: ${location.origin + location.pathname}`;
-            return t;
-        }
-        window.app_sharePoll = async () => {
-            const text = pollShareText();
-            if (!text) return;
-            logAction('share', 'ha condiviso il sondaggio presenze');
-            if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
-            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-        };
-
-        function answerButtonsHtml(compact) {
-            const pid = myPlayerId();
-            if (!poll || !poll.date) return '';
-            if (!isRegistered()) return `<p class="text-sm text-gray-400">Per rispondere <button class="underline text-accent" onclick="app_signOut()">entra con un account</button>.</p>`;
-            if (isBlocked()) return '';
-            if (!pid) {
-                const pend = myProfile && myProfile.status === 'pending';
-                return `<p class="text-sm text-gray-400">${pend ? '⏳ Aspetta che l\'admin confermi il tuo nome per rispondere.' : 'Per rispondere <button class="underline text-accent" onclick="app_openWhoAmI()">dimmi chi sei</button>.'}</p>`;
-            }
-            const cur = pollAnswers()[pid] && pollAnswers()[pid].v;
-            const open = pollIsOpen();
-            return `<div class="flex flex-wrap gap-2">${Object.entries(ANS).map(([k, a]) => `
-                <button type="button" ${open ? '' : 'disabled'} onclick="app_answerPoll('${k}')"
-                    class="poll-btn ${cur === k ? 'active' : ''} ${compact ? 'text-sm py-1 px-3' : 'py-2 px-4'}" style="--c:${a.color}">${a.icon} ${a.label}</button>`).join('')}
-                ${open ? '' : '<span class="text-xs text-gray-400 self-center">Risposte chiuse</span>'}</div>`;
-        }
-
-        function renderPollPage() {
-            const box = document.getElementById('poll-box');
-            if (!box) return;
-            if (!poll || !poll.date) {
-                box.innerHTML = `<div class="card rounded-lg p-6 text-center text-gray-300">📅 L'admin non ha ancora fissato il prossimo allenamento.</div>`;
-            } else {
-                const g = pollGroups();
-                const answered = g.si.length + g.forse.length + g.no.length || 1;
-                const row = (k) => {
-                    const a = ANS[k], list = g[k], pct = Math.round(list.length / answered * 100);
-                    return `<div class="mb-4">
-                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-white">${a.icon} ${a.label}</span><span class="text-gray-300">${list.length}</span></div>
-                        <div class="poll-bar"><i style="width:${pct}%;background:${a.color}"></i></div>
-                        <div class="flex flex-wrap gap-1 mt-2">${list.map(p => `<span class="poll-name">${avatarHtml(p, 20)}${esc(playerLabel(p))}</span>`).join('')}</div>
-                    </div>`;
-                };
-                const closedMsg = poll.open === false ? '🔒 Risposte chiuse dall\'admin' : (Date.now() >= pollDeadline() ? '🏐 Allenamento iniziato: risposte chiuse' : '');
-                box.innerHTML = `<div class="card rounded-lg p-5">
-                    <div class="flex flex-wrap justify-between items-start gap-3 mb-3">
-                        <div>
-                            <h3 class="text-2xl font-bold text-white">🏐 ${esc(pollTitle())}</h3>
-                            <p class="text-gray-300 capitalize">${esc(fmtDay(poll.date))}${poll.time ? ' · ore ' + esc(poll.time) : ''}</p>
-                            ${poll.note ? `<p class="text-gray-400 text-sm">📍 ${esc(poll.note)}</p>` : ''}
-                            ${closedMsg ? `<p class="text-yellow-300 text-sm mt-1">${closedMsg}</p>` : ''}
-                        </div>
-                        <button onclick="app_sharePoll()" class="share-btn"><span class="text-lg leading-none">📲</span> Condividi</button>
-                    </div>
-                    <div class="mb-5">${answerButtonsHtml(false)}</div>
-                    ${row('si')}${row('forse')}${row('no')}
-                    ${g.none.length ? `<details class="text-sm text-gray-400"><summary class="cursor-pointer">⏳ Non hanno ancora risposto (${g.none.length})</summary>
-                        <div class="flex flex-wrap gap-1 mt-2">${g.none.map(p => `<span class="poll-name">${avatarHtml(p, 20)}${esc(playerLabel(p))}</span>`).join('')}</div></details>` : ''}
-                    ${isAdmin ? `<details class="mt-4"><summary class="cursor-pointer text-sm text-accent">✍️ Rispondi al posto di un giocatore</summary>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${players.map(p => {
-                            const v = pollAnswers()[p.id] && pollAnswers()[p.id].v;
-                            return `<label class="flex items-center gap-2 bg-primary rounded px-2 py-1">${avatarHtml(p, 24)}<span class="flex-grow text-sm text-white truncate">${esc(playerFull(p))}</span>
-                                <select class="form-input rounded p-1 text-sm" onchange="app_answerPoll(this.value,'${p.id}')">
-                                    <option value="" ${!v ? 'selected' : ''}>—</option>
-                                    ${Object.entries(ANS).map(([k, a]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${a.icon} ${a.label}</option>`).join('')}
-                                </select></label>`;
-                        }).join('')}</div></details>` : ''}
-                </div>`;
-            }
-            renderPollAdmin();
-        }
-
-        function renderPollAdmin() {
-            const box = document.getElementById('poll-admin');
-            if (!box) return;
-            if (!isAdmin) { box.innerHTML = ''; return; }
-            const d = (poll && poll.date) || '';
-            box.innerHTML = `<div class="card rounded-lg p-5 border-l-4 border-accent">
-                <h3 class="text-xl font-bold text-white mb-3">🛡️ Fissa il prossimo allenamento</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <label class="text-sm">Giorno<input type="date" id="poll-date" class="w-full form-input p-2 rounded mt-1" value="${d}"></label>
-                    <label class="text-sm">Ora d'inizio<input type="time" id="poll-time" class="w-full form-input p-2 rounded mt-1" value="${(poll && poll.time) || DEFAULT_TRAINING_TIME}"></label>
-                    <label class="text-sm">Nota (luogo, ecc.)<input type="text" id="poll-note" maxlength="80" class="w-full form-input p-2 rounded mt-1" value="${esc((poll && poll.note) || '')}" placeholder="Palestra comunale"></label>
-                </div>
-                <p class="text-xs text-gray-400 mt-2">Le risposte e i jolly si chiudono all'ora d'inizio.</p>
-                <div class="flex flex-wrap gap-2 mt-3">
-                    <button class="btn-accent text-white font-bold py-2 px-4 rounded" onclick="app_savePoll()">💾 Salva</button>
-                    ${d ? `<button class="bg-gray-600 text-white py-2 px-4 rounded" onclick="app_togglePollOpen()">${poll.open === false ? '🔓 Riapri le risposte' : '🔒 Chiudi le risposte'}</button>
-                    <button class="bg-red-700 text-white py-2 px-4 rounded" onclick="app_cancelPoll()">🗑️ Allenamento annullato</button>` : ''}
-                </div>
-            </div>`;
-        }
-
-        // Sposta i jolly da una data all'altra (se l'admin cambia giorno)
-        async function moveJollies(oldDate, newDate, newDeadline) {
-            const list = jollyDocs.filter(j => j.date === oldDate);
-            for (const j of list) {
-                const { id: _oldId, ...rest } = j;
-                if (newDate) await setDoc(doc(db, 'scandoJolly', newDate + '_' + j.playerId), { ...rest, date: newDate, deadline: newDeadline });
-                await deleteDoc(doc(db, 'scandoJolly', j.id));
-            }
-            return list.length;
-        }
-
-        window.app_savePoll = async () => {
-            if (!isAdmin) return;
-            const date = document.getElementById('poll-date').value;
-            const time = document.getElementById('poll-time').value || DEFAULT_TRAINING_TIME;
-            const note = document.getElementById('poll-note').value.trim();
-            if (!date) { showToast('Scegli il giorno.'); return; }
-            const go = async (resetAnswers) => {
-                try {
-                    if (poll && poll.date && poll.date !== date) {
-                        const old = poll;
-                        await setDoc(doc(db, 'scandoPoll', 'archivio_' + old.date), { ...old, archivedAt: Date.now() });
-                        const moved = await moveJollies(old.date, date, deadlineOf(date, time));
-                        if (moved) showToast(moved + ' jolly spostati alla nuova data.');
-                    } else if (poll && poll.date === date && poll.time !== time) {
-                        for (const j of jollyDocs.filter(j => j.date === date)) await updateDoc(doc(db, 'scandoJolly', j.id), { deadline: deadlineOf(date, time) });
-                    }
-                    const keep = poll && !resetAnswers ? (poll.answers || {}) : {};
-                    await setDoc(pollRef, { date, time, note, open: true, answers: keep, updatedAt: Date.now(), createdAt: (poll && !resetAnswers && poll.createdAt) || Date.now() });
-                    logAction('poll-set', 'ha fissato l\'allenamento: ' + fmtDay(date) + ' ore ' + time);
-                    showToast('Prossimo allenamento salvato ✅');
-                } catch (e) { console.error(e); alert('Non salvato: ' + (e.message || e)); }
-            };
-            if (poll && poll.date && poll.date !== date && Object.keys(poll.answers || {}).length) {
-                showConfirmModal('Cambiare giorno?', 'Le risposte date per ' + fmtDay(poll.date) + ' verranno azzerate (i jolly giocati vengono spostati al nuovo giorno).', () => go(true));
-            } else {
-                go(!poll || poll.date !== date);
-            }
-        };
-        window.app_togglePollOpen = async () => {
-            if (!isAdmin || !poll) return;
-            await updateDoc(pollRef, { open: poll.open === false });
-            logAction('poll-set', poll.open === false ? 'ha riaperto le risposte' : 'ha chiuso le risposte');
-        };
-        window.app_cancelPoll = () => {
-            if (!isAdmin || !poll) return;
-            showConfirmModal('Allenamento annullato?', 'Il sondaggio viene tolto e i jolly giocati per questo giorno vengono restituiti ai giocatori.', async () => {
-                try {
-                    const back = await moveJollies(poll.date, null);
-                    await setDoc(doc(db, 'scandoPoll', 'archivio_' + poll.date), { ...poll, cancelled: true, archivedAt: Date.now() });
-                    await deleteDoc(pollRef);
-                    logAction('poll-set', 'ha annullato l\'allenamento del ' + fmtShort(poll.date) + (back ? ' (' + back + ' jolly restituiti)' : ''));
-                    showToast('Allenamento annullato' + (back ? ': ' + back + ' jolly restituiti' : ''));
-                } catch (e) { console.error(e); alert('Errore: ' + (e.message || e)); }
-            });
-        };
-
         // ---------- JOLLY ----------
-        function jollyRevealed(j) { return Date.now() >= (j.deadline || 0); }
+        // Come funziona:
+        //  1. il giocatore gioca il jolly → nasce scandoJollyPending/{uid} con l'ora del server (non falsificabile)
+        //  2. nessuno lo vede (le regole di Firestore lo fanno leggere solo a lui e all'account admin)
+        //  3. quando l'admin salva i punteggi di un allenamento, l'app scopre i jolly giocati
+        //     prima dell'ora limite di quel giorno e mostra la finestra "Jolly scoperti!"
         function seasonJollies(pid) { const s = seasonStartDate(); return jollyDocs.filter(j => j.playerId === pid && j.date > s); }
-        function jollyLeft(pid) { return Math.max(0, JOLLY_PER_SEASON - seasonJollies(pid).length); }
-        // Insieme "data|giocatore" dei jolly già scoperti (contano in classifica)
-        function revealedJollySet() {
-            const s = new Set();
-            jollyDocs.forEach(j => { if (jollyRevealed(j)) s.add(j.date + '|' + j.playerId); });
-            return s;
+        function jollyLeft(pid) {
+            const pend = (pid && pid === myPlayerId() && myPending) ? 1 : 0;
+            return Math.max(0, JOLLY_PER_SEASON - seasonJollies(pid).length - pend);
         }
+        function revealedJollySet() { return new Set(jollyDocs.map(j => j.date + '|' + j.playerId)); }
         function jollyResult(j) {
             const pd = trainings[j.date] && trainings[j.date].players && trainings[j.date].players[j.playerId];
             const sets = pd ? (parseInt(pd.setsWon, 10) || 0) : 0;
-            if (!jollyRevealed(j)) return { txt: '🤫 segreto fino all\'inizio', cls: 'text-gray-400' };
-            if (!pd) return { txt: trainings[j.date] ? 'perso (assente)' : 'in attesa del risultato', cls: 'text-gray-400' };
-            return sets > 0 ? { txt: '+' + sets + ' punti bonus', cls: 'text-green-400' } : { txt: 'nessun set vinto: 0 bonus', cls: 'text-gray-400' };
+            if (!pd || (!pd.present && !sets)) return { txt: 'assente: jolly perso', cls: 'text-gray-400', pts: 0 };
+            return sets > 0 ? { txt: '+' + sets + ' punti bonus', cls: 'text-green-400', pts: sets } : { txt: 'nessun set vinto: 0 bonus', cls: 'text-gray-400', pts: 0 };
         }
+        function cutoffLabel() { return jollyCfg.cutoff || DEFAULT_JOLLY_CUTOFF; }
 
         window.app_playJolly = () => {
             const pid = myPlayerId();
             if (!pid || isBlocked()) return;
-            if (!poll || !poll.date || !pollIsOpen()) { showToast('Ora non si può giocare il jolly.'); return; }
+            if (myPending) { showToast('Hai già un jolly in gioco.'); return; }
             if (jollyLeft(pid) <= 0) { showToast('Hai già usato tutti i jolly della stagione.'); return; }
-            showConfirmModal('🃏 Giocare il jolly?', `Per ${fmtDay(poll.date)} i punti dei set che vinci valgono doppio. Nessuno lo saprà fino all'inizio dell'allenamento. Se non vieni, il jolly è perso. Puoi ritirarlo fino alle ${poll.time || DEFAULT_TRAINING_TIME}.`, async () => {
-                try {
-                    await setDoc(doc(db, 'scandoJolly', poll.date + '_' + pid), {
-                        date: poll.date, playerId: pid, uid: authUser.uid, deadline: pollDeadline(), ts: Date.now()
-                    });
-                    logAction('jolly', 'ha giocato un jolly', { secretUntil: pollDeadline() });
-                    showToast('🃏 Jolly giocato! Acqua in bocca…');
-                } catch (e) { console.error(e); alert('Jolly non salvato: ' + (e.message || e)); }
-            });
+            showConfirmModal('🃏 Giocare il jolly?',
+                `Vale per il prossimo allenamento: i punti dei set che vinci valgono doppio. Nessuno lo saprà finché non vengono inseriti i punteggi. Va giocato entro le ${cutoffLabel()} del giorno dell'allenamento (se lo giochi dopo, vale per quello successivo). Non si può ritirare e, se non vieni, è perso.`,
+                async () => {
+                    try {
+                        await setDoc(doc(db, 'scandoJollyPending', authUser.uid), { uid: authUser.uid, playerId: pid, playedAt: serverTimestamp() });
+                        showToast('🃏 Jolly giocato! Acqua in bocca…');
+                    } catch (e) { console.error(e); alert('Jolly non salvato: ' + (e.message || e)); }
+                });
         };
-        window.app_withdrawJolly = () => {
-            const pid = myPlayerId();
-            if (!pid || !poll || !pollIsOpen()) return;
-            showConfirmModal('Ritirare il jolly?', 'Il jolly torna disponibile per un altro allenamento.', async () => {
-                try {
-                    await deleteDoc(doc(db, 'scandoJolly', poll.date + '_' + pid));
-                    logAction('jolly', 'ha ritirato un jolly', { secretUntil: pollDeadline() });
-                    showToast('Jolly ritirato.');
-                } catch (e) { alert('Errore: ' + (e.message || e)); }
-            });
+
+        // Chiamata dopo il salvataggio dei punteggi: scopre i jolly giocati per quell'allenamento
+        async function revealJolliesAfterSave(date) {
+            if (!trainingHappened(date)) return;
+            let pend;
+            try {
+                pend = (await getDocs(collection(db, 'scandoJollyPending'))).docs.map(d => ({ id: d.id, ...d.data() }));
+            } catch (e) {
+                console.warn('Jolly in attesa non leggibili:', e);
+                showToast('🃏 Per scoprire i jolly devi entrare con l\'account admin (Google).');
+                return;
+            }
+            if (!pend.length) return;
+            const cutoff = new Date(date + 'T' + cutoffLabel() + ':00').getTime();
+            const found = [];
+            for (const p of pend) {
+                const played = tsMs(p.playedAt);
+                if (!played || played >= cutoff) continue;                       // giocato dopo l'ora limite: vale per il prossimo
+                if (jollyDocs.some(j => j.date === date && j.playerId === p.playerId)) continue;
+                const pl = playerById(p.playerId);
+                try { await deleteDoc(doc(db, 'scandoJollyPending', p.id)); } catch (e) { console.warn(e); continue; }
+                if (!pl) continue;
+                if (seasonJollies(p.playerId).length >= JOLLY_PER_SEASON) { found.push({ pl, invalid: true }); continue; }
+                await setDoc(doc(db, 'scandoJolly', date + '_' + p.playerId), {
+                    date, playerId: p.playerId, uid: p.uid || null, playedAt: played, revealedAt: Date.now(), revealedBy: myName()
+                });
+                const r = jollyResult({ date, playerId: p.playerId });
+                found.push({ pl, r });
+                sendNotif(p.uid, 'jolly', '🃏 Il tuo jolly è stato scoperto', `Allenamento di ${fmtDay(date)}: ${r.txt}.`);
+            }
+            if (!found.length) return;
+            const valid = found.filter(f => !f.invalid);
+            if (valid.length) {
+                sendNotif('all', 'jollyAll', '🃏 Jolly scoperti!', valid.map(f => playerFull(f.pl) + ' (' + f.r.txt + ')').join(', '), 'jolly_' + date);
+                logAction('jolly', 'ha scoperto i jolly del ' + fmtShort(date) + ': ' + valid.map(f => playerFull(f.pl)).join(', '));
+            }
+            openNf(`<div class="text-center">
+                <div class="jolly-reveal">🃏</div>
+                <h3 class="text-2xl font-bold text-white mb-1">${found.length === 1 ? 'Jolly scoperto!' : 'Jolly scoperti!'}</h3>
+                <p class="text-gray-300 text-sm mb-4">Allenamento di ${esc(fmtDay(date))}</p>
+                <div class="space-y-2 text-left">${found.map(f => `
+                    <div class="flex items-center gap-3 bg-primary rounded-lg p-2">
+                        ${avatarHtml(f.pl, 44)}
+                        <div><p class="text-white font-bold">${esc(playerFull(f.pl))} aveva giocato il jolly!</p>
+                        <p class="text-sm ${f.invalid ? 'text-red-400' : f.r.cls}">${f.invalid ? 'non valido: jolly della stagione già finiti' : f.r.txt}</p></div>
+                    </div>`).join('')}</div>
+                <p class="text-xs text-gray-400 mt-3">Se correggi i set vinti, il bonus si aggiorna da solo.</p>
+                <button class="btn-accent text-white font-bold py-2 px-6 rounded mt-4" onclick="app_closeNf()">Ok!</button>
+            </div>`);
+        }
+
+        window.app_saveJollyCfg = async () => {
+            if (!isAdmin) return;
+            const v = document.getElementById('jolly-cutoff').value || DEFAULT_JOLLY_CUTOFF;
+            try { await setDoc(jollyCfgRef, { cutoff: v, updatedAt: Date.now() }); showToast('Ora limite salvata: ' + v); logAction('jolly-admin', 'ha impostato l\'ora limite dei jolly alle ' + v); }
+            catch (e) { alert('Non salvato (serve l\'account admin): ' + (e.message || e)); }
         };
         window.app_refundJolly = (id) => {
             if (!isAdmin) return;
             const j = jollyDocs.find(x => x.id === id);
             if (!j) return;
             showConfirmModal('Restituire il jolly?', `Il jolly di ${playerFull(playerById(j.playerId))} del ${fmtShort(j.date)} viene cancellato e torna disponibile.`, async () => {
-                await deleteDoc(doc(db, 'scandoJolly', id));
-                logAction('jolly-admin', 'ha restituito il jolly di ' + playerFull(playerById(j.playerId)) + ' (' + fmtShort(j.date) + ')');
+                try {
+                    await deleteDoc(doc(db, 'scandoJolly', id));
+                    logAction('jolly-admin', 'ha restituito il jolly di ' + playerFull(playerById(j.playerId)) + ' (' + fmtShort(j.date) + ')');
+                } catch (e) { alert('Non riuscito (serve l\'account admin): ' + (e.message || e)); }
             });
         };
 
-        function jollyCardsHtml(left) {
-            return Array.from({ length: JOLLY_PER_SEASON }, (_, i) => `<span class="jolly-card ${i < left ? '' : 'used'}">🃏</span>`).join('');
+        function jollyCardsHtml(left, total = JOLLY_PER_SEASON) {
+            return Array.from({ length: total }, (_, i) => `<span class="jolly-card ${i < left ? '' : 'used'}">🃏</span>`).join('');
         }
-        function renderJollyBox() {
-            const box = document.getElementById('jolly-box');
+        function renderJollyPage() {
+            const mineBox = document.getElementById('jolly-mine');
+            const teamBox = document.getElementById('jolly-team');
+            const adminBox = document.getElementById('jolly-admin');
+            if (!mineBox) return;
+            const rules = `<p class="text-xs text-gray-400 mt-3">${JOLLY_PER_SEASON} jolly a stagione. Il jolly raddoppia i punti dei <strong>set vinti</strong> nel prossimo allenamento (non presenze, piatti o badge). Va giocato entro le <strong>${esc(cutoffLabel())}</strong> del giorno dell'allenamento, non si può ritirare e se non vieni è perso. Resta segreto finché non vengono inseriti i punteggi.</p>`;
+            const pid = myPlayerId();
+            if (!pid) {
+                const msg = !isRegistered() ? 'Entra con un account per giocare i jolly.'
+                    : (myProfile && myProfile.status === 'pending') ? '⏳ Aspetta che l\'admin confermi il tuo nome.'
+                    : 'Collega il tuo account a un giocatore per giocare i jolly. <button class="underline text-accent" onclick="app_openWhoAmI()">Dimmi chi sei</button>';
+                mineBox.innerHTML = `<div class="card rounded-lg p-5"><h3 class="text-xl font-bold text-white mb-1">🃏 Il mio jolly</h3><p class="text-gray-300 text-sm">${msg}</p>${rules}</div>`;
+            } else {
+                const left = jollyLeft(pid);
+                let action;
+                if (myPending) action = `<div class="jolly-armed"><p class="text-lg font-bold text-white">🃏 Jolly in gioco 🤫</p>
+                        <p class="text-sm text-gray-200">Giocato ${esc(fmtWhen(tsMs(myPending.playedAt)))}. Verrà scoperto quando saranno inseriti i punteggi del prossimo allenamento.</p></div>`;
+                else if (isBlocked()) action = '<p class="text-gray-400 text-sm">Account bloccato.</p>';
+                else if (left > 0) action = `<button class="jolly-play" onclick="app_playJolly()">🃏 Gioca il jolly per il prossimo allenamento</button>`;
+                else action = '<p class="text-gray-400 text-sm">Hai usato tutti i jolly di questa stagione.</p>';
+                mineBox.innerHTML = `<div class="card rounded-lg p-5">
+                    <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
+                        <h3 class="text-xl font-bold text-white">🃏 Il mio jolly</h3>
+                        <div class="flex gap-1" title="${left} rimasti">${jollyCardsHtml(left)}</div>
+                    </div>${action}${rules}</div>`;
+            }
+            // situazione di tutti (solo jolly già scoperti)
+            const rows = players.filter(p => p.status !== 'guest' || seasonJollies(p.id).length)
+                .map(p => ({ p, list: seasonJollies(p.id).sort((a, b) => a.date.localeCompare(b.date)) }))
+                .sort((a, b) => b.list.length - a.list.length || playerFull(a.p).localeCompare(playerFull(b.p)));
+            teamBox.innerHTML = `<div class="card rounded-lg p-5">
+                <h3 class="text-xl font-bold text-white mb-1">📋 Situazione della squadra</h3>
+                <p class="text-xs text-gray-400 mb-3">Qui compaiono solo i jolly già scoperti: chi ha giocato il jolly per il prossimo allenamento resta un segreto.</p>
+                ${rows.map(({ p, list }) => {
+                    const pts = list.reduce((a, j) => a + jollyResult(j).pts, 0);
+                    return `<div class="py-2 border-b border-gray-700">
+                        <div class="flex items-center gap-3">
+                            ${avatarHtml(p, 32)}
+                            <span class="flex-grow text-white font-semibold truncate">${esc(playerFull(p))}${p.id === pid ? ' <span class="text-xs text-gray-400">(tu)</span>' : ''}</span>
+                            <span class="text-sm text-gray-300 whitespace-nowrap">${list.length}/${JOLLY_PER_SEASON}${pts ? ` · <span class="text-green-400">+${pts}</span>` : ''}</span>
+                        </div>
+                        ${list.length ? `<div class="ml-11 mt-1 space-y-1">${list.map(j => {
+                            const r = jollyResult(j);
+                            return `<div class="flex flex-wrap justify-between gap-2 text-sm"><span class="capitalize text-gray-300">🃏 ${esc(fmtDay(j.date))}</span>
+                                <span class="${r.cls}">${r.txt}${isAdmin ? ` <button class="text-xs underline text-gray-500 ml-1" onclick="app_refundJolly('${j.id}')">restituisci</button>` : ''}</span></div>`;
+                        }).join('')}</div>` : ''}
+                    </div>`;
+                }).join('') || '<p class="text-gray-400 text-sm">Nessun giocatore.</p>'}
+            </div>`;
+            if (adminBox) {
+                adminBox.innerHTML = !isAdmin ? '' : `<div class="card rounded-lg p-5 border-l-4 border-accent">
+                    <h3 class="text-lg font-bold text-white mb-2">🛡️ Impostazioni jolly</h3>
+                    <p class="text-sm mb-3">${isServerAdmin() ? '✅ Sei entrato con l\'account admin: quando salvi i punteggi, i jolly vengono scoperti.' : '⚠️ Per scoprire i jolly quando salvi i punteggi devi entrare con l\'account admin (Google: ' + esc(ADMIN_EMAILS.join(', ')) + ') e poi con la password admin.'}</p>
+                    <label class="text-sm">Ora limite per giocare il jolly nel giorno dell'allenamento
+                        <div class="flex gap-2 mt-1"><input type="time" id="jolly-cutoff" class="form-input p-2 rounded" value="${esc(cutoffLabel())}">
+                        <button class="btn-accent text-white font-bold py-2 px-4 rounded" onclick="app_saveJollyCfg()">Salva</button></div></label>
+                </div>`;
+            }
+        }
+        // striscia in Classifica
+        function renderJollyStrip() {
+            const box = document.getElementById('jolly-strip');
             if (!box) return;
             const pid = myPlayerId();
-            const rules = `<p class="text-xs text-gray-400 mt-3">${JOLLY_PER_SEASON} jolly a stagione. Il jolly raddoppia i punti dei <strong>set vinti</strong> nell'allenamento in cui lo giochi (non presenze, piatti o badge). Si gioca in segreto entro l'ora d'inizio; se non vieni è perso.</p>`;
-            if (!pid) {
-                box.innerHTML = `<div class="card rounded-lg p-5"><h3 class="text-xl font-bold text-white mb-1">🃏 Il jolly</h3>
-                    <p class="text-gray-300 text-sm">${isRegistered() ? 'Collega il tuo account a un giocatore per usare i jolly.' : 'Entra con un account per usare i jolly.'}</p>${rules}</div>`;
-                return;
-            }
+            if (!pid) { box.innerHTML = ''; return; }
             const left = jollyLeft(pid);
-            const mine = seasonJollies(pid).sort((a, b) => b.date.localeCompare(a.date));
-            const forNext = poll && poll.date ? jollyDocs.find(j => j.date === poll.date && j.playerId === pid) : null;
-            let action = '';
-            if (!poll || !poll.date) action = '<p class="text-gray-400 text-sm">Potrai giocarlo quando l\'admin fissa il prossimo allenamento.</p>';
-            else if (forNext && pollIsOpen()) action = `<p class="text-green-300 mb-2">🃏 Jolly giocato per ${esc(fmtDay(poll.date))} — è un segreto!</p><button class="bg-gray-600 text-white text-sm py-1 px-3 rounded" onclick="app_withdrawJolly()">Ritira il jolly</button>`;
-            else if (forNext) action = `<p class="text-green-300">🃏 Hai giocato il jolly per ${esc(fmtDay(poll.date))}.</p>`;
-            else if (!pollIsOpen()) action = '<p class="text-gray-400 text-sm">Giocate chiuse per questo allenamento.</p>';
-            else if (left > 0) action = `<button class="jolly-play" onclick="app_playJolly()">🃏 Gioca il jolly per ${esc(weekdayOf(poll.date))}</button>`;
-            else action = '<p class="text-gray-400 text-sm">Hai usato tutti i jolly di questa stagione.</p>';
-            box.innerHTML = `<div class="card rounded-lg p-5">
-                <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
-                    <h3 class="text-xl font-bold text-white">🃏 I tuoi jolly</h3>
-                    <div class="flex gap-1">${jollyCardsHtml(left)}</div>
-                </div>
-                ${action}
-                ${mine.length ? `<div class="mt-4 text-sm"><p class="text-gray-400 mb-1">Giocati in questa stagione:</p>${mine.map(j => {
-                    const r = jollyResult(j);
-                    return `<div class="flex justify-between border-t border-gray-700 py-1"><span class="capitalize">${esc(fmtDay(j.date))}</span><span class="${r.cls}">${r.txt}</span></div>`;
-                }).join('')}</div>` : ''}
-                ${rules}
+            box.innerHTML = `<div class="card rounded-lg p-3 mb-4 flex flex-wrap items-center justify-between gap-2 jolly-strip">
+                <div class="flex items-center gap-2"><div class="flex gap-1">${jollyCardsHtml(left)}</div>
+                <span class="text-sm text-gray-200">${myPending ? '🃏 Jolly in gioco 🤫' : left ? `Hai ${left} jolly` : 'Jolly finiti'}</span></div>
+                <button class="underline text-accent text-sm" onclick="switchPage('jolly')">${!myPending && left ? 'Gioca il jolly →' : 'Situazione jolly →'}</button>
             </div>`;
         }
 
-        // ---------- riquadro "Prossimo allenamento" in Classifica ----------
-        function renderNextTrainingCard() {
-            const box = document.getElementById('next-training-card');
+        // ---------- NOTIFICHE ----------
+        function notifPrefs() {
+            const n = (myProfile && myProfile.notify) || {};
+            const types = {};
+            Object.keys(NOTIF_TYPES).forEach(k => { types[k] = !(n.types && n.types[k] === false); });
+            return { types, browser: !!n.browser };
+        }
+        function visibleNotifs() {
+            const prefs = notifPrefs();
+            const since = Date.now() - 60 * 86400000;
+            const map = new Map();
+            [...notifMine, ...notifAll].forEach(n => { if (n.ts > since && prefs.types[n.type] !== false) map.set(n.id, n); });
+            return [...map.values()].sort((a, b) => b.ts - a.ts).slice(0, 60);
+        }
+        function unreadNotifs() {
+            if (!isRegistered()) return [];
+            const readAt = (myProfile && myProfile.notifReadAt) || 0;
+            return visibleNotifs().filter(n => n.ts > readAt && n.from !== (authUser && authUser.uid));
+        }
+        function onNotifsChanged() {
+            const vis = visibleNotifs();
+            if (!notifLoaded.mine || !notifLoaded.all) { renderNewFeatures(); return; }
+            if (notifSeen === null) {
+                notifSeen = new Set(vis.map(n => n.id + ':' + n.ts));       // al primo caricamento niente avvisi
+            } else {
+                vis.forEach(n => {
+                    const key = n.id + ':' + n.ts;
+                    if (notifSeen.has(key)) return;
+                    notifSeen.add(key);
+                    if (n.from === (authUser && authUser.uid)) return;
+                    showToast(n.title);
+                    if (notifPrefs().browser) showSystemNotif(n.title, n.body);
+                });
+            }
+            renderNewFeatures();
+        }
+        function showSystemNotif(title, body) {
+            try {
+                if (!('Notification' in window) || Notification.permission !== 'granted') return;
+                const n = new Notification(title, { body: body || '', icon: 'https://placehold.co/192x192/e94560/ffffff?text=SV', tag: title });
+                n.onclick = () => { window.focus(); switchPage('notifiche'); n.close(); };
+            } catch (e) { console.warn('Avviso di sistema non disponibile su questo dispositivo:', e); }
+        }
+        window.app_toggleNotifType = async (k, on) => {
+            if (!isRegistered()) return;
+            try { await updateDoc(doc(db, 'scandoUsers', authUser.uid), { ['notify.types.' + k]: on }); }
+            catch (e) { alert('Non salvato: ' + (e.message || e)); }
+        };
+        window.app_toggleBrowserNotif = async (on) => {
+            if (!isRegistered()) return;
+            if (on) {
+                if (!('Notification' in window)) { showToast('Questo browser non supporta gli avvisi.'); renderNotifPage(); return; }
+                let perm = Notification.permission;
+                if (perm === 'default') { try { perm = await Notification.requestPermission(); } catch (e) { perm = 'denied'; } }
+                if (perm !== 'granted') { showToast('Permesso negato: abilitalo dalle impostazioni del browser.'); renderNotifPage(); return; }
+            }
+            try { await updateDoc(doc(db, 'scandoUsers', authUser.uid), { 'notify.browser': on }); }
+            catch (e) { alert('Non salvato: ' + (e.message || e)); }
+        };
+        window.app_testNotif = () => { showToast('🔔 Prova: le notifiche funzionano!'); if (notifPrefs().browser) showSystemNotif('🔔 Scando Volley', 'Prova: le notifiche funzionano!'); };
+        async function markNotifsRead() {
+            if (!isRegistered() || !unreadNotifs().length) return;
+            try { await updateDoc(doc(db, 'scandoUsers', authUser.uid), { notifReadAt: Date.now() }); } catch (e) { console.warn(e); }
+        }
+        function renderNotifPage() {
+            const box = document.getElementById('notif-box');
             if (!box) return;
-            if (!poll || !poll.date) {
-                box.innerHTML = isAdmin ? `<div class="card rounded-lg p-3 mb-4 text-sm text-gray-300">📅 Nessun prossimo allenamento fissato. <button class="underline text-accent" onclick="switchPage('presenze')">Fissalo ora</button></div>` : '';
+            if (!isRegistered()) {
+                box.innerHTML = `<div class="card rounded-lg p-6 text-gray-300">Entra con un account per ricevere le notifiche. <button class="underline text-accent" onclick="app_signOut()">Entra</button></div>`;
                 return;
             }
-            const g = pollGroups();
-            const pid = myPlayerId();
-            const forNext = pid ? jollyDocs.find(j => j.date === poll.date && j.playerId === pid) : null;
-            box.innerHTML = `<div class="card rounded-lg p-4 mb-4 next-card">
-                <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
-                    <div>
-                        <p class="text-xs uppercase tracking-wide text-accent font-bold">Prossimo allenamento</p>
-                        <p class="text-lg font-bold text-white capitalize">${esc(fmtDay(poll.date))}${poll.time ? ' · ' + esc(poll.time) : ''}</p>
-                    </div>
-                    <div class="flex gap-3 text-sm text-gray-200"><span>✅ ${g.si.length}</span><span>❓ ${g.forse.length}</span><span>❌ ${g.no.length}</span></div>
+            const prefs = notifPrefs();
+            const readAt = (myProfile && myProfile.notifReadAt) || 0;
+            const list = visibleNotifs();
+            const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+            box.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="lg:col-span-2 card rounded-lg p-5">
+                    <h3 class="text-xl font-bold text-white mb-3">🔔 Le mie notifiche</h3>
+                    ${list.length ? list.map(n => `<div class="flex gap-3 py-2 border-b border-gray-700 ${n.ts > readAt ? 'notif-unread' : ''}">
+                        <div class="flex-grow"><p class="text-white font-semibold">${esc(n.title)}</p>${n.body ? `<p class="text-sm text-gray-300">${esc(n.body)}</p>` : ''}</div>
+                        <span class="text-xs text-gray-400 whitespace-nowrap">${fmtWhen(n.ts)}</span></div>`).join('') : '<p class="text-gray-400">Nessuna notifica negli ultimi 60 giorni.</p>'}
                 </div>
-                ${answerButtonsHtml(true)}
-                <div class="flex flex-wrap justify-between items-center gap-2 mt-3 text-sm">
-                    ${pid ? `<span>${forNext ? '🃏 Jolly giocato 🤫' : `Jolly rimasti: ${jollyLeft(pid)}`}</span>` : '<span></span>'}
-                    <button class="underline text-accent" onclick="switchPage('presenze')">Vedi chi c'è${pid && !forNext && pollIsOpen() && jollyLeft(pid) ? ' · gioca il jolly' : ''} →</button>
+                <div class="card rounded-lg p-5">
+                    <h3 class="text-xl font-bold text-white mb-3">⚙️ Cosa voglio ricevere</h3>
+                    ${Object.entries(NOTIF_TYPES).map(([k, t]) => `<label class="flex items-center justify-between gap-3 py-2 border-b border-gray-700 cursor-pointer">
+                        <span class="text-sm">${t.icon} ${esc(t.label)}</span>
+                        <input type="checkbox" class="nf-switch" ${prefs.types[k] ? 'checked' : ''} onchange="app_toggleNotifType('${k}', this.checked)"></label>`).join('')}
+                    <label class="flex items-center justify-between gap-3 py-3 cursor-pointer">
+                        <span class="text-sm">📱 Avvisi del telefono/computer<br><span class="text-xs text-gray-400">mentre l'app è aperta${perm === 'denied' ? ' · bloccati dal browser' : perm === 'unsupported' ? ' · non supportati qui' : ''}</span></span>
+                        <input type="checkbox" class="nf-switch" ${prefs.browser && perm === 'granted' ? 'checked' : ''} onchange="app_toggleBrowserNotif(this.checked)"></label>
+                    <button class="bg-gray-600 text-white text-sm py-1 px-3 rounded mt-1" onclick="app_testNotif()">Prova una notifica</button>
+                    <p class="text-xs text-gray-400 mt-3">Le notifiche arrivano dentro l'app (🔔 in alto). Gli avvisi con l'app chiusa richiederebbero un servizio a pagamento: per ora non li usiamo.</p>
                 </div>
             </div>`;
         }
@@ -5506,18 +5516,17 @@
         // ---------- ADMIN: UTENTI E ATTIVITÀ ----------
         let logCache = [];
         let logFilter = '';
+        let logError = '';
         window.app_loadLog = async () => {
             if (!isAdmin) return;
             const box = document.getElementById('log-list');
             if (box) box.innerHTML = '<p class="text-gray-400">Carico…</p>';
             try {
-                const q = query(collection(db, 'scandoLog'), orderBy('ts', 'desc'), limit(300));
-                const snap = await getDocs(q);
-                logCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const snap = await getDocs(query(collection(db, 'scandoLog'), orderBy('ts', 'desc'), limit(300)));
+                logCache = snap.docs.map(d => ({ id: d.id, ...d.data() })); logError = '';
             } catch (e) {
                 console.error(e);
-                if (box) box.innerHTML = `<p class="text-red-400">Registro non leggibile: ${esc(e.message || e)}</p>`;
-                return;
+                logError = 'Registro non leggibile: entra con l\'account admin (Google).';
             }
             renderLogList();
         };
@@ -5525,20 +5534,16 @@
         function renderLogList() {
             const box = document.getElementById('log-list');
             if (!box) return;
+            if (logError) { box.innerHTML = `<p class="text-red-400 text-sm">${esc(logError)}</p>`; return; }
             const list = logCache.filter(l => !logFilter || l.uid === logFilter);
             if (!list.length) { box.innerHTML = '<p class="text-gray-400">Nessuna attività registrata.</p>'; return; }
-            const ICON = { login: '🔑', signup: '🆕', link: '🔗', approve: '✅', poll: '🗳️', 'poll-set': '📅', jolly: '🃏', 'jolly-admin': '🃏', save: '💾', share: '📲', season: '📊', users: '👥' };
-            box.innerHTML = list.map(l => {
-                const secret = l.secretUntil && Date.now() < l.secretUntil;
-                const text = secret ? '🤫 azione segreta (si vedrà all\'inizio dell\'allenamento)' : l.text;
-                return `<div class="flex gap-3 py-2 border-b border-gray-700 text-sm">
+            const ICON = { login: '🔑', signup: '🆕', link: '🔗', approve: '✅', jolly: '🃏', 'jolly-admin': '🃏', save: '💾', share: '📲', season: '📊', users: '👥' };
+            box.innerHTML = list.map(l => `<div class="flex gap-3 py-2 border-b border-gray-700 text-sm">
                     <span class="text-gray-400 w-24 flex-shrink-0">${fmtWhen(l.ts)}</span>
                     <span>${ICON[l.type] || '•'}</span>
-                    <span><strong class="text-white">${esc(l.name || '?')}</strong> ${esc(text || '')}</span>
-                </div>`;
-            }).join('');
+                    <span><strong class="text-white">${esc(l.name || '?')}</strong> ${esc(l.text || '')}</span>
+                </div>`).join('');
         }
-
         window.app_approveUser = async (uid, pid) => {
             if (!isAdmin) return;
             const u = usersList.find(x => x.uid === uid);
@@ -5550,8 +5555,9 @@
                     if (other && other !== uid) await updateDoc(doc(db, 'scandoUsers', other), { status: 'none', playerId: null });
                     await updateDoc(doc(db, 'scandoUsers', uid), { status: 'approved', playerId: target, requestedPlayerId: null });
                     logAction('approve', 'ha collegato ' + ((u && u.name) || 'un account') + ' a ' + playerFull(playerById(target)));
+                    sendNotif(uid, 'account', '✅ Account confermato', 'Ora sei collegato a ' + playerFull(playerById(target)) + ': puoi giocare i jolly.');
                     showToast('Account collegato ✅');
-                } catch (e) { alert('Errore: ' + (e.message || e)); }
+                } catch (e) { alert('Errore (serve l\'account admin): ' + (e.message || e)); }
             };
             if (other && other !== uid) {
                 const ou = usersList.find(x => x.uid === other);
@@ -5567,24 +5573,21 @@
                 await updateDoc(doc(db, 'scandoUsers', uid), patch);
                 const label = { blocked: 'ha bloccato', none: 'ha scollegato', approved: 'ha sbloccato' }[status] || 'ha modificato';
                 logAction('users', label + ' l\'account di ' + ((u && u.name) || '?'));
-            } catch (e) { alert('Errore: ' + (e.message || e)); }
+                if (status === 'blocked') sendNotif(uid, 'account', '⛔ Account bloccato', 'L\'admin ha bloccato il tuo account: puoi solo guardare.');
+            } catch (e) { alert('Errore (serve l\'account admin): ' + (e.message || e)); }
         };
-        window.app_unblockUser = (uid) => {
-            const u = usersList.find(x => x.uid === uid);
-            app_setUserStatus(uid, u && u.playerId ? 'approved' : 'none');
-        };
+        window.app_unblockUser = (uid) => { const u = usersList.find(x => x.uid === uid); app_setUserStatus(uid, u && u.playerId ? 'approved' : 'none'); };
         window.app_linkUserSelect = (uid, pid) => { if (pid) app_approveUser(uid, pid); else app_setUserStatus(uid, 'none'); };
 
         function renderUsersPage() {
             const box = document.getElementById('users-box');
             if (!box) return;
             if (!isAdmin) { box.innerHTML = ''; return; }
+            const warn = usersError ? `<div class="card rounded-lg p-4 mb-6 border-l-4 border-yellow-400 text-yellow-200 text-sm">⚠️ ${esc(usersError)}</div>` : '';
             const pending = usersList.filter(u => u.status === 'pending');
             const sorted = [...usersList].sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
             const statusTxt = u => ({ approved: '✅ collegato', pending: '⏳ in attesa', blocked: '⛔ bloccato', fan: '👀 tifoso', none: '❔ da collegare' }[u.status] || '❔ da collegare');
-            const revealed = jollyDocs.filter(jollyRevealed).sort((a, b) => b.date.localeCompare(a.date));
-            const hidden = jollyDocs.filter(j => !jollyRevealed(j)).length;
-            box.innerHTML = `
+            box.innerHTML = warn + `
                 ${pending.length ? `<div class="card rounded-lg p-4 mb-6 border-l-4 border-yellow-400">
                     <h3 class="text-xl font-bold text-white mb-3">⏳ Richieste da confermare (${pending.length})</h3>
                     ${pending.map(u => {
@@ -5613,17 +5616,6 @@
                                 : `<button class="bg-red-700 text-white text-xs py-1 px-2 rounded" onclick="app_setUserStatus('${u.uid}','blocked')">Blocca</button>`}
                         </div>`).join('') : '<p class="text-gray-400">Ancora nessun account.</p>'}
                 </div>
-                <div class="card rounded-lg p-4 mb-6">
-                    <h3 class="text-xl font-bold text-white mb-1">🃏 Jolly giocati</h3>
-                    <p class="text-xs text-gray-400 mb-3">${hidden ? hidden + ' jolly ancora segreti (si vedono all\'inizio dell\'allenamento). ' : ''}Se un allenamento salta, puoi restituire il jolly.</p>
-                    ${revealed.length ? revealed.map(j => {
-                        const r = jollyResult(j);
-                        return `<div class="flex flex-wrap items-center gap-2 py-1 border-b border-gray-700 text-sm">
-                            <span class="w-28 capitalize">${esc(fmtShort(j.date))}</span><span class="flex-grow text-white">${esc(playerFull(playerById(j.playerId)))}</span>
-                            <span class="${r.cls}">${r.txt}</span>
-                            <button class="text-xs underline text-gray-400" onclick="app_refundJolly('${j.id}')">restituisci</button></div>`;
-                    }).join('') : '<p class="text-gray-400 text-sm">Nessun jolly scoperto.</p>'}
-                </div>
                 <div class="card rounded-lg p-4">
                     <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
                         <h3 class="text-xl font-bold text-white">📜 Attività</h3>
@@ -5637,17 +5629,12 @@
                     </div>
                     <div id="log-list"><p class="text-gray-400 text-sm">Premi "Aggiorna" per vedere le ultime attività.</p></div>
                 </div>`;
-            if (logCache.length) renderLogList();
+            if (logCache.length || logError) renderLogList();
         }
 
         // ---------- LA MIA STAGIONE ----------
         let seasonPid = null;
-        function realTrainingDates() {
-            return Object.keys(trainings).sort().filter(d => {
-                const ps = trainings[d] && trainings[d].players;
-                return ps && Object.values(ps).some(x => x && (x.present || (parseInt(x.setsWon, 10) || 0) > 0));
-            });
-        }
+        function realTrainingDates() { return Object.keys(trainings).sort().filter(trainingHappened); }
         function seasonStats(pid) {
             const p = playerById(pid);
             if (!p) return null;
@@ -5686,8 +5673,7 @@
                 p, points: me.totalPoints || 0, rank: r ? r.rank : null, of: ranked.length,
                 presences: me.attendanceCount || 0, trainings: dates.length, pct,
                 sets: me.setsWon || 0, avg: myAvg, teamAvg, dishes: me.dishPoints || 0,
-                badgePts: me.badgePoints || 0, badgeList, best, bestMonth,
-                streakBest: streak.best, streakNow: streak.current,
+                badgeList, best, bestMonth, streakBest: streak.best, streakNow: streak.current,
                 jollyUsed: jolly.length, jollyPts: me.jollyPoints || 0, title
             };
         }
@@ -5700,7 +5686,7 @@
                 { bg: 'linear-gradient(160deg,#00695c,#26a69a)', big: s.presences, unit: 'presenze', title: `su ${s.trainings} allenamenti (${s.pct}%)`, sub: s.streakBest ? `Serie record: ${s.streakBest} di fila 🔥` : '' },
                 { bg: 'linear-gradient(160deg,#d95926,#f6a623)', big: s.sets, unit: 'set vinti', title: `Media ${s.avg.toFixed(2)} a presenza`, sub: `La squadra fa ${s.teamAvg.toFixed(2)}${s.best ? ` · serata top: ${s.best.sets} set (${fmtShort(s.best.date)})` : ''}` },
                 { bg: 'linear-gradient(160deg,#37474f,#607d8b)', big: s.dishes, unit: 'volte ai piatti', title: s.badgeList.length ? 'Badge: ' + s.badgeList.map(b => b.icon || '🏅').join(' ') : 'Nessun badge, per ora', sub: s.bestMonth ? `Mese migliore: ${monthName(s.bestMonth[0])}` : '' },
-                { bg: 'linear-gradient(160deg,#4a148c,#9c27b0)', big: '🃏 ' + s.jollyUsed + '/' + JOLLY_PER_SEASON, unit: 'jolly giocati', title: s.jollyPts ? `+${s.jollyPts} punti bonus` : 'Nessun punto bonus (ancora)', sub: '' },
+                { bg: 'linear-gradient(160deg,#4a148c,#9c27b0)', big: '🃏 ' + s.jollyUsed + '/' + JOLLY_PER_SEASON, unit: 'jolly scoperti', title: s.jollyPts ? `+${s.jollyPts} punti bonus` : 'Nessun punto bonus (ancora)', sub: '' },
                 { bg: 'linear-gradient(160deg,#e94560,#f6c700)', big: s.title[0], title: s.title[1], sub: s.title[2] }
             ];
         }
@@ -5750,7 +5736,6 @@
             show();
         };
         window.app_closeStory = () => { clearTimeout(storyTimer); const ov = document.getElementById('story-overlay'); ov.classList.add('hidden'); ov.innerHTML = ''; };
-
         window.app_shareSeason = (evt) => {
             const btn = evt && evt.currentTarget;
             return withButtonBusy(btn, 'Preparo…', async () => {
@@ -5789,14 +5774,26 @@
             });
         };
 
+        // ---------- dopo il salvataggio dei punteggi (chiamata da saveData) ----------
+        async function afterScoresSaved(date) {
+            logAction('save', 'ha salvato i dati (allenamento del ' + fmtShort(date) + ')');
+            if (trainingHappened(date)) {
+                sendNotif('all', 'classifica', '📊 Classifica aggiornata', 'Inseriti i punteggi dell\'allenamento di ' + fmtDay(date) + '.', 'classifica_' + date);
+            }
+            lastAwardedBadges.forEach(b => sendNotif('all', 'badge', '🏅 ' + b.player + ' ha sbloccato un badge', (b.icon || '🏅') + ' ' + b.name));
+            lastAwardedBadges = [];
+            await revealJolliesAfterSave(date);
+        }
+
         // ---------- render di tutte le novità ----------
         function renderNewFeatures() {
             if (!appEntered) return;
             try {
-                renderNextTrainingCard();
-                if (currentPage === 'presenze') { renderPollPage(); renderJollyBox(); }
+                renderJollyStrip();
+                if (currentPage === 'jolly') renderJollyPage();
                 if (currentPage === 'stagione') renderSeasonPage();
                 if (currentPage === 'utenti') renderUsersPage();
+                if (currentPage === 'notifiche') { renderNotifPage(); markNotifsRead(); }
                 renderUserChip();
                 maybeAskWhoAmI();
                 document.querySelectorAll('.nf-badge-pending').forEach(el => {
@@ -5806,21 +5803,15 @@
             } catch (e) { console.error('Errore nelle novità:', e); }
         }
 
+        // Etichetta nel registro allenamenti: jolly già scoperto per quel giorno
+        function trainingTagsHtml(pid) {
+            const j = jollyDocs.find(x => x.date === selectedTrainingDate && x.playerId === pid);
+            return j ? ' <span class="jolly-chip" title="Ha giocato il jolly: set x2">🃏 x2</span>' : '';
+        }
+
         // registra le condivisioni della classifica
         const _origShareStandings = window.app_shareStandings;
         window.app_shareStandings = (evt) => { logAction('share', 'ha condiviso la classifica'); return _origShareStandings(evt); };
-
-        // Etichette nel registro allenamenti: risposta al sondaggio e jolly (solo quando è scoperto)
-        function trainingTagsHtml(pid) {
-            let out = '';
-            if (poll && poll.date === selectedTrainingDate) {
-                const a = pollAnswers()[pid];
-                if (a && ANS[a.v]) out += ` <span class="text-sm" title="Sondaggio: ${ANS[a.v].label}">${ANS[a.v].icon}</span>`;
-            }
-            const j = jollyDocs.find(x => x.date === selectedTrainingDate && x.playerId === pid);
-            if (j && jollyRevealed(j)) out += ' <span class="jolly-chip" title="Ha giocato il jolly: set x2">🃏 x2</span>';
-            return out;
-        }
 
         // --- EVENT LISTENERS ---
         document.querySelectorAll('.nav-link').forEach(link => {
